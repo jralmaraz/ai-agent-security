@@ -87,6 +87,7 @@ func issueOrchestratorToken(_ js.Value, _ []js.Value) any {
 
 	return okObj(map[string]any{
 		"token":      truncate(tok),
+		"fullToken":  tok,
 		"chain":      chain.String(),
 		"chainHash":  chain.Hash(),
 		"chainDepth": 0,
@@ -120,6 +121,7 @@ func delegateToExecutor(_ js.Value, _ []js.Value) any {
 
 	return okObj(map[string]any{
 		"token":      truncate(tok),
+		"fullToken":  tok,
 		"chainLen":   chain.Len(),
 		"chainHash":  chain.Hash(),
 		"chainDepth": 1,
@@ -187,6 +189,7 @@ func generateProof(_ js.Value, args []js.Value) any {
 
 	return okObj(map[string]any{
 		"proof":     truncate(proof),
+		"fullProof": proof,
 		"targetURI": targetURI,
 		"chainHash": chain.Hash(),
 	})
@@ -338,21 +341,42 @@ func setupFederation(_ js.Value, _ []js.Value) any {
 	fedResolver.RegisterEntityConfig(fedOrgBID, fedOrgBEC)
 	fedResolver.RegisterSubordinateStatement(fedOrgBID, fedOrgBSS)
 
-	anchorJWK, _ := keys.PublicKeyToJWK(fedAnchorPub, "anchor-key")
-	orgBJWK, _ := keys.PublicKeyToJWK(fedOrgBPub, "orgb-key")
+	// PublicKeyToJWK returns a struct pointer — must extract primitive fields
+	// before putting into the return map; js.ValueOf panics on struct pointers.
+	anchorJWK, err := keys.PublicKeyToJWK(fedAnchorPub, "anchor-key")
+	if err != nil {
+		return errObj("anchor JWK: " + err.Error())
+	}
+	orgBJWK, err := keys.PublicKeyToJWK(fedOrgBPub, "orgb-key")
+	if err != nil {
+		return errObj("orgB JWK: " + err.Error())
+	}
 
 	ec, _ := federation.ParseEntityConfiguration(fedOrgBEC)
 	ss, _ := federation.ParseSubordinateStatement(fedOrgBSS)
 
+	// Build ecHints as []interface{} — js.ValueOf cannot convert []string.
+	var ecIss, ssSub string
+	var ecHints []interface{}
+	if ec != nil {
+		ecIss = ec.Issuer
+		for _, h := range ec.AuthorityHints {
+			ecHints = append(ecHints, h)
+		}
+	}
+	if ss != nil {
+		ssSub = ss.Subject
+	}
+
 	return okObj(map[string]any{
-		"anchorID":      fedAnchorID,
-		"orgBID":        fedOrgBID,
-		"anchorJWK":     anchorJWK,
-		"orgBJWK":       orgBJWK,
-		"ecIss":         ec.Issuer,
-		"ecHints":       ec.AuthorityHints,
-		"ssIss":         ss.Issuer,
-		"ssSub":         ss.Subject,
+		"anchorID":   fedAnchorID,
+		"orgBID":     fedOrgBID,
+		"ecJWT":      fedOrgBEC,
+		"ecIss":      ecIss,
+		"ecHints":    ecHints,
+		"ssSub":      ssSub,
+		"anchorKeyX": anchorJWK.X,
+		"orgBKeyX":   orgBJWK.X,
 	})
 }
 
@@ -411,13 +435,17 @@ func validateFederatedToken(_ js.Value, _ []js.Value) any {
 	}
 
 	orgBJWK, _ := keys.PublicKeyToJWK(resolvedPub, "orgb-key")
+	var resolvedKeyX string
+	if orgBJWK != nil {
+		resolvedKeyX = orgBJWK.X
+	}
 
 	return okObj(map[string]any{
 		"subject":          va.Claims.Subject,
 		"issuer":           va.Claims.Issuer,
 		"resolvedViaChain": true,
 		"trustAnchor":      fedAnchorID,
-		"resolvedKey":      orgBJWK,
+		"resolvedKeyX":     resolvedKeyX,
 	})
 }
 

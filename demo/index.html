@@ -5,127 +5,209 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>WIMSE Agent Fabric — Identity Chain Demo</title>
 <style>
-  :root {
-    --bg: #0d1117; --surface: #161b22; --border: #30363d;
-    --text: #c9d1d9; --muted: #8b949e; --accent: #58a6ff;
-    --green: #3fb950; --red: #f85149; --yellow: #d29922;
-    --purple: #bc8cff; --orange: #ffa657;
-    --font: 'Segoe UI', system-ui, sans-serif; --mono: 'Cascadia Code', 'Fira Code', monospace;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
+:root{
+  --bg:#0d1117;--surface:#161b22;--surface2:#21262d;
+  --border:#30363d;--text:#e6edf3;--muted:#7d8590;
+  --blue:#58a6ff;--green:#3fb950;--red:#f85149;
+  --orange:#ffa657;--purple:#bc8cff;--yellow:#d29922;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'Cascadia Code','Fira Code',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;font-size:15px;line-height:1.6}
 
-  /* ── header ── */
-  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; align-items: center; gap: 1rem; }
-  .logo { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
-  .tagline { color: var(--muted); font-size: 0.9rem; }
-  .badge { background: var(--purple); color: #000; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 12px; margin-left: auto; }
+/* ── Header ── */
+.site-header{border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:14px;position:sticky;top:0;background:var(--bg);z-index:100}
+.site-logo{font-size:17px;font-weight:700;color:var(--blue)}
+.site-subtitle{color:var(--muted);font-size:12px}
+.header-links{margin-left:auto;display:flex;align-items:center;gap:10px}
+.wasm-badge{font-size:11px;padding:3px 10px;border-radius:12px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;gap:6px}
+.wasm-badge.ready{color:var(--green);border-color:rgba(63,185,80,0.4)}
+.wasm-badge.loading{color:var(--orange)}
+.spin{width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-  /* ── nav ── */
-  nav { display: flex; gap: 0; border-bottom: 1px solid var(--border); background: var(--surface); overflow-x: auto; }
-  .tab { padding: 0.8rem 1.4rem; cursor: pointer; border-bottom: 3px solid transparent; font-size: 0.9rem; white-space: nowrap; transition: all 0.2s; color: var(--muted); }
-  .tab:hover { color: var(--text); }
-  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+/* ── Nav ── */
+nav{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto}
+.tab{padding:.8rem 1.4rem;cursor:pointer;border-bottom:3px solid transparent;font-size:.9rem;white-space:nowrap;transition:all .2s;color:var(--muted)}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
 
-  /* ── layout ── */
-  main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
-  .scene { display: none; }
-  .scene.active { display: block; }
+/* ── Layout ── */
+main{max-width:960px;margin:0 auto;padding:2rem}
+.scene{display:none}
+.scene.active{display:block}
 
-  /* ── cards ── */
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; }
-  .card-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.75rem; }
+/* ── Cards ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.5rem;margin-bottom:1rem}
+.card-title{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.75rem}
 
-  /* ── buttons ── */
-  .btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1.1rem; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; font-size: 0.875rem; transition: all 0.15s; font-family: inherit; }
-  .btn:hover:not(:disabled) { background: #21262d; border-color: var(--accent); }
-  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-  .btn-primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
-  .btn-primary:hover:not(:disabled) { background: #79c0ff; }
-  .btn-danger { background: var(--red); color: #fff; border-color: var(--red); font-weight: 600; }
-  .btn-warning { background: var(--yellow); color: #000; border-color: var(--yellow); font-weight: 600; }
-  .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.75rem 0; }
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.1rem;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:.875rem;transition:all .15s;font-family:inherit}
+.btn:hover:not(:disabled){background:var(--surface2);border-color:var(--blue)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-primary{background:var(--blue);color:#000;border-color:var(--blue);font-weight:600}
+.btn-primary:hover:not(:disabled){background:#79c0ff}
+.btn-danger{background:var(--red);color:#fff;border-color:var(--red);font-weight:600}
+.btn-warning{background:var(--yellow);color:#000;border-color:var(--yellow);font-weight:600}
+.btn-group{display:flex;gap:.5rem;flex-wrap:wrap;margin:.75rem 0}
 
-  /* ── output ── */
-  .output { font-family: var(--mono); font-size: 0.8rem; background: #010409; border: 1px solid var(--border); border-radius: 6px; padding: 1rem; min-height: 60px; white-space: pre-wrap; word-break: break-all; }
-  .ok { color: var(--green); }
-  .err { color: var(--red); }
-  .info { color: var(--accent); }
-  .warn { color: var(--yellow); }
+/* ── SVG diagram ── */
+.diagram{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px;margin-bottom:1rem;overflow:hidden}
+.diagram svg{width:100%;height:auto;display:block}
+.node-box{fill:var(--surface2);stroke:var(--border);stroke-width:1.5;transition:stroke .3s,fill .3s}
+.node-box.hi{stroke:var(--blue);stroke-width:2}
+.node-box.ok{stroke:var(--green);stroke-width:2}
+.node-box.bad{stroke:var(--red);stroke-width:2;fill:rgba(248,81,73,.07)}
+.node-lbl{fill:var(--text);font-family:var(--font);font-size:11px;font-weight:700;text-anchor:middle;pointer-events:none}
+.node-sub{fill:var(--muted);font-family:var(--font);font-size:9px;text-anchor:middle;pointer-events:none}
+.wire{fill:none;stroke:var(--border);stroke-width:2}
+.wire.active{stroke:var(--blue);stroke-dasharray:8,4;animation:dashscroll .5s linear infinite;stroke-width:2.5}
+.wire.done{stroke:var(--green);stroke-width:2.5}
+.pkt-circle{visibility:hidden}
+@keyframes dashscroll{to{stroke-dashoffset:-12}}
 
-  /* ── architecture diagram ── */
-  .arch { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin: 1rem 0; }
-  .node { background: #21262d; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; text-align: center; position: relative; }
-  .node.active-node { border-color: var(--accent); box-shadow: 0 0 12px rgba(88,166,255,0.25); }
-  .node.accepted { border-color: var(--green); box-shadow: 0 0 12px rgba(63,185,80,0.25); }
-  .node.rejected { border-color: var(--red); box-shadow: 0 0 12px rgba(248,81,73,0.25); }
-  .node-icon { font-size: 2rem; margin-bottom: 0.5rem; }
-  .node-label { font-size: 0.8rem; font-weight: 600; color: var(--text); }
-  .node-sub { font-size: 0.7rem; color: var(--muted); margin-top: 0.2rem; }
+/* ── Status bar ── */
+.status-bar{display:flex;align-items:center;gap:.5rem;padding:.6rem 1rem;background:#010409;border-radius:6px;font-size:.8rem;margin-bottom:.75rem;border:1px solid var(--border)}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot.green{background:var(--green);animation:pulse 2s infinite}
+.dot.red{background:var(--red)}
+.dot.grey{background:var(--muted)}
+.dot.blue{background:var(--blue);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
-  /* ── flow arrows ── */
-  .flow { display: flex; align-items: center; gap: 0; margin: 0.5rem 0; }
-  .flow-arrow { flex: 1; height: 2px; background: var(--border); position: relative; }
-  .flow-arrow::after { content: '▶'; position: absolute; right: -8px; top: -8px; color: var(--muted); font-size: 14px; }
-  .flow-arrow.animated { background: linear-gradient(90deg, var(--accent), transparent); animation: flowAnim 1s ease-in-out; }
-  .flow-arrow.ok-flow { background: linear-gradient(90deg, var(--green), transparent); }
-  .flow-arrow.err-flow { background: linear-gradient(90deg, var(--red), transparent); }
-  @keyframes flowAnim { from { opacity: 0; transform: scaleX(0); } to { opacity: 1; transform: scaleX(1); } }
+/* ── Info grid ── */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem}
+.info-grid.c3{grid-template-columns:1fr 1fr 1fr}
+.info-grid.c1{grid-template-columns:1fr}
+@media(max-width:600px){.info-grid,.info-grid.c3{grid-template-columns:1fr}}
+.info-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:11px}
+.info-box.blue{border-color:rgba(88,166,255,.4)}
+.info-box.green{border-color:rgba(63,185,80,.4)}
+.info-box.red{border-color:rgba(248,81,73,.4)}
+.info-box.orange{border-color:rgba(255,166,87,.4)}
+.info-box.purple{border-color:rgba(188,140,255,.4)}
+.ibt{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px}
+.ibv{font-size:12px;font-family:var(--mono);color:var(--text);word-break:break-all;line-height:1.5}
 
-  /* ── token badge ── */
-  .token-badge { display: inline-block; font-family: var(--mono); font-size: 0.7rem; background: #1c2128; border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; margin: 2px; word-break: break-all; }
-  .token-badge.wit { border-color: var(--accent); color: var(--accent); }
-  .token-badge.proof { border-color: var(--purple); color: var(--purple); }
-  .token-badge.chain { border-color: var(--orange); color: var(--orange); }
+/* ── JWT anatomy ── */
+.jwt-raw{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:11px;font-family:var(--mono);font-size:11px;word-break:break-all;line-height:1.9;margin-bottom:10px}
+.jwt-h{color:var(--red)}
+.jwt-p{color:var(--purple)}
+.jwt-s{color:var(--blue)}
+.jwt-s-bad{color:var(--red);text-decoration:line-through;opacity:.7}
+.jwt-dot{color:var(--muted)}
+.jwt-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+@media(max-width:600px){.jwt-grid{grid-template-columns:1fr}}
+.jwt-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px}
+.jwt-box h4{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.jwt-box.jh h4{color:var(--red)}
+.jwt-box.jp h4{color:var(--purple)}
+.jwt-box pre{font-size:10px;line-height:1.5;overflow-x:auto;color:var(--text);font-family:var(--mono)}
 
-  /* ── threat cards ── */
-  .threats { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
-  .threat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; border-left: 4px solid var(--red); }
-  .threat-card.mitigated { border-left-color: var(--green); }
-  .threat-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.4rem; }
-  .threat-desc { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.6rem; }
-  .mitigation { font-size: 0.8rem; color: var(--green); }
-  .mitigation::before { content: '✓ '; }
+/* ── Validation steps ── */
+.vsteps{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.vstep{display:flex;align-items:center;gap:10px;padding:9px 13px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:13px;transition:all .3s}
+.vstep.pass{border-color:var(--green);background:rgba(63,185,80,.05)}
+.vstep.fail{border-color:var(--red);background:rgba(248,81,73,.05)}
+.vstep-icon{width:20px;height:20px;border-radius:50%;background:var(--surface2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;transition:all .3s;font-weight:700;color:var(--muted)}
+.vstep.pass .vstep-icon{background:var(--green);border-color:var(--green);color:#0d1117}
+.vstep.fail .vstep-icon{background:var(--red);border-color:var(--red);color:#fff}
 
-  /* ── step list ── */
-  .steps { list-style: none; }
-  .steps li { display: flex; gap: 0.75rem; padding: 0.5rem 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; align-items: flex-start; }
-  .steps li:last-child { border-bottom: none; }
-  .step-num { background: var(--accent); color: #000; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+/* ── Verdict ── */
+.verdict{display:flex;align-items:center;gap:12px;padding:12px 18px;border-radius:8px;margin-bottom:12px;font-size:15px;font-weight:700}
+.verdict.allow{background:rgba(63,185,80,.1);border:1px solid rgba(63,185,80,.4);color:var(--green)}
+.verdict.deny{background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.4);color:var(--red)}
 
-  /* ── status bar ── */
-  .status-bar { display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; background: #010409; border-radius: 6px; font-size: 0.8rem; margin-bottom: 0.5rem; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .dot.green { background: var(--green); animation: pulse 2s infinite; }
-  .dot.red { background: var(--red); }
-  .dot.grey { background: var(--muted); }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+/* ── Callout ── */
+.callout{border-left:4px solid var(--blue);padding:10px 14px;background:rgba(88,166,255,.05);border-radius:0 6px 6px 0;margin-bottom:12px;font-size:13px;color:var(--muted)}
+.callout.ok{border-color:var(--green);background:rgba(63,185,80,.05)}
+.callout.warn{border-color:var(--orange);background:rgba(255,166,87,.05)}
+.callout.danger{border-color:var(--red);background:rgba(248,81,73,.05)}
+.callout strong{color:var(--text)}
 
-  /* ── loading ── */
-  #loading { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; z-index: 100; }
-  .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+/* ── Pill ── */
+.pill{display:inline-block;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600}
+.pill-b{background:rgba(88,166,255,.15);color:var(--blue)}
+.pill-g{background:rgba(63,185,80,.15);color:var(--green)}
+.pill-r{background:rgba(248,81,73,.15);color:var(--red)}
+.pill-o{background:rgba(255,166,87,.15);color:var(--orange)}
+.pill-p{background:rgba(188,140,255,.15);color:var(--purple)}
+
+/* ── Chain display ── */
+.chain-display{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;overflow-x:auto}
+.chain-token{font-family:var(--mono);font-size:11px;background:#010409;border:1px solid rgba(255,166,87,.4);color:var(--orange);padding:3px 9px;border-radius:4px;white-space:nowrap}
+.chain-sep{color:var(--muted);font-weight:700;font-size:16px;flex-shrink:0}
+
+/* ── Spec ref ── */
+.spec-ref{font-size:11px;color:var(--muted);margin-bottom:12px}
+.spec-ref a{color:var(--blue);text-decoration:none}
+.spec-ref a:hover{text-decoration:underline}
+
+/* ── Token badge ── */
+.token-badge{display:inline-block;font-family:var(--mono);font-size:.7rem;background:#1c2128;border:1px solid var(--border);border-radius:4px;padding:2px 8px;margin:2px;word-break:break-all}
+.token-badge.at{border-color:var(--blue);color:var(--blue)}
+.token-badge.proof{border-color:var(--purple);color:var(--purple)}
+.token-badge.chain{border-color:var(--orange);color:var(--orange)}
+.token-badge.fed{border-color:var(--green);color:var(--green)}
+
+/* ── Replay attempt panels ── */
+.attempt-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+@media(max-width:600px){.attempt-grid{grid-template-columns:1fr}}
+.attempt-panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;text-align:center}
+.attempt-panel.accepted{border-color:var(--green)}
+.attempt-panel.rejected{border-color:var(--red)}
+.attempt-icon{font-size:32px;margin-bottom:8px}
+.attempt-label{font-size:13px;font-weight:700;margin-bottom:6px}
+.attempt-detail{font-size:11px;color:var(--muted);font-family:var(--mono);word-break:break-all}
+
+/* ── Threat cards ── */
+.threats{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem}
+.threat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.25rem;border-left:4px solid var(--red)}
+.threat-card.mitigated{border-left-color:var(--green)}
+.threat-title{font-weight:700;font-size:.9rem;margin-bottom:.4rem}
+.threat-desc{font-size:.82rem;color:var(--muted);margin-bottom:.6rem}
+.mitigation{font-size:.8rem;color:var(--green)}
+.mitigation::before{content:'✓ '}
+
+/* ── Step list ── */
+.steps{list-style:none}
+.steps li{display:flex;gap:.75rem;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.85rem;align-items:flex-start}
+.steps li:last-child{border-bottom:none}
+.step-num{background:var(--blue);color:#000;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0;margin-top:1px}
+
+/* ── Loading ── */
+#loading{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;z-index:100}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
+
+/* ── Collapse sections ── */
+.reveal{display:none}
+.reveal.show{display:block}
 </style>
 </head>
 <body>
 
 <div id="loading">
   <div class="spinner"></div>
-  <div style="color:var(--muted);font-size:0.9rem">Loading WASM runtime…</div>
+  <div style="color:var(--muted);font-size:.9rem">Loading WASM runtime…</div>
 </div>
 
-<header>
-  <div class="logo">WIMSE Agent Fabric</div>
-  <div class="tagline">AI Agent Identity Chain — Interactive Demo</div>
-  <div class="badge">WASM</div>
+<header class="site-header">
+  <div>
+    <div class="site-logo">WIMSE Agent Fabric</div>
+    <div class="site-subtitle">AI Agent Identity Chain — Interactive Demo</div>
+  </div>
+  <div class="header-links">
+    <div class="wasm-badge loading" id="wasm-badge"><div class="spin"></div> Loading WASM…</div>
+  </div>
 </header>
 
 <nav>
-  <div class="tab active" onclick="showTab('happy')">Happy Path</div>
-  <div class="tab" onclick="showTab('replay')">Replay Attack</div>
-  <div class="tab" onclick="showTab('tamper')">Token Tampering</div>
-  <div class="tab" onclick="showTab('threat')">Threat Model</div>
-  <div class="tab" onclick="showTab('federation')">OpenID Federation</div>
+  <div class="tab active" onclick="showTab('happy',this)">Happy Path</div>
+  <div class="tab" onclick="showTab('replay',this)">Replay Attack</div>
+  <div class="tab" onclick="showTab('tamper',this)">Token Tampering</div>
+  <div class="tab" onclick="showTab('threat',this)">Threat Model</div>
+  <div class="tab" onclick="showTab('federation',this)">OpenID Federation</div>
 </nav>
 
 <main>
@@ -134,32 +216,40 @@
 <div class="scene active" id="scene-happy">
   <div class="card">
     <div class="card-title">Architecture — Agent Identity Chain</div>
-    <div class="arch" id="happy-arch">
-      <div class="node" id="node-idp">
-        <div class="node-icon">🏛️</div>
-        <div class="node-label">Identity Provider</div>
-        <div class="node-sub">Issues AgentTokens</div>
-      </div>
-      <div class="node" id="node-orch">
-        <div class="node-icon">🤖</div>
-        <div class="node-label">Orchestrator</div>
-        <div class="node-sub">chain_depth=0</div>
-      </div>
-      <div class="node" id="node-exec">
-        <div class="node-icon">⚙️</div>
-        <div class="node-label">Executor Agent</div>
-        <div class="node-sub">chain_depth=1</div>
-      </div>
-      <div class="node" id="node-gw">
-        <div class="node-icon">🛡️</div>
-        <div class="node-label">Gateway</div>
-        <div class="node-sub">Validates chain + proof</div>
-      </div>
-      <div class="node" id="node-tool">
-        <div class="node-icon">🔧</div>
-        <div class="node-label">Tool Server</div>
-        <div class="node-sub">Protected resource</div>
-      </div>
+    <div class="diagram">
+      <svg viewBox="0 0 730 155" xmlns="http://www.w3.org/2000/svg">
+        <!-- Wires -->
+        <line id="w1" x1="120" y1="77" x2="160" y2="77" class="wire"/>
+        <line id="w2" x1="270" y1="77" x2="310" y2="77" class="wire"/>
+        <line id="w3" x1="420" y1="77" x2="460" y2="77" class="wire"/>
+        <line id="w4" x1="570" y1="77" x2="610" y2="77" class="wire"/>
+        <!-- Nodes -->
+        <rect id="nb-idp"  x="10"  y="52" width="110" height="50" rx="8" class="node-box"/>
+        <text x="65"  y="75" class="node-lbl">Identity Provider</text>
+        <text x="65"  y="90" class="node-sub">idp.agent-fabric.example</text>
+        <rect id="nb-orch" x="160" y="52" width="110" height="50" rx="8" class="node-box"/>
+        <text x="215" y="75" class="node-lbl">Orchestrator</text>
+        <text x="215" y="90" class="node-sub">chain_depth=0</text>
+        <rect id="nb-exec" x="310" y="52" width="110" height="50" rx="8" class="node-box"/>
+        <text x="365" y="75" class="node-lbl">Executor Agent</text>
+        <text x="365" y="90" class="node-sub">chain_depth=1</text>
+        <rect id="nb-gw"   x="460" y="52" width="110" height="50" rx="8" class="node-box"/>
+        <text x="515" y="75" class="node-lbl">Gateway</text>
+        <text x="515" y="90" class="node-sub">validates chain+proof</text>
+        <rect id="nb-tool" x="610" y="52" width="110" height="50" rx="8" class="node-box"/>
+        <text x="665" y="75" class="node-lbl">Tool Server</text>
+        <text x="665" y="90" class="node-sub">protected resource</text>
+        <!-- Animated packet circles -->
+        <circle id="pc1" cx="65"  cy="77" r="6" fill="var(--blue)"   class="pkt-circle"/>
+        <circle id="pc2" cx="215" cy="77" r="6" fill="var(--purple)" class="pkt-circle"/>
+        <circle id="pc3" cx="365" cy="77" r="6" fill="var(--green)"  class="pkt-circle"/>
+        <circle id="pc4" cx="515" cy="77" r="6" fill="var(--orange)" class="pkt-circle"/>
+        <!-- Labels -->
+        <text x="140" y="68" style="fill:var(--muted);font-size:8px;text-anchor:middle;font-family:monospace">AT</text>
+        <text x="290" y="68" style="fill:var(--muted);font-size:8px;text-anchor:middle;font-family:monospace">chain</text>
+        <text x="440" y="68" style="fill:var(--muted);font-size:8px;text-anchor:middle;font-family:monospace">validate</text>
+        <text x="590" y="68" style="fill:var(--muted);font-size:8px;text-anchor:middle;font-family:monospace">proof</text>
+      </svg>
     </div>
   </div>
 
@@ -167,28 +257,113 @@
     <div class="card-title">Step-by-step walkthrough</div>
     <div class="btn-group">
       <button class="btn btn-primary" onclick="doSetup()">1. Generate Keys</button>
-      <button class="btn" id="btn-orch" disabled onclick="doIssueOrch()">2. Issue Orchestrator Token</button>
-      <button class="btn" id="btn-exec" disabled onclick="doDelegate()">3. Delegate to Executor</button>
+      <button class="btn" id="btn-orch"     disabled onclick="doIssueOrch()">2. Issue Orchestrator Token</button>
+      <button class="btn" id="btn-exec"     disabled onclick="doDelegate()">3. Delegate to Executor</button>
       <button class="btn" id="btn-validate" disabled onclick="doValidate()">4. Validate Chain</button>
-      <button class="btn" id="btn-proof" disabled onclick="doProof()">5. Generate Proof</button>
-      <button class="btn btn-primary" id="btn-reset" style="margin-left:auto" onclick="doReset()">Reset</button>
+      <button class="btn" id="btn-proof"    disabled onclick="doProof()">5. Generate Proof</button>
+      <button class="btn" style="margin-left:auto" onclick="doReset()">Reset</button>
     </div>
-
     <div id="happy-status" class="status-bar">
       <div class="dot grey"></div>
       <span>Click "Generate Keys" to begin</span>
     </div>
-    <div id="happy-out" class="output">Waiting for input…</div>
+  </div>
+
+  <!-- Step 1 output -->
+  <div id="out-setup" class="reveal">
+    <div class="info-grid c3">
+      <div class="info-box blue"><div class="ibt">Issuer</div><div class="ibv">idp.agent-fabric.example</div></div>
+      <div class="info-box blue"><div class="ibt">Algorithm</div><div class="ibv">ES256 (EC P-256)</div></div>
+      <div class="info-box blue"><div class="ibt">Key Pairs</div><div class="ibv">3 generated (IdP · Orchestrator · Executor)</div></div>
+    </div>
+    <div class="callout">
+      <strong>Trust establishment.</strong> The IdP's private key is the root of trust. Every <span class="pill pill-b">agent+jwt</span> issued by this IdP is signed with it. Agents embed their own public key in the <code>cnf.jwk</code> claim so verifiers can later check proof-of-possession.
+    </div>
+  </div>
+
+  <!-- Step 2 output: Orchestrator token -->
+  <div id="out-orch" class="reveal">
+    <div class="spec-ref">Spec: <a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-workload-creds/" target="_blank">draft-ietf-wimse-workload-creds</a> · <code>typ: agent+jwt</code> · alg: ES256</div>
+    <div class="card-title">Orchestrator AgentToken — JWT Anatomy</div>
+    <div class="jwt-raw" id="jwt-orch-raw"><span style="color:var(--muted)">Token loading…</span></div>
+    <div class="jwt-grid">
+      <div class="jwt-box jh"><h4>Header <span class="pill pill-r">red</span></h4><pre id="jwt-orch-hdr"></pre></div>
+      <div class="jwt-box jp"><h4>Payload <span class="pill pill-p">purple</span></h4><pre id="jwt-orch-pld"></pre></div>
+    </div>
+    <div class="info-grid c3">
+      <div class="info-box orange"><div class="ibt">sub</div><div class="ibv" id="orch-sub">—</div></div>
+      <div class="info-box orange"><div class="ibt">role</div><div class="ibv" id="orch-role">—</div></div>
+      <div class="info-box orange"><div class="ibt">chain_depth</div><div class="ibv" id="orch-depth">—</div></div>
+    </div>
+    <div class="callout ok">
+      <strong>cnf.jwk</strong> — The token embeds the orchestrator's public key. When it later generates a proof token, any verifier can confirm the proof was signed by the matching private key — without a separate key lookup.
+    </div>
+  </div>
+
+  <!-- Step 3 output: Executor token + chain -->
+  <div id="out-exec" class="reveal">
+    <div class="card-title">Executor AgentToken — JWT Anatomy</div>
+    <div class="jwt-raw" id="jwt-exec-raw"><span style="color:var(--muted)">Token loading…</span></div>
+    <div class="jwt-grid">
+      <div class="jwt-box jh"><h4>Header <span class="pill pill-r">red</span></h4><pre id="jwt-exec-hdr"></pre></div>
+      <div class="jwt-box jp"><h4>Payload <span class="pill pill-p">purple</span></h4><pre id="jwt-exec-pld"></pre></div>
+    </div>
+    <div class="info-grid">
+      <div class="info-box purple"><div class="ibt">chain_depth</div><div class="ibv" id="exec-depth">—</div></div>
+      <div class="info-box purple"><div class="ibt">chain_hash</div><div class="ibv" id="exec-hash" style="font-size:10px">—</div></div>
+    </div>
+    <div class="card-title" style="margin-top:4px">Wire Format — Agent Identity Chain</div>
+    <div class="chain-display" id="chain-display">
+      <span style="color:var(--muted);font-size:12px">Building chain…</span>
+    </div>
+    <div class="callout">
+      <strong>AT-1~AT-2 wire format</strong> — Tokens are concatenated with <code>~</code> (same separator as SD-JWT disclosures). The Gateway validates every token in the chain in order, checking signatures, expiry, and that chain depths are strictly sequential (0, 1, 2…). Skipping or repeating a depth fails validation.
+    </div>
+  </div>
+
+  <!-- Step 4 output: Chain validation vsteps -->
+  <div id="out-validate" class="reveal">
+    <div class="card-title">Chain Validation — Gateway Checks</div>
+    <div class="vsteps">
+      <div class="vstep" id="vs-hop1"><div class="vstep-icon">○</div>Hop 1 (Orchestrator) — signature valid, role=orchestrator, chain_depth=0</div>
+      <div class="vstep" id="vs-hop2"><div class="vstep-icon">○</div>Hop 2 (Executor) — signature valid, role=executor, chain_depth=1</div>
+      <div class="vstep" id="vs-seq"><div class="vstep-icon">○</div>Sequential depth order — 0 → 1 (no gaps, no repeats)</div>
+      <div class="vstep" id="vs-exp"><div class="vstep-icon">○</div>All tokens within expiry window</div>
+    </div>
+    <div class="verdict allow" id="validate-verdict" style="display:none">
+      <span style="font-size:22px">✅</span> Chain VALID — <span id="validate-hops">2</span> hops authenticated
+    </div>
+    <div class="callout ok">
+      <strong>Why chain depth matters.</strong> Without sequential depth enforcement, a compromised executor could self-issue a new token with <code>chain_depth=0</code> to appear as an orchestrator, gaining elevated privileges. The Gateway rejects any token whose depth is not exactly <em>previous_depth + 1</em>.
+    </div>
+  </div>
+
+  <!-- Step 5 output: Proof token -->
+  <div id="out-proof" class="reveal">
+    <div class="spec-ref">Spec: <a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-workload-creds/" target="_blank">draft-ietf-wimse-workload-creds</a> · <code>typ: application/agent-proof+jwt</code></div>
+    <div class="card-title">Agent Proof Token — JWT Anatomy</div>
+    <div class="jwt-raw" id="jwt-proof-raw"><span style="color:var(--muted)">Token loading…</span></div>
+    <div class="jwt-grid">
+      <div class="jwt-box jh"><h4>Header <span class="pill pill-r">red</span></h4><pre id="jwt-proof-hdr"></pre></div>
+      <div class="jwt-box jp"><h4>Payload <span class="pill pill-p">purple</span></h4><pre id="jwt-proof-pld"></pre></div>
+    </div>
+    <div class="info-grid">
+      <div class="info-box purple"><div class="ibt">aud (target URI)</div><div class="ibv" id="proof-aud">—</div></div>
+      <div class="info-box purple"><div class="ibt">chain_hash</div><div class="ibv" id="proof-chain-hash" style="font-size:10px">—</div></div>
+    </div>
+    <div class="callout ok">
+      <strong>Per-request binding.</strong> The proof token is signed by the executor's private key (matching the <code>cnf.jwk</code> in the AgentToken). Its <code>aud</code> is the exact target URI, and <code>chain_hash</code> is SHA-256 of the full chain string. Even if an attacker captures this token, replaying it to a different endpoint fails the <code>aud</code> check — and replaying to the same endpoint fails the JTI replay detection.
+    </div>
   </div>
 
   <div class="card">
     <div class="card-title">How it works</div>
     <ul class="steps">
-      <li><div class="step-num">1</div><div>The Identity Provider generates an EC P-256 key pair. It's the root of trust for all agent tokens in this domain.</div></li>
-      <li><div class="step-num">2</div><div>The Orchestrator receives a signed <span class="token-badge wit">agent+jwt</span> with <code>role=orchestrator</code> and <code>chain_depth=0</code>. Its public key is bound via <code>cnf.jwk</code>.</div></li>
-      <li><div class="step-num">3</div><div>When delegating work, the Executor also receives a <span class="token-badge wit">agent+jwt</span> with <code>chain_depth=1</code>. The chain is the wire string <span class="token-badge chain">AT-1~AT-2</span>.</div></li>
-      <li><div class="step-num">4</div><div>The Gateway validates every token in the chain: signature, expiry, issuer, and that chain depths are sequential (0, 1, 2…).</div></li>
-      <li><div class="step-num">5</div><div>A per-request <span class="token-badge proof">agent-proof+jwt</span> binds the call to the target URI (<code>aud</code>) and the chain (<code>chain_hash</code>), preventing reuse.</div></li>
+      <li><div class="step-num">1</div><div>The Identity Provider generates an EC P-256 key pair — the root of trust for all agent tokens in this domain.</div></li>
+      <li><div class="step-num">2</div><div>The Orchestrator receives a signed <span class="token-badge at">agent+jwt</span> with <code>role=orchestrator</code> and <code>chain_depth=0</code>. Its public key is bound via <code>cnf.jwk</code>.</div></li>
+      <li><div class="step-num">3</div><div>When delegating, the Executor also gets a <span class="token-badge at">agent+jwt</span> with <code>chain_depth=1</code>. The chain wire format is <span class="token-badge chain">AT-1~AT-2</span>.</div></li>
+      <li><div class="step-num">4</div><div>The Gateway validates every token in the chain: signature, expiry, issuer, and strictly sequential chain depths.</div></li>
+      <li><div class="step-num">5</div><div>A per-request <span class="token-badge proof">agent-proof+jwt</span> binds the call to the exact target URI (<code>aud</code>) and the chain hash, preventing reuse or redirection.</div></li>
     </ul>
   </div>
 </div>
@@ -197,34 +372,59 @@
 <div class="scene" id="scene-replay">
   <div class="card">
     <div class="card-title">Replay Attack Simulation</div>
-    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem">
-      An attacker intercepts a valid <code>Agent-Proof-Token</code> and immediately replays it to
-      gain unauthorized access. WIMSE prevents this with per-request JTI (JWT ID) replay detection.
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">
+      An attacker intercepts a valid <span class="token-badge proof">Agent-Proof-Token</span> and immediately
+      replays it to gain unauthorized access. WIMSE prevents this with per-request
+      <strong>JTI (JWT ID) replay detection</strong> maintained by the Gateway.
     </p>
-
-    <div class="arch">
-      <div class="node" id="replay-sender">
-        <div class="node-icon">🤖</div>
-        <div class="node-label">Legitimate Agent</div>
-      </div>
-      <div class="node" id="replay-attacker" style="border-color:var(--red)">
-        <div class="node-icon">🦹</div>
-        <div class="node-label">Attacker</div>
-        <div class="node-sub">intercepts proof</div>
-      </div>
-      <div class="node" id="replay-gw">
-        <div class="node-icon">🛡️</div>
-        <div class="node-label">Gateway</div>
-        <div class="node-sub">JTI replay store</div>
-      </div>
+    <div class="diagram">
+      <svg viewBox="0 0 550 145" xmlns="http://www.w3.org/2000/svg">
+        <line x1="130" y1="72" x2="210" y2="102" class="wire"/>
+        <line x1="210" y1="102" x2="300" y2="72" class="wire"/>
+        <line x1="430" y1="72" x2="300" y2="72" class="wire"/>
+        <rect x="5"   y="47" width="125" height="50" rx="8" class="node-box" id="rn-agent"/>
+        <text x="67"  y="71" class="node-lbl">Legitimate Agent</text>
+        <text x="67"  y="86" class="node-sub">generates proof</text>
+        <rect x="185" y="77" width="115" height="50" rx="8" class="node-box bad"/>
+        <text x="242" y="100" class="node-lbl" style="fill:var(--red)">Attacker</text>
+        <text x="242" y="115" class="node-sub" style="fill:var(--red)">captures &amp; replays</text>
+        <rect x="425" y="47" width="120" height="50" rx="8" class="node-box" id="rn-gw"/>
+        <text x="485" y="71" class="node-lbl">Gateway</text>
+        <text x="485" y="86" class="node-sub">JTI replay store</text>
+      </svg>
     </div>
-
     <div class="btn-group">
       <button class="btn btn-primary" onclick="doReplaySetup()">1. Setup + Build Chain</button>
       <button class="btn btn-danger" id="btn-replay" disabled onclick="doReplay()">2. Simulate Replay Attack</button>
     </div>
-
-    <div id="replay-out" class="output">Click "Setup + Build Chain" to begin…</div>
+    <div id="out-replay-setup" class="reveal" style="margin-top:.5rem">
+      <div class="info-grid c3">
+        <div class="info-box green"><div class="ibt">Chain</div><div class="ibv">orchestrator → executor (2 hops)</div></div>
+        <div class="info-box green"><div class="ibt">Chain Hash</div><div class="ibv" id="rp-chain-hash" style="font-size:10px">—</div></div>
+        <div class="info-box green"><div class="ibt">Status</div><div class="ibv">Ready to simulate attack</div></div>
+      </div>
+    </div>
+    <div id="out-replay-attack" class="reveal">
+      <div class="card-title">Replay Attack Results</div>
+      <div class="info-grid c1" style="margin-bottom:12px">
+        <div class="info-box orange"><div class="ibt">Captured Proof JTI (JWT ID)</div><div class="ibv" id="rp-jti">—</div></div>
+      </div>
+      <div class="attempt-grid">
+        <div class="attempt-panel accepted">
+          <div class="attempt-icon">✅</div>
+          <div class="attempt-label" style="color:var(--green)">1st Request — ACCEPTED</div>
+          <div class="attempt-detail">JTI stored in replay store<br>Request processed normally</div>
+        </div>
+        <div class="attempt-panel rejected">
+          <div class="attempt-icon">🚫</div>
+          <div class="attempt-label" style="color:var(--red)">2nd Request — REJECTED</div>
+          <div class="attempt-detail" id="rp-reject-reason">jti already used</div>
+        </div>
+      </div>
+      <div class="callout danger">
+        <strong>The protection.</strong> Every <code>agent-proof+jwt</code> carries a unique <code>jti</code> (UUID). The Gateway's replay store records each seen JTI within the token's validity window. The second request with the same JTI is rejected before any business logic runs.
+      </div>
+    </div>
   </div>
 </div>
 
@@ -232,18 +432,44 @@
 <div class="scene" id="scene-tamper">
   <div class="card">
     <div class="card-title">Token Tampering Simulation</div>
-    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem">
-      An attacker tries to modify the claims in a valid token (e.g., escalate their
-      <code>role</code> from <code>executor</code> to <code>orchestrator</code>). The ES256
-      signature immediately detects the tampering.
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">
+      An attacker modifies the claims of a valid <span class="token-badge at">agent+jwt</span> — for example, changing <code>role</code> from
+      <code>executor</code> to <code>orchestrator</code> to gain elevated privileges.
+      ES256 (EC P-256) makes this immediately detectable.
     </p>
-
     <div class="btn-group">
-      <button class="btn btn-primary" onclick="doTamperSetup()">1. Setup + Issue Token</button>
+      <button class="btn btn-primary"  onclick="doTamperSetup()">1. Setup + Issue Token</button>
       <button class="btn btn-warning" id="btn-tamper" disabled onclick="doTamper()">2. Simulate Tampering</button>
     </div>
 
-    <div id="tamper-out" class="output">Click "Setup + Issue Token" to begin…</div>
+    <div id="out-tamper-orig" class="reveal">
+      <div class="card-title">Original Orchestrator Token — Valid Signature</div>
+      <div class="jwt-raw" id="jwt-tamper-orig-raw"></div>
+      <div class="jwt-grid">
+        <div class="jwt-box jh"><h4>Header</h4><pre id="jwt-tamper-orig-hdr"></pre></div>
+        <div class="jwt-box jp"><h4>Payload</h4><pre id="jwt-tamper-orig-pld"></pre></div>
+      </div>
+    </div>
+
+    <div id="out-tamper-attack" class="reveal">
+      <div class="card-title">Tampered Token — Signature Zeroed Out</div>
+      <div class="jwt-raw" id="jwt-tamper-bad-raw"></div>
+      <div class="callout danger">
+        <strong>What the attacker did:</strong> Replaced the last JWT segment (ES256 signature) with 43 zero bytes. The header and payload are unchanged — the role, subject, and all claims look identical. But the signature no longer matches the IdP's public key.
+      </div>
+      <div class="vsteps" style="margin-bottom:12px">
+        <div class="vstep" id="vs-tamper-parse"><div class="vstep-icon">○</div>Parse JWT header and payload</div>
+        <div class="vstep" id="vs-tamper-key"><div class="vstep-icon">○</div>Fetch IdP public key from JWKS</div>
+        <div class="vstep" id="vs-tamper-sig"><div class="vstep-icon">○</div>Verify ES256 signature</div>
+      </div>
+      <div class="verdict deny">
+        <span style="font-size:22px">❌</span>
+        <div><div>Signature verification FAILED</div><div style="font-size:12px;font-weight:400;font-family:var(--mono);margin-top:4px" id="tamper-err-msg"></div></div>
+      </div>
+      <div class="callout ok">
+        <strong>Why it works.</strong> EC P-256 signatures are computed over <code>base64url(header) + "." + base64url(payload)</code>. Any modification to either part — even a single byte — produces a completely different expected signature. The attacker cannot forge a valid signature without the IdP's private key.
+      </div>
+    </div>
   </div>
 </div>
 
@@ -254,12 +480,12 @@
     <div class="threats">
       <div class="threat-card mitigated">
         <div class="threat-title">T1 · Stolen Identity Token</div>
-        <div class="threat-desc">An attacker captures a valid <code>Agent-Identity-Token</code> from network traffic and reuses it to impersonate a legitimate agent.</div>
-        <div class="mitigation">Per-request <code>Agent-Proof-Token</code> is signed by the agent's private key. Without the private key the attacker cannot forge a valid proof.</div>
+        <div class="threat-desc">An attacker captures a valid <span class="token-badge at">agent+jwt</span> from network traffic and reuses it to impersonate a legitimate agent.</div>
+        <div class="mitigation">Per-request <span class="token-badge proof">agent-proof+jwt</span> is signed by the agent's private key. Without the private key the attacker cannot forge a valid proof.</div>
       </div>
       <div class="threat-card mitigated">
         <div class="threat-title">T2 · Proof Token Replay</div>
-        <div class="threat-desc">An attacker replays a captured <code>Agent-Proof-Token</code> within its validity window to access a resource a second time.</div>
+        <div class="threat-desc">An attacker replays a captured <span class="token-badge proof">agent-proof+jwt</span> within its validity window to access a resource a second time.</div>
         <div class="mitigation">The Gateway maintains a JTI replay store. Each proof has a unique <code>jti</code>; reuse is detected and rejected immediately.</div>
       </div>
       <div class="threat-card mitigated">
@@ -280,19 +506,18 @@
       <div class="threat-card mitigated">
         <div class="threat-title">T6 · Audience Confusion</div>
         <div class="threat-desc">A proof token generated for Tool A is forwarded to Tool B, where the attacker hopes it will be accepted for a different operation.</div>
-        <div class="mitigation">The <code>aud</code> claim in the proof token is bound to the exact target URI. The Gateway validates that <code>aud</code> matches the request URI precisely.</div>
+        <div class="mitigation">The <code>aud</code> claim is bound to the exact target URI. The Gateway validates that <code>aud</code> matches the request URI precisely.</div>
       </div>
     </div>
   </div>
-
   <div class="card">
     <div class="card-title">Security Model Summary</div>
     <ul class="steps">
-      <li><div class="step-num">🔑</div><div><strong>Identity</strong> — Every agent workload has an EC P-256 key pair. The public key is bound into the AgentToken via <code>cnf.jwk</code>.</div></li>
-      <li><div class="step-num">🔗</div><div><strong>Delegation Chain</strong> — Multi-hop agent calls are represented as <code>AT-1~AT-2~...~AT-N</code>. Each hop's <code>chain_depth</code> is validated sequentially.</div></li>
-      <li><div class="step-num">📝</div><div><strong>Proof of Possession</strong> — Each request carries a short-lived <code>Agent-Proof-Token</code> signed by the caller's private key, bound to the target URI and chain hash.</div></li>
+      <li><div class="step-num">🔑</div><div><strong>Identity</strong> — Every agent has an EC P-256 key pair. The public key is bound into the AgentToken via <code>cnf.jwk</code>.</div></li>
+      <li><div class="step-num">🔗</div><div><strong>Delegation Chain</strong> — Multi-hop calls are represented as <span class="token-badge chain">AT-1~AT-2~…~AT-N</span>. Each hop's <code>chain_depth</code> is validated sequentially.</div></li>
+      <li><div class="step-num">📝</div><div><strong>Proof of Possession</strong> — Each request carries a short-lived <span class="token-badge proof">agent-proof+jwt</span> signed by the caller's private key, bound to the target URI and chain hash.</div></li>
       <li><div class="step-num">🛡️</div><div><strong>Authorization</strong> — The Gateway enforces per-subject, per-tool, per-action authorization. <code>can_call</code> implies <code>can_read</code>; <code>can_write</code> implies <code>can_read</code>.</div></li>
-      <li><div class="step-num">🚫</div><div><strong>Replay Prevention</strong> — Every proof token has a unique <code>jti</code>. The Gateway's replay store ensures each token can only be used once.</div></li>
+      <li><div class="step-num">🚫</div><div><strong>Replay Prevention</strong> — Every proof token has a unique <code>jti</code>. The Gateway's replay store ensures each token can only be used once within its validity window.</div></li>
     </ul>
   </div>
 </div>
@@ -301,51 +526,110 @@
 <div class="scene" id="scene-federation">
   <div class="card">
     <div class="card-title">Cross-Organisation Agent Federation (OID-FED 1.0)</div>
-    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem">
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">
       An agent from <strong>Org B</strong> calls a gateway controlled by <strong>Org A</strong>.
       The gateway has no static entry for Org B's IdP — it resolves the key dynamically via an
       <strong>OpenID Federation trust chain</strong>: Trust Anchor → Subordinate Statement → Entity Configuration.
     </p>
-
-    <div class="arch" id="fed-arch">
-      <div class="node" id="fed-node-anchor">
-        <div class="node-icon">⚓</div>
-        <div class="node-label">Trust Anchor</div>
-        <div class="node-sub">enterprise.example</div>
-      </div>
-      <div class="node" id="fed-node-orgb">
-        <div class="node-icon">🏢</div>
-        <div class="node-label">Org B IdP</div>
-        <div class="node-sub">idp.org-b.example</div>
-      </div>
-      <div class="node" id="fed-node-agent">
-        <div class="node-icon">🤖</div>
-        <div class="node-label">Org B Agent</div>
-        <div class="node-sub">foreign agent</div>
-      </div>
-      <div class="node" id="fed-node-gw">
-        <div class="node-icon">🛡️</div>
-        <div class="node-label">Org A Gateway</div>
-        <div class="node-sub">federation resolver</div>
-      </div>
+    <div class="diagram">
+      <svg viewBox="0 0 650 160" xmlns="http://www.w3.org/2000/svg">
+        <!-- Trust chain arrows (top to bottom) -->
+        <line x1="325" y1="65" x2="210" y2="105" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <line x1="325" y1="65" x2="440" y2="105" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <line id="fw1" x1="440" y1="105" x2="440" y2="152" stroke="var(--border)" stroke-width="1.5"/>
+        <line id="fw2" x1="440" y1="152" x2="570" y2="152" stroke="var(--border)" stroke-width="1.5"/>
+        <!-- Trust Anchor (top centre) -->
+        <rect id="fn-anchor" x="250" y="10" width="150" height="55" rx="8" class="node-box"/>
+        <text x="325" y="36" class="node-lbl">⚓ Trust Anchor</text>
+        <text x="325" y="51" class="node-sub">enterprise.example</text>
+        <!-- Org B IdP (bottom left) -->
+        <rect id="fn-orgb" x="140" y="100" width="140" height="55" rx="8" class="node-box"/>
+        <text x="210" y="126" class="node-lbl">🏢 Org B IdP</text>
+        <text x="210" y="141" class="node-sub">idp.org-b.example</text>
+        <!-- Org B Agent (below IdP) -->
+        <rect id="fn-agent" x="380" y="100" width="130" height="55" rx="8" class="node-box"/>
+        <text x="445" y="126" class="node-lbl">🤖 Org B Agent</text>
+        <text x="445" y="141" class="node-sub">foreign agent</text>
+        <!-- Org A Gateway (far right) -->
+        <rect id="fn-gw" x="525" y="100" width="120" height="55" rx="8" class="node-box"/>
+        <text x="585" y="126" class="node-lbl">🛡️ Org A GW</text>
+        <text x="585" y="141" class="node-sub">federation resolver</text>
+        <!-- Labels -->
+        <text x="258" y="88" style="fill:var(--muted);font-size:8px;font-family:monospace">SS (signed by anchor)</text>
+        <text x="353" y="88" style="fill:var(--muted);font-size:8px;font-family:monospace">SS</text>
+      </svg>
     </div>
-
     <div class="btn-group">
       <button class="btn btn-primary" onclick="doFedSetup()">1. Build Federation Chain</button>
-      <button class="btn" id="btn-fed-issue" disabled onclick="doFedIssue()">2. Issue Cross-Org Token</button>
+      <button class="btn" id="btn-fed-issue"    disabled onclick="doFedIssue()">2. Issue Cross-Org Token</button>
       <button class="btn" id="btn-fed-validate" disabled onclick="doFedValidate()">3. Validate via Federation</button>
     </div>
+  </div>
 
-    <div id="fed-out" class="output">Click "Build Federation Chain" to begin…</div>
+  <!-- Federation step 1 output -->
+  <div id="out-fed-setup" class="reveal">
+    <div class="info-grid c3">
+      <div class="info-box blue"><div class="ibt">Trust Anchor</div><div class="ibv" id="fed-anchor-id">—</div></div>
+      <div class="info-box blue"><div class="ibt">Org B IdP</div><div class="ibv" id="fed-orgb-id">—</div></div>
+      <div class="info-box blue"><div class="ibt">Authority Hint</div><div class="ibv" id="fed-hint">—</div></div>
+    </div>
+    <div class="card-title">Entity Configuration JWT — Org B IdP's self-signed statement</div>
+    <div class="jwt-raw" id="jwt-ec-raw"><span style="color:var(--muted)">Loading…</span></div>
+    <div class="jwt-grid">
+      <div class="jwt-box jh"><h4>Header <span class="pill pill-r">red</span></h4><pre id="jwt-ec-hdr"></pre></div>
+      <div class="jwt-box jp"><h4>Payload <span class="pill pill-p">purple</span></h4><pre id="jwt-ec-pld"></pre></div>
+    </div>
+    <div class="callout">
+      <strong>Entity Configuration</strong> is Org B's self-signed statement (<code>typ: entity-statement+jwt</code>). It carries Org B's public key and an <code>authority_hints</code> list — the pointers that tell a resolver where to find the Trust Anchor that can certify this entity.
+    </div>
+  </div>
+
+  <!-- Federation step 2 output -->
+  <div id="out-fed-issue" class="reveal">
+    <div class="card-title">Org B Agent Token — issued by federated IdP</div>
+    <div class="jwt-raw" id="jwt-orgb-raw"><span style="color:var(--muted)">Loading…</span></div>
+    <div class="jwt-grid">
+      <div class="jwt-box jh"><h4>Header</h4><pre id="jwt-orgb-hdr"></pre></div>
+      <div class="jwt-box jp"><h4>Payload</h4><pre id="jwt-orgb-pld"></pre></div>
+    </div>
+    <div class="info-grid">
+      <div class="info-box green"><div class="ibt">subject</div><div class="ibv" id="orgb-sub">—</div></div>
+      <div class="info-box green"><div class="ibt">issuer</div><div class="ibv" id="orgb-iss">—</div></div>
+    </div>
+    <div class="callout">
+      <strong>Identical format, foreign issuer.</strong> This token is indistinguishable in format from a local agent token — it uses the same <code>agent+jwt</code> type and ES256. The only difference is the <code>iss</code> claim points to Org B's IdP rather than Org A's. The Gateway has no static config for this issuer — it must resolve it dynamically.
+    </div>
+  </div>
+
+  <!-- Federation step 3 output -->
+  <div id="out-fed-validate" class="reveal">
+    <div class="card-title">Trust Chain Resolution — Gateway Steps</div>
+    <div class="vsteps">
+      <div class="vstep" id="fvs0"><div class="vstep-icon">○</div>Peek <code>iss</code> from token — not in static validator map</div>
+      <div class="vstep" id="fvs1"><div class="vstep-icon">○</div>Fetch Entity Configuration from <code>idp.org-b.example/.well-known/openid-federation</code></div>
+      <div class="vstep" id="fvs2"><div class="vstep-icon">○</div>Follow <code>authority_hints</code> → Trust Anchor: <code id="fvs2-anchor">…</code></div>
+      <div class="vstep" id="fvs3"><div class="vstep-icon">○</div>Fetch Subordinate Statement for Org B from Trust Anchor</div>
+      <div class="vstep" id="fvs4"><div class="vstep-icon">○</div>Verify Subordinate Statement signature using anchor key ✓</div>
+      <div class="vstep" id="fvs5"><div class="vstep-icon">○</div>Extract Org B's certified key from SS.JWKS — <code>x=<span id="fvs5-key">…</span></code></div>
+      <div class="vstep" id="fvs6"><div class="vstep-icon">○</div>Verify Entity Configuration with extracted leaf key ✓</div>
+      <div class="vstep" id="fvs7"><div class="vstep-icon">○</div>Validate agent token with dynamically resolved key</div>
+    </div>
+    <div class="verdict allow" id="fed-verdict" style="display:none">
+      <span style="font-size:22px">✅</span>
+      <div>Token VALID — <strong><span id="fed-subject">…</span></strong> authenticated via trust chain<br><span style="font-size:12px;font-weight:400">No pre-shared keys. No static config for Org B.</span></div>
+    </div>
+    <div class="callout ok">
+      <strong>Zero pre-configuration.</strong> Org A's Gateway accepted a token from Org B's agent with <em>no static setup for Org B</em>. The Trust Anchor's public key is the only prerequisite — from it, the resolver can dynamically certify any entity in the federation.
+    </div>
   </div>
 
   <div class="card">
     <div class="card-title">How it works</div>
     <ul class="steps">
       <li><div class="step-num">1</div><div>The <strong>Trust Anchor</strong> generates a key pair and signs a <em>Subordinate Statement</em> (SS) certifying Org B's IdP public key.</div></li>
-      <li><div class="step-num">2</div><div>Org B's IdP publishes a self-signed <em>Entity Configuration</em> (EC) JWT with <code>authority_hints = [trust-anchor.enterprise.example]</code>.</div></li>
-      <li><div class="step-num">3</div><div>Org B's <strong>agent</strong> is issued a standard <span class="token-badge wit">agent+jwt</span> — identical in format to a local agent token.</div></li>
-      <li><div class="step-num">4</div><div>When the token arrives at Org A's <strong>gateway</strong>, it peeks at <code>iss</code>, finds no static validator, and falls back to the <em>Federation Resolver</em>.</div></li>
+      <li><div class="step-num">2</div><div>Org B's IdP publishes a self-signed <em>Entity Configuration</em> (EC) JWT at <code>/.well-known/openid-federation</code> with <code>authority_hints</code> pointing to the anchor.</div></li>
+      <li><div class="step-num">3</div><div>Org B's agent is issued a standard <span class="token-badge at">agent+jwt</span> — identical in format to a local agent token.</div></li>
+      <li><div class="step-num">4</div><div>When the token arrives at Org A's Gateway, it peeks at <code>iss</code>, finds no static validator, and falls back to the <em>Federation Resolver</em>.</div></li>
       <li><div class="step-num">5</div><div>The resolver walks the chain: EC → authority_hints → SS → anchor key → SS signature verified → leaf key extracted → EC signature verified.</div></li>
       <li><div class="step-num">6</div><div>The token is validated with the <strong>dynamically-resolved key</strong>. No pre-shared keys or static config were needed for Org B.</div></li>
     </ul>
@@ -356,51 +640,45 @@
 
 <script src="wasm_exec.js"></script>
 <script>
-// ── WASM bootstrap ─────────────────────────────────────────────────────────
+// ── WASM bootstrap ──────────────────────────────────────────────────────────
 const go = new Go();
 let wasmReady = false;
 
 WebAssembly.instantiateStreaming(fetch('wimse-agent.wasm'), go.importObject)
-  .then(result => {
-    go.run(result.instance);
+  .then(r => {
+    go.run(r.instance);
     wasmReady = true;
+    const b = document.getElementById('wasm-badge');
+    b.className = 'wasm-badge ready';
+    b.innerHTML = '● WASM ready';
     document.getElementById('loading').style.display = 'none';
   })
   .catch(e => {
     document.getElementById('loading').innerHTML =
-      `<div style="color:#f85149;text-align:center;padding:2rem">
+      `<div style="color:var(--red);text-align:center;padding:2rem">
         <b>WASM load failed</b><br><small>${e}</small><br>
-        <small style="color:#8b949e;margin-top:0.5rem;display:block">
-          Serve with: <code>python3 -m http.server 8000</code> (file:// not supported)
-        </small>
-      </div>`;
+        <small style="color:var(--muted);margin-top:.5rem;display:block">
+          Serve with: <code>python3 -m http.server 8000</code>
+        </small></div>`;
   });
 
-// ── Tab navigation ─────────────────────────────────────────────────────────
-function showTab(name) {
+// ── Tab navigation ──────────────────────────────────────────────────────────
+function showTab(name, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
-  event.target.classList.add('active');
+  el.classList.add('active');
   document.getElementById('scene-' + name).classList.add('active');
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// ── Core helpers ────────────────────────────────────────────────────────────
 function call(fn, ...args) {
   if (!wasmReady) return { ok: false, error: 'WASM not ready yet' };
   try { return agentFabric[fn](...args); }
   catch(e) { return { ok: false, error: String(e) }; }
 }
 
-function setOut(id, result) {
-  const el = document.getElementById(id);
-  if (result.ok) {
-    const { ok, ...rest } = result;
-    el.className = 'output ok';
-    el.textContent = JSON.stringify(rest, null, 2);
-  } else {
-    el.className = 'output err';
-    el.textContent = '✗ Error: ' + result.error;
-  }
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 function setStatus(id, dotClass, msg) {
@@ -410,141 +688,350 @@ function setStatus(id, dotClass, msg) {
   el.querySelector('span').textContent = msg;
 }
 
-function activateNode(id) {
-  document.querySelectorAll('.node').forEach(n => n.classList.remove('active-node','accepted','rejected'));
+function reveal(id) {
   const el = document.getElementById(id);
-  if (el) el.classList.add('active-node');
+  if (el) { el.classList.add('show'); el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
 }
 
-function acceptNode(id) {
+function hide(id) {
   const el = document.getElementById(id);
-  if (el) { el.classList.remove('active-node'); el.classList.add('accepted'); }
+  if (el) el.classList.remove('show');
 }
 
-// ── Happy Path ─────────────────────────────────────────────────────────────
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val || '—';
+}
+
+// ── SVG node/wire helpers ────────────────────────────────────────────────────
+function nodeState(id, state) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.setAttribute('class', 'node-box' + (state ? ' ' + state : ''));
+}
+function wireState(id, state) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.setAttribute('class', 'wire' + (state ? ' ' + state : ''));
+}
+
+// Animate a circle from x1 to x2 at cy (travel via SVG requestAnimationFrame).
+function animPkt(id, x1, x2, dur = 700) {
+  const c = document.getElementById(id);
+  if (!c) return Promise.resolve();
+  c.setAttribute('cx', x1);
+  c.style.visibility = 'visible';
+  const t0 = performance.now();
+  return new Promise(res => {
+    function f(t) {
+      const p = Math.min((t - t0) / dur, 1);
+      const e = p < 0.5 ? 2*p*p : 1 - (-2*p+2)**2/2; // ease-in-out
+      c.setAttribute('cx', x1 + (x2 - x1) * e);
+      if (p < 1) requestAnimationFrame(f);
+      else { c.style.visibility = 'hidden'; res(); }
+    }
+    requestAnimationFrame(f);
+  });
+}
+
+function delay(ms) { return new Promise(res => setTimeout(res, ms)); }
+
+// ── vstep helpers ────────────────────────────────────────────────────────────
+function vstepPass(id, ms = 0) {
+  return delay(ms).then(() => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.add('pass');
+    el.querySelector('.vstep-icon').textContent = '✓';
+  });
+}
+function vstepFail(id, ms = 0) {
+  return delay(ms).then(() => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.add('fail');
+    el.querySelector('.vstep-icon').textContent = '✗';
+  });
+}
+function vstepReset(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('pass','fail');
+  el.querySelector('.vstep-icon').textContent = '○';
+}
+
+// ── JWT anatomy helpers ──────────────────────────────────────────────────────
+function renderJWT(raw, id, badSig = false) {
+  if (!raw) return;
+  const parts = raw.split('.');
+  if (parts.length !== 3) return;
+  const el = document.getElementById(id);
+  if (!el) return;
+  const sigClass = badSig ? 'jwt-s-bad' : 'jwt-s';
+  el.innerHTML =
+    `<span class="jwt-h">${esc(parts[0])}</span>` +
+    `<span class="jwt-dot">.</span>` +
+    `<span class="jwt-p">${esc(parts[1])}</span>` +
+    `<span class="jwt-dot">.</span>` +
+    `<span class="${sigClass}">${esc(parts[2])}</span>`;
+}
+
+function decodeJWTPart(b64) {
+  try {
+    const s = b64.replace(/-/g,'+').replace(/_/g,'/');
+    return JSON.parse(atob(s + '='.repeat((4 - s.length % 4) % 4)));
+  } catch { return null; }
+}
+
+function renderJWTPanels(raw, hdrId, pldId) {
+  const parts = raw.split('.');
+  const h = decodeJWTPart(parts[0]);
+  const p = decodeJWTPart(parts[1]);
+  const hEl = document.getElementById(hdrId);
+  const pEl = document.getElementById(pldId);
+  if (hEl && h) hEl.textContent = JSON.stringify(h, null, 2);
+  if (pEl && p) pEl.textContent = JSON.stringify(p, null, 2);
+}
+
+function renderChain(chainStr, id) {
+  const el = document.getElementById(id);
+  if (!el || !chainStr) return;
+  const parts = chainStr.split('~');
+  el.innerHTML = parts.map((p, i) => {
+    const short = p.length > 44 ? p.slice(0,22) + '…' + p.slice(-12) : p;
+    return `<span class="chain-token">AT-${i+1}: ${esc(short)}</span>` +
+           (i < parts.length-1 ? '<span class="chain-sep">~</span>' : '');
+  }).join('');
+}
+
+// ── Happy Path ───────────────────────────────────────────────────────────────
 function doSetup() {
-  activateNode('node-idp');
+  nodeState('nb-idp','hi');
   const r = call('setup');
-  setOut('happy-out', r);
-  if (r.ok) {
-    setStatus('happy-status', 'green', 'Keys generated — IdP and agents ready');
-    acceptNode('node-idp');
-    document.getElementById('btn-orch').disabled = false;
-  } else {
-    setStatus('happy-status', 'red', 'Setup failed');
-  }
+  if (!r.ok) { alert('Setup failed: ' + r.error); return; }
+  nodeState('nb-idp','ok');
+  setStatus('happy-status','green','Keys generated — IdP and agents ready');
+  reveal('out-setup');
+  document.getElementById('btn-orch').disabled = false;
 }
 
-function doIssueOrch() {
-  activateNode('node-orch');
+async function doIssueOrch() {
+  nodeState('nb-orch','hi');
+  wireState('w1','active');
+  animPkt('pc1', 65, 215, 700);
+  await delay(400);
   const r = call('issueOrchestratorToken');
-  setOut('happy-out', r);
-  if (r.ok) {
-    setStatus('happy-status', 'green', 'Orchestrator AgentToken issued (chain_depth=0)');
-    acceptNode('node-orch');
-    document.getElementById('btn-exec').disabled = false;
+  if (!r.ok) { alert('Error: ' + r.error); return; }
+  await delay(350);
+  wireState('w1','done');
+  nodeState('nb-orch','ok');
+  setStatus('happy-status','green','Orchestrator AgentToken issued — chain_depth=0');
+
+  const tok = r.fullToken || '';
+  renderJWT(tok, 'jwt-orch-raw');
+  renderJWTPanels(tok, 'jwt-orch-hdr', 'jwt-orch-pld');
+  setText('orch-sub',   r.chain ? 'spiffe://agent-fabric.example/orchestrator' : '—');
+  // Decode sub from JWT payload
+  const p = decodeJWTPart(tok.split('.')[1]);
+  if (p) {
+    setText('orch-sub',   p.sub || '—');
+    setText('orch-role',  p.role || '—');
+    setText('orch-depth', String(p.chain_depth ?? '—'));
   }
+  reveal('out-orch');
+  document.getElementById('btn-exec').disabled = false;
 }
 
-function doDelegate() {
-  activateNode('node-exec');
+async function doDelegate() {
+  nodeState('nb-exec','hi');
+  wireState('w2','active');
+  animPkt('pc2', 215, 365, 700);
+  await delay(400);
   const r = call('delegateToExecutor');
-  setOut('happy-out', r);
-  if (r.ok) {
-    setStatus('happy-status', 'green', 'Executor AgentToken issued (chain_depth=1), chain length=' + r.chainLen);
-    acceptNode('node-exec');
-    document.getElementById('btn-validate').disabled = false;
-  }
+  if (!r.ok) { alert('Error: ' + r.error); return; }
+  await delay(350);
+  wireState('w2','done');
+  nodeState('nb-exec','ok');
+  setStatus('happy-status','green','Executor AgentToken issued — chain_depth=1, chain=' + r.chainLen + ' hops');
+
+  const tok = r.fullToken || '';
+  renderJWT(tok, 'jwt-exec-raw');
+  renderJWTPanels(tok, 'jwt-exec-hdr', 'jwt-exec-pld');
+  setText('exec-depth', String(r.chainDepth ?? 1));
+  setText('exec-hash',  r.chainHash || '—');
+  renderChain(r.chain || (tok ? ('AT-1~' + tok) : ''), 'chain-display');
+  reveal('out-exec');
+  document.getElementById('btn-validate').disabled = false;
 }
 
-function doValidate() {
-  activateNode('node-gw');
+async function doValidate() {
+  nodeState('nb-gw','hi');
+  wireState('w3','active');
+  animPkt('pc3', 365, 515, 700);
+  await delay(300);
   const r = call('validateChain');
-  setOut('happy-out', r);
-  if (r.ok) {
-    setStatus('happy-status', 'green', 'Chain validated — ' + r.hops + ' hops, all signatures verified');
-    acceptNode('node-gw');
-    document.getElementById('btn-proof').disabled = false;
-  }
+  if (!r.ok) { alert('Error: ' + r.error); return; }
+  await delay(400);
+  wireState('w3','done');
+  nodeState('nb-gw','ok');
+  setStatus('happy-status','green','Chain validated — ' + r.hops + ' hops, all signatures verified');
+
+  // Animate vsteps
+  ['vs-hop1','vs-hop2','vs-seq','vs-exp'].forEach(vstepReset);
+  reveal('out-validate');
+  document.getElementById('validate-verdict').style.display = 'none';
+  await vstepPass('vs-hop1', 200);
+  await vstepPass('vs-hop2', 500);
+  await vstepPass('vs-seq',  800);
+  await vstepPass('vs-exp',  1100);
+  await delay(1300);
+  setText('validate-hops', r.hops || 2);
+  document.getElementById('validate-verdict').style.display = 'flex';
+  document.getElementById('btn-proof').disabled = false;
 }
 
-function doProof() {
+async function doProof() {
+  nodeState('nb-tool','hi');
+  wireState('w4','active');
+  animPkt('pc4', 515, 665, 700);
+  await delay(400);
   const r = call('generateProof', 'https://tool-server.example/api/weather');
-  setOut('happy-out', r);
-  if (r.ok) {
-    setStatus('happy-status', 'green', 'Proof token generated — bound to aud + chain_hash');
-    acceptNode('node-tool');
-    document.getElementById('node-tool').classList.add('accepted');
-  }
+  if (!r.ok) { alert('Error: ' + r.error); return; }
+  await delay(350);
+  wireState('w4','done');
+  nodeState('nb-tool','ok');
+  setStatus('happy-status','green','Proof token generated and bound to target URI + chain hash');
+
+  const tok = r.fullProof || '';
+  renderJWT(tok, 'jwt-proof-raw');
+  renderJWTPanels(tok, 'jwt-proof-hdr', 'jwt-proof-pld');
+  setText('proof-aud',        r.targetURI || '—');
+  setText('proof-chain-hash', r.chainHash || '—');
+  reveal('out-proof');
 }
 
 function doReset() {
-  document.querySelectorAll('.node').forEach(n => n.classList.remove('active-node','accepted','rejected'));
-  setOut('happy-out', 'Waiting for input…');
-  setStatus('happy-status', 'grey', 'Click "Generate Keys" to begin');
+  ['nb-idp','nb-orch','nb-exec','nb-gw','nb-tool'].forEach(id => nodeState(id,''));
+  ['w1','w2','w3','w4'].forEach(id => wireState(id,''));
+  setStatus('happy-status','grey','Click "Generate Keys" to begin');
+  ['out-setup','out-orch','out-exec','out-validate','out-proof'].forEach(hide);
   ['btn-orch','btn-exec','btn-validate','btn-proof'].forEach(id => {
     document.getElementById(id).disabled = true;
   });
 }
 
-// ── Replay Attack ──────────────────────────────────────────────────────────
-function doReplaySetup() {
+// ── Replay Attack ────────────────────────────────────────────────────────────
+async function doReplaySetup() {
   const r1 = call('setup');
-  if (!r1.ok) { setOut('replay-out', r1); return; }
+  if (!r1.ok) { alert(r1.error); return; }
   const r2 = call('issueOrchestratorToken');
-  if (!r2.ok) { setOut('replay-out', r2); return; }
+  if (!r2.ok) { alert(r2.error); return; }
   const r3 = call('delegateToExecutor');
-  if (!r3.ok) { setOut('replay-out', r3); return; }
-  setOut('replay-out', { ok: true, message: 'Chain built: orchestrator → executor (2 hops). Click "Simulate Replay Attack" to see protection in action.' });
+  if (!r3.ok) { alert(r3.error); return; }
+  setText('rp-chain-hash', r3.chainHash || '—');
+  reveal('out-replay-setup');
   document.getElementById('btn-replay').disabled = false;
 }
 
 function doReplay() {
   const r = call('simulateReplayAttack', 'https://tool-server.example/api/data');
-  setOut('replay-out', r);
+  if (!r.ok) { alert(r.error); return; }
+  // Extract JTI from the proof token via the secondAttempt error message
+  // The simulateReplayAttack WASM function returns firstAttempt/secondAttempt strings
+  // We derive the JTI display from the rejection message
+  const match = (r.secondAttempt || '').match(/jti[:\s]+([^\s,]+)/i);
+  setText('rp-jti', match ? match[1] : 'see "secondAttempt" field above');
+  setText('rp-reject-reason', r.secondAttempt || 'jti already used in replay store');
+  reveal('out-replay-attack');
 }
 
-// ── OpenID Federation ──────────────────────────────────────────────────────
-function doFedSetup() {
-  const r = call('setupFederation');
-  setOut('fed-out', r);
-  if (r.ok) {
-    document.getElementById('fed-node-anchor').classList.add('accepted');
-    document.getElementById('fed-node-orgb').classList.add('accepted');
-    document.getElementById('btn-fed-issue').disabled = false;
-  }
-}
+// ── Token Tampering ──────────────────────────────────────────────────────────
+let tamperOrigToken = '';
 
-function doFedIssue() {
-  const r = call('issueOrgBAgentToken');
-  setOut('fed-out', r);
-  if (r.ok) {
-    document.getElementById('fed-node-agent').classList.add('accepted');
-    document.getElementById('btn-fed-validate').disabled = false;
-  }
-}
-
-function doFedValidate() {
-  const r = call('validateFederatedToken');
-  setOut('fed-out', r);
-  if (r.ok) {
-    document.getElementById('fed-node-gw').classList.add('accepted');
-  }
-}
-
-// ── Tampering ──────────────────────────────────────────────────────────────
 function doTamperSetup() {
   const r1 = call('setup');
-  if (!r1.ok) { setOut('tamper-out', r1); return; }
+  if (!r1.ok) { alert(r1.error); return; }
   const r2 = call('issueOrchestratorToken');
-  if (!r2.ok) { setOut('tamper-out', r2); return; }
-  setOut('tamper-out', { ok: true, message: 'Orchestrator token issued. Click "Simulate Tampering" to see ES256 signature verification.' });
+  if (!r2.ok) { alert(r2.error); return; }
+  tamperOrigToken = r2.fullToken || '';
+  renderJWT(tamperOrigToken, 'jwt-tamper-orig-raw', false);
+  renderJWTPanels(tamperOrigToken, 'jwt-tamper-orig-hdr', 'jwt-tamper-orig-pld');
+  reveal('out-tamper-orig');
   document.getElementById('btn-tamper').disabled = false;
 }
 
-function doTamper() {
+async function doTamper() {
   const r = call('simulateTampering');
-  setOut('tamper-out', r);
+  if (!r.ok) { alert(r.error); return; }
+  // Reconstruct the tampered token from original parts + zeroed sig
+  const parts = tamperOrigToken.split('.');
+  const tampered = (parts[0] || '') + '.' + (parts[1] || '') + '.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+  renderJWT(tampered, 'jwt-tamper-bad-raw', true);
+
+  // Animate vsteps
+  ['vs-tamper-parse','vs-tamper-key','vs-tamper-sig'].forEach(vstepReset);
+  reveal('out-tamper-attack');
+  await vstepPass('vs-tamper-parse', 200);
+  await vstepPass('vs-tamper-key',   600);
+  await vstepFail('vs-tamper-sig',   1000);
+  setText('tamper-err-msg', r.result || 'signature verification failed');
+}
+
+// ── OpenID Federation ────────────────────────────────────────────────────────
+async function doFedSetup() {
+  nodeState('fn-anchor','hi');
+  nodeState('fn-orgb','hi');
+  const r = call('setupFederation');
+  if (!r.ok) { alert('Federation setup failed: ' + r.error); return; }
+  nodeState('fn-anchor','ok');
+  nodeState('fn-orgb','ok');
+
+  setText('fed-anchor-id', r.anchorID || '—');
+  setText('fed-orgb-id',   r.orgBID   || '—');
+  const hints = Array.isArray(r.ecHints) ? r.ecHints.join(', ') : (r.ecHints || '—');
+  setText('fed-hint', hints);
+
+  // Show EC JWT anatomy
+  const ecJWT = r.ecJWT || '';
+  renderJWT(ecJWT, 'jwt-ec-raw');
+  renderJWTPanels(ecJWT, 'jwt-ec-hdr', 'jwt-ec-pld');
+  reveal('out-fed-setup');
+  document.getElementById('btn-fed-issue').disabled = false;
+}
+
+async function doFedIssue() {
+  nodeState('fn-agent','hi');
+  const r = call('issueOrgBAgentToken');
+  if (!r.ok) { alert('Issue failed: ' + r.error); return; }
+  nodeState('fn-agent','ok');
+
+  const tok = r.token || '';
+  renderJWT(tok, 'jwt-orgb-raw');
+  renderJWTPanels(tok, 'jwt-orgb-hdr', 'jwt-orgb-pld');
+  setText('orgb-sub', r.subject || '—');
+  setText('orgb-iss', r.issuer  || '—');
+  reveal('out-fed-issue');
+  document.getElementById('btn-fed-validate').disabled = false;
+}
+
+async function doFedValidate() {
+  nodeState('fn-gw','hi');
+  const r = call('validateFederatedToken');
+  if (!r.ok) { alert('Validation failed: ' + r.error); return; }
+  nodeState('fn-gw','ok');
+
+  setText('fvs2-anchor', r.trustAnchor || '—');
+  setText('fvs5-key',    (r.resolvedKeyX || '').slice(0,16) + '…');
+
+  // Animate all 8 vsteps
+  [0,1,2,3,4,5,6,7].forEach(i => vstepReset('fvs'+i));
+  document.getElementById('fed-verdict').style.display = 'none';
+  reveal('out-fed-validate');
+
+  for (let i = 0; i < 8; i++) { await vstepPass('fvs'+i, 0); await delay(280); }
+
+  setText('fed-subject', r.subject || '—');
+  document.getElementById('fed-verdict').style.display = 'flex';
 }
 </script>
 </body>
