@@ -449,6 +449,96 @@ func validateFederatedToken(_ js.Value, _ []js.Value) any {
 	})
 }
 
+// simulateMTLSBinding demonstrates the token-cert binding property.
+// It generates a CA, issues agent certs, and simulates the gateway's
+// verifyMTLSBinding check for both the happy path and a stolen-token attack.
+// Returns only primitive/string values safe for js.ValueOf.
+func simulateMTLSBinding(_ js.Value, _ []js.Value) any {
+	if issuer == nil {
+		return errObj("call setup() first")
+	}
+
+	// Generate an ephemeral CA for this trust domain.
+	ca, err := keys.GenerateCA("agents.example")
+	if err != nil {
+		return errObj("generate CA: " + err.Error())
+	}
+
+	// Legitimate agent: one key pair serves as cert key, cnf.jwk, and proof key.
+	const legitSub = "spiffe://agents.example/agent/orchestrator"
+	legitKP, err := keys.GenerateECKeyPair()
+	if err != nil {
+		return errObj("generate legit key: " + err.Error())
+	}
+	legitCert, err := ca.IssueAgentCert(legitSub, legitKP.Public, nil)
+	if err != nil {
+		return errObj("issue legit cert: " + err.Error())
+	}
+	// Issue token with sub matching the cert URI SAN.
+	legitTok, err := issuer.Issue(identity.IssueOptions{
+		Subject:     legitSub,
+		Role:        identity.RoleOrchestrator,
+		ChainDepth:  0,
+		WorkloadKey: legitKP.Public,
+	})
+	if err != nil {
+		return errObj("issue legit token: " + err.Error())
+	}
+	// Peek subject from token (for display).
+	va, err := validator.Validate(legitTok)
+	legitTokenSub := "unknown"
+	if err == nil {
+		legitTokenSub = va.Claims.Subject
+	}
+	// Binding check: cert URI SAN[0] == token sub.
+	legitSAN := ""
+	if len(legitCert.Cert.URIs) > 0 {
+		legitSAN = legitCert.Cert.URIs[0].String()
+	}
+	legitMatch := legitSAN == legitTokenSub
+	legitResult := "REJECTED"
+	if legitMatch {
+		legitResult = "ALLOWED"
+	}
+
+	// Attacker: has their own cert but uses the legit token (stolen).
+	const attackerSub = "spiffe://agents.example/agent/attacker"
+	attackerKP, err := keys.GenerateECKeyPair()
+	if err != nil {
+		return errObj("generate attacker key: " + err.Error())
+	}
+	attackerCert, err := ca.IssueAgentCert(attackerSub, attackerKP.Public, nil)
+	if err != nil {
+		return errObj("issue attacker cert: " + err.Error())
+	}
+	attackerSAN := ""
+	if len(attackerCert.Cert.URIs) > 0 {
+		attackerSAN = attackerCert.Cert.URIs[0].String()
+	}
+	// Attacker presents their cert but the stolen token sub is legitSub.
+	attackMatch := attackerSAN == legitTokenSub
+	attackResult := fmt.Sprintf(
+		"REJECTED: cert SAN %q != token sub %q", attackerSAN, legitTokenSub)
+	if attackMatch {
+		attackResult = "ALLOWED (bug if true)"
+	}
+
+	return okObj(map[string]any{
+		// CA
+		"trustDomain": "agents.example",
+		// Legit agent
+		"legitSAN":    legitSAN,
+		"legitSub":    legitTokenSub,
+		"legitMatch":  legitMatch,
+		"legitResult": legitResult,
+		// Attacker (stolen token)
+		"attackerSAN": attackerSAN,
+		"stolenSub":   legitTokenSub,
+		"attackMatch": attackMatch,
+		"attackResult": attackResult,
+	})
+}
+
 // ── WASM registration ─────────────────────────────────────────────────────────
 
 func main() {
@@ -464,6 +554,8 @@ func main() {
 		"setupFederation":        js.FuncOf(setupFederation),
 		"issueOrgBAgentToken":    js.FuncOf(issueOrgBAgentToken),
 		"validateFederatedToken": js.FuncOf(validateFederatedToken),
+		// mTLS token-cert binding
+		"simulateMTLSBinding":    js.FuncOf(simulateMTLSBinding),
 	}))
 	<-make(chan struct{}) // block forever
 }

@@ -238,6 +238,7 @@ main{max-width:960px;margin:0 auto;padding:2rem}
   <div class="tab" onclick="showTab('federation',this)">OpenID Federation</div>
   <div class="tab" onclick="showTab('postquantum',this)">Post-Quantum Safety</div>
   <div class="tab" onclick="showTab('paxos',this)">Paxos Consensus</div>
+  <div class="tab" onclick="showTab('mtls',this)">mTLS Transport</div>
 </nav>
 
 <main>
@@ -806,6 +807,112 @@ main{max-width:960px;margin:0 auto;padding:2rem}
   </div>
 </div>
 
+<!-- ── Scene: mTLS Transport ──────────────────────────────────────────────── -->
+<div class="scene" id="scene-mtls">
+  <div class="card">
+    <div class="card-title">mTLS Transport — Token-Cert Binding</div>
+    <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">
+      Mutual TLS adds a transport-layer identity check on top of the application-layer token validation. Each agent presents an EC&nbsp;P-256 certificate with a SPIFFE URI SAN during the TLS handshake. The gateway verifies that <code>cert.URI SAN[0] == AgentToken.sub</code> — a stolen token is useless without the matching private key.
+    </p>
+    <div style="background:rgba(88,166,255,.07);border:1px solid rgba(88,166,255,.25);border-radius:8px;padding:12px;font-size:13px;margin-bottom:1rem">
+      <strong>Shared-key design:</strong> The same EC&nbsp;P-256 key pair is used for (1) the mTLS client certificate, (2) the <code>cnf.jwk</code> in the AgentToken, and (3) the AgentProofToken signing key. Compromising the token alone is not enough — an attacker must also compromise the private key.
+    </div>
+  </div>
+
+  <!-- Animated comparison -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem">
+    <!-- Happy path -->
+    <div class="card" style="padding:14px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin-bottom:10px">Happy Path — cert SAN = token sub</div>
+      <svg id="af-mtls-happy" viewBox="0 0 640 110" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:8px">
+        <!-- Actors -->
+        <circle cx="70" cy="55" r="22" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
+        <text x="70" y="51" text-anchor="middle" font-size="12" fill="#58a6ff" font-family="sans-serif">🔒</text>
+        <text x="70" y="67" text-anchor="middle" font-size="9" fill="#e6edf3" font-family="sans-serif">Agent</text>
+        <circle cx="320" cy="55" r="22" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
+        <text x="320" y="51" text-anchor="middle" font-size="11" fill="#e6edf3" font-family="sans-serif" font-weight="700">GW</text>
+        <text x="320" y="67" text-anchor="middle" font-size="9" fill="#7d8590" font-family="sans-serif">Gateway</text>
+        <circle cx="570" cy="55" r="22" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
+        <text x="570" y="51" text-anchor="middle" font-size="12" fill="#3fb950" font-family="sans-serif">⚙</text>
+        <text x="570" y="67" text-anchor="middle" font-size="9" fill="#e6edf3" font-family="sans-serif">Tool</text>
+        <!-- Lines -->
+        <line x1="92" y1="55" x2="298" y2="55" stroke="#30363d" stroke-width="1" stroke-dasharray="4,3"/>
+        <line x1="342" y1="55" x2="548" y2="55" stroke="#30363d" stroke-width="1" stroke-dasharray="4,3"/>
+        <!-- Binding label -->
+        <text id="af-happy-bind" x="320" y="98" text-anchor="middle" font-size="9" fill="#7d8590" font-family="sans-serif">—</text>
+        <!-- Packets -->
+        <circle id="af-mpkt1" cx="70" cy="55" r="6" fill="#58a6ff" opacity="0"/>
+        <circle id="af-mpkt2" cx="320" cy="55" r="6" fill="#3fb950" opacity="0"/>
+      </svg>
+      <div class="anim-step-sm" id="af-ms1">1. mTLS handshake — agent presents cert</div>
+      <div class="anim-step-sm" id="af-ms2">2. Gateway: cert SAN = token sub ✓</div>
+      <div class="anim-step-sm" id="af-ms3">3. Request forwarded → 200 OK</div>
+    </div>
+
+    <!-- Attack path -->
+    <div class="card" style="padding:14px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--red);margin-bottom:10px">Token Theft Attack — cert SAN ≠ token sub</div>
+      <svg id="af-mtls-attack" viewBox="0 0 640 110" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:8px">
+        <circle cx="70" cy="55" r="22" fill="#21262d" stroke="#f85149" stroke-width="1.5"/>
+        <text x="70" y="51" text-anchor="middle" font-size="12" fill="#f85149" font-family="sans-serif">☠</text>
+        <text x="70" y="67" text-anchor="middle" font-size="9" fill="#f85149" font-family="sans-serif">Attacker</text>
+        <circle cx="320" cy="55" r="22" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
+        <text x="320" y="51" text-anchor="middle" font-size="11" fill="#e6edf3" font-family="sans-serif" font-weight="700">GW</text>
+        <text x="320" y="67" text-anchor="middle" font-size="9" fill="#7d8590" font-family="sans-serif">Gateway</text>
+        <circle cx="570" cy="55" r="22" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
+        <text x="570" y="51" text-anchor="middle" font-size="12" fill="#7d8590" font-family="sans-serif">⚙</text>
+        <text x="570" y="67" text-anchor="middle" font-size="9" fill="#7d8590" font-family="sans-serif">Tool</text>
+        <line x1="92" y1="55" x2="298" y2="55" stroke="#30363d" stroke-width="1" stroke-dasharray="4,3"/>
+        <line x1="342" y1="55" x2="548" y2="55" stroke="#30363d" stroke-width="1" stroke-dasharray="4,3"/>
+        <text id="af-attack-bind" x="320" y="98" text-anchor="middle" font-size="9" fill="#7d8590" font-family="sans-serif">—</text>
+        <circle id="af-mpkt3" cx="70" cy="55" r="6" fill="#f85149" opacity="0"/>
+        <circle id="af-mpkt4" cx="320" cy="55" r="6" fill="#f85149" opacity="0"/>
+      </svg>
+      <div class="anim-step-sm" id="af-ms4">1. mTLS handshake — attacker presents own cert</div>
+      <div class="anim-step-sm" id="af-ms5">2. Gateway: cert SAN ≠ token sub ✗</div>
+      <div class="anim-step-sm" id="af-ms6">3. Request rejected → 401 Unauthorized</div>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" id="af-mtls-btn" onclick="playMTLSDemo(this)">&#9654; Play Demo</button>
+
+  <!-- WASM output -->
+  <div id="af-mtls-out" style="display:none;margin-top:1rem">
+    <div class="card">
+      <div class="card-title">WASM Binding Check — Live Results</div>
+      <div id="af-mtls-result"></div>
+    </div>
+  </div>
+
+  <!-- Security comparison table -->
+  <div class="card" style="margin-top:1rem">
+    <div class="card-title">Defence-in-depth comparison</div>
+    <table class="compare-table">
+      <tr><th>Threat</th><th>Without mTLS</th><th>With mTLS</th></tr>
+      <tr>
+        <td><strong>Stolen AgentToken</strong></td>
+        <td style="color:var(--orange)">Thwarted by cnf.jwk proof (attacker needs private key)</td>
+        <td class="check">Double protection: cert binding also checked</td>
+      </tr>
+      <tr>
+        <td><strong>Network eavesdropping</strong></td>
+        <td class="cross">Tokens visible in plaintext (HTTP)</td>
+        <td class="check">TLS 1.3 encrypted channel (AEAD)</td>
+      </tr>
+      <tr>
+        <td><strong>Identity spoofing</strong></td>
+        <td style="color:var(--orange)">Prevented by IdP JWT signature</td>
+        <td class="check">Cert URI SAN additionally bound to token sub</td>
+      </tr>
+      <tr>
+        <td><strong>MITM / downgrade</strong></td>
+        <td class="cross">Not prevented</td>
+        <td class="check">TLS 1.3 min-version, no downgrade possible</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
 </main>
 
 <script src="wasm_exec.js"></script>
@@ -1268,6 +1375,82 @@ async function playAgentPaxos() {
 
   btn.disabled=false; btn.textContent='↺ Run Again';
   afPaxosRunning=false;
+}
+
+// ── mTLS transport demo ──────────────────────────────────────────────────────
+
+let mtlsRunning = false;
+
+async function playMTLSDemo(btn) {
+  if (mtlsRunning) return;
+  mtlsRunning = true;
+  if (btn) { btn.disabled = true; btn.textContent = 'Running…'; }
+
+  // Reset state
+  ['af-ms1','af-ms2','af-ms3','af-ms4','af-ms5','af-ms6'].forEach(id => afSetStep(id, ''));
+  const happyBind = document.getElementById('af-happy-bind');
+  const attackBind = document.getElementById('af-attack-bind');
+  if (happyBind) { happyBind.textContent = '—'; happyBind.setAttribute('fill','#7d8590'); }
+  if (attackBind) { attackBind.textContent = '—'; attackBind.setAttribute('fill','#7d8590'); }
+
+  // Step 1: mTLS handshake — agent and attacker both send certs to gateway
+  afSetStep('af-ms1','active'); afSetStep('af-ms4','active');
+  await Promise.all([
+    animPktC('af-mpkt1', 70, 320, '#58a6ff', 750),   // legit agent cert
+    animPktC('af-mpkt3', 70, 320, '#f85149', 750),   // attacker cert
+  ]);
+  await delay(400);
+
+  // Step 2: Gateway binding check (cert SAN vs token sub)
+  afSetStep('af-ms1','done'); afSetStep('af-ms2','active');
+  afSetStep('af-ms4','done'); afSetStep('af-ms5','active');
+  await delay(500);
+  if (happyBind) { happyBind.textContent = '✓ SAN = sub'; happyBind.setAttribute('fill','#3fb950'); }
+  if (attackBind) { attackBind.textContent = '✗ SAN ≠ sub'; attackBind.setAttribute('fill','#f85149'); }
+  await delay(500);
+
+  // Step 3: happy path continues, attack rejected
+  afSetStep('af-ms2','done'); afSetStep('af-ms3','active');
+  afSetStep('af-ms5','done'); afSetStep('af-ms6','active');
+  await Promise.all([
+    animPktC('af-mpkt2', 320, 570, '#3fb950', 700), // forwarded to tool
+    animPktC('af-mpkt4', 320, 70,  '#f85149', 600), // rejected back
+  ]);
+  afSetStep('af-ms3','done'); afSetStep('af-ms6','done');
+  await delay(300);
+
+  // Call WASM for live binding check results
+  if (wasmReady) {
+    try {
+      call('setup');
+      const r = call('simulateMTLSBinding');
+      if (r && r.ok) {
+        document.getElementById('af-mtls-result').innerHTML =
+          `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div style="background:rgba(63,185,80,.07);border:1px solid rgba(63,185,80,.3);border-radius:6px;padding:10px">
+              <div style="font-weight:700;color:var(--green);margin-bottom:6px">Legit Agent</div>
+              <div style="color:var(--muted);font-size:11px;margin-bottom:2px">Cert URI SAN</div>
+              <div style="font-family:var(--mono);font-size:10px;word-break:break-all;margin-bottom:6px">${r.legitSAN||''}</div>
+              <div style="color:var(--muted);font-size:11px;margin-bottom:2px">Token sub</div>
+              <div style="font-family:var(--mono);font-size:10px;word-break:break-all;margin-bottom:6px">${r.legitSub||''}</div>
+              <div style="font-weight:700;color:var(--green)">✓ ${r.legitResult||''}</div>
+            </div>
+            <div style="background:rgba(248,81,73,.07);border:1px solid rgba(248,81,73,.3);border-radius:6px;padding:10px">
+              <div style="font-weight:700;color:var(--red);margin-bottom:6px">Attacker (stolen token)</div>
+              <div style="color:var(--muted);font-size:11px;margin-bottom:2px">Cert URI SAN</div>
+              <div style="font-family:var(--mono);font-size:10px;word-break:break-all;margin-bottom:6px">${r.attackerSAN||''}</div>
+              <div style="color:var(--muted);font-size:11px;margin-bottom:2px">Token sub (stolen)</div>
+              <div style="font-family:var(--mono);font-size:10px;word-break:break-all;margin-bottom:6px">${r.stolenSub||''}</div>
+              <div style="font-weight:700;color:var(--red)">✗ ${r.attackResult||''}</div>
+            </div>
+          </div>`;
+        document.getElementById('af-mtls-out').style.display = 'block';
+      }
+    } catch(e) { console.error('mTLS WASM demo:', e); }
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = '↺ Run Again'; }
+  mtlsRunning = false;
 }
 
 async function doFedValidate() {

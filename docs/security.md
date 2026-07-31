@@ -116,6 +116,33 @@ The `Authorizer` will return `Decision{Allowed: false}` unless an explicit rule 
 
 ---
 
+### T8 — Token theft with mTLS enabled
+
+**Scenario:** An attacker steals an `Agent-Identity-Token` (e.g., from a log or a compromised intermediate proxy) and attempts to replay it using their own TLS certificate.
+
+**Why it fails:** When `MTLSClientCA` is set on the gateway, `verifyMTLSBinding` checks that the peer certificate's first URI SAN equals the `sub` claim of the identity token. The attacker's certificate has a different URI SAN (their own identity), so the check fails with 401.
+
+**Controls:**
+
+```go
+// internal/gateway/server.go
+func verifyMTLSBinding(r *http.Request, wantSub string) error {
+    if r.TLS == nil || len(r.TLS.PeerCertificates) == 0 {
+        return errors.New("no client certificate presented")
+    }
+    for _, u := range r.TLS.PeerCertificates[0].URIs {
+        if u.String() == wantSub { return nil }
+    }
+    return fmt.Errorf("cert URI SANs %v do not match token subject %q", ...)
+}
+```
+
+**Key design:** The agent uses the **same EC P-256 key pair** for its mTLS certificate, the `cnf.jwk` in the AgentToken, and the AgentProofToken signing key. Compromising the token alone is not enough — the attacker must also compromise the private key, defeating the binding check at both layers (mTLS cert and proof token).
+
+**New in:** `pkg/keys/mtls.go` (`GenerateCA`, `IssueAgentCert`, `NewServerTLSConfig`, `NewClientTLSConfig`), `internal/gateway/server.go` (`Config.MTLSClientCA`, `verifyMTLSBinding`).
+
+---
+
 ## Cryptographic primitives
 
 | Primitive | Usage | Parameters |
@@ -138,7 +165,7 @@ These are deliberate simplifications acceptable for a research PoC. Production s
 | JTI replay store is in-memory | Restart clears it; multi-replica deployments share no state | Distributed cache (Redis/Memcached) with TTL aligned to proof token expiry |
 | No token revocation | Tokens are valid until `exp` | Short TTLs (minutes) + JWKS endpoint polling + revocation list |
 | IdP public key is static config | Key rotation requires restart | Fetch public key from JWKS endpoint; cache with short TTL |
-| No transport-layer mTLS | Network eavesdropping could capture tokens | Add mTLS (SPIFFE SVIDs) between agents and gateway |
+| mTLS JTI store is in-memory per process | Gateway restart clears replay store | Distributed cache (Redis) with TTL aligned to proof token expiry |
 | Single trust domain | No cross-domain agent calls | Add token exchange service (see Phase 4 roadmap) |
 | No SPIRE integration | SPIFFE URIs are self-asserted | Integrate with SPIRE for workload attestation |
 

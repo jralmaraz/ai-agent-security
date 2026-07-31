@@ -4,6 +4,8 @@ package gateway
 
 import (
 	"context"
+	"crypto/x509"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
@@ -32,6 +34,13 @@ type Config struct {
 
 	// Routes maps tool names (e.g. "tool:weather-api") to their upstream base URLs.
 	Routes map[string]string
+
+	// MTLSClientCA, when non-nil, enables token-cert binding. The middleware
+	// verifies that the connecting agent's TLS client certificate URI SAN
+	// matches the sub claim of the Agent-Identity-Token, binding transport
+	// identity to application identity. The listener must be separately
+	// configured with RequireAndVerifyClientCert and this same CA pool.
+	MTLSClientCA *x509.CertPool
 }
 
 // Server is the agent gateway HTTP server.
@@ -93,7 +102,15 @@ func (s *Server) agentAuthMiddleware(toolName string) gin.HandlerFunc {
 			return
 		}
 
-		// 2. Delegation chain.
+		// 2. mTLS token-cert binding: peer certificate URI SAN must equal token sub.
+		if s.cfg.MTLSClientCA != nil {
+			if err := verifyMTLSBinding(c.Request, va.Claims.Subject); err != nil {
+				abort(c, http.StatusUnauthorized, "mTLS binding: "+err.Error())
+				return
+			}
+		}
+
+		// 3. Delegation chain.
 		chainStr := c.GetHeader(authz.HeaderAgentChainToken)
 		if chainStr == "" {
 			abort(c, http.StatusUnauthorized, "missing "+authz.HeaderAgentChainToken)
@@ -109,7 +126,7 @@ func (s *Server) agentAuthMiddleware(toolName string) gin.HandlerFunc {
 			return
 		}
 
-		// 3. Proof token.
+		// 4. Proof token.
 		proofTok := c.GetHeader(authz.HeaderAgentProofToken)
 		if proofTok == "" {
 			abort(c, http.StatusUnauthorized, "missing "+authz.HeaderAgentProofToken)
@@ -131,7 +148,7 @@ func (s *Server) agentAuthMiddleware(toolName string) gin.HandlerFunc {
 			return
 		}
 
-		// 4. Authorization.
+		// 5. Authorization.
 		decision, err := s.cfg.Authz.Authorize(c.Request.Context(), authz.Request{
 			Subject: va.Claims.Subject,
 			Object:  toolName,
@@ -178,6 +195,23 @@ func (s *Server) resolveAndValidate(ctx context.Context, tok string) (*identity.
 	}
 	dynValidator := identity.NewAgentValidator(issuer, pub)
 	return dynValidator.Validate(tok)
+}
+
+// verifyMTLSBinding checks that the first URI SAN of the peer TLS certificate
+// equals wantSub (the Agent-Identity-Token sub claim). This binds transport
+// identity to application identity: a stolen token cannot be replayed without
+// the matching private key.
+func verifyMTLSBinding(r *http.Request, wantSub string) error {
+	if r.TLS == nil || len(r.TLS.PeerCertificates) == 0 {
+		return errors.New("no client certificate presented")
+	}
+	for _, u := range r.TLS.PeerCertificates[0].URIs {
+		if u.String() == wantSub {
+			return nil
+		}
+	}
+	return fmt.Errorf("cert URI SANs %v do not match token subject %q",
+		r.TLS.PeerCertificates[0].URIs, wantSub)
 }
 
 func abort(c *gin.Context, code int, msg string) {

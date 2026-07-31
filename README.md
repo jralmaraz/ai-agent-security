@@ -48,6 +48,18 @@ cd demo && python3 -m http.server 8000
 # Open http://localhost:8000
 ```
 
+Run the gateway with mTLS (auto-generates ephemeral CA):
+
+```bash
+# Start gateway in mTLS mode — writes demo agent cert/key to /tmp/agent-*.pem
+go run ./cmd/gateway --mtls --trust-domain agents.example \
+    --write-agent-creds /tmp/agent --port 8443
+
+# CA cert is logged to stdout; also written to /tmp/agent-ca.pem
+# Agent cert → /tmp/agent-agent.pem
+# Agent key  → /tmp/agent-agent-key.pem (mode 0600)
+```
+
 ---
 
 ## Architecture
@@ -118,7 +130,8 @@ wimse-agent-fabric/
 ├── pkg/
 │   ├── keys/
 │   │   ├── ec.go           EC P-256 key generation, JWK (de)serialization
-│   │   └── ec_test.go
+│   │   ├── mtls.go         CA generation, agent cert issuance, TLS config helpers
+│   │   └── ec_test.go / mtls_test.go
 │   └── identity/
 │       ├── token.go        AgentToken: AgentIssuer, AgentValidator, AgentClaims
 │       ├── chain.go        AgentChain: wire format, sequential-depth validation
@@ -131,9 +144,10 @@ wimse-agent-fabric/
 │   │   ├── middleware.go   Gin middleware: AgentAuth (identity + chain + proof + authz)
 │   │   └── authz_test.go
 │   └── gateway/
-│       ├── server.go       MCP-compatible HTTP reverse proxy
+│       ├── server.go       MCP-compatible HTTP reverse proxy (+ mTLS cert binding)
 │       ├── multivalidator.go  Multi-IdP token validation
-│       └── gateway_test.go
+│       ├── gateway_test.go
+│       └── mtls_test.go    mTLS end-to-end tests (happy path, wrong CA, SAN mismatch, no cert)
 ├── cmd/
 │   ├── gateway/main.go     Runnable gateway binary
 │   └── demo-wasm/main.go   Browser demo (WASM entry point)
