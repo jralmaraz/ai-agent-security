@@ -539,23 +539,95 @@ func simulateMTLSBinding(_ js.Value, _ []js.Value) any {
 	})
 }
 
+// simulateCredentialBroker generates a real WIMSE AgentToken + AgentProofToken
+// and a simulated CB4A Task Request Envelope for the same agent identity,
+// illustrating how draft-hartman-credential-broker-4-agents-00 and WIMSE Agent
+// Fabric represent the same agent action from complementary angles.
+func simulateCredentialBroker(_ js.Value, _ []js.Value) any {
+	if issuer == nil {
+		return errObj("call setup() first")
+	}
+
+	const (
+		agentSub    = "spiffe://enterprise.example/agent/billing-agent"
+		wimseTarget = "https://tool-server.example/api/billing"
+	)
+
+	agentKP, err := keys.GenerateECKeyPair()
+	if err != nil {
+		return errObj("generate agent key: " + err.Error())
+	}
+
+	// WIMSE: AgentToken with cnf.jwk binding + AgentProofToken per-request proof.
+	wTok, err := issuer.Issue(identity.IssueOptions{
+		Subject:     agentSub,
+		Role:        identity.RoleOrchestrator,
+		ChainDepth:  0,
+		WorkloadKey: agentKP.Public,
+	})
+	if err != nil {
+		return errObj("issue WIMSE token: " + err.Error())
+	}
+	wChain := identity.AgentChain{wTok}
+	wProof, err := identity.GenerateProof(identity.ProofGenerateOptions{
+		TargetURI:   wimseTarget,
+		Chain:       wChain,
+		WorkloadKey: agentKP.Private,
+	})
+	if err != nil {
+		return errObj("generate WIMSE proof: " + err.Error())
+	}
+	chainHash := wChain.Hash()
+
+	// CB4A: simulate a Task Request Envelope — the auditable request artifact
+	// submitted to the Policy Decision Point before credential issuance.
+	envelope := map[string]interface{}{
+		"request_id":    "req-" + chainHash[:12],
+		"agent_svid":    agentSub,
+		"target":        "https://billing-api.vendor.example/v2/invoices",
+		"action":        "read",
+		"scope":         "billing:invoices:read",
+		"justification": "Monthly report (evidence only, excluded from authz)",
+		"ttl_seconds":   300,
+	}
+	envBytes, _ := json.MarshalIndent(envelope, "", "  ")
+
+	return okObj(map[string]any{
+		// WIMSE outputs
+		"wimseSub":       agentSub,
+		"wimseTarget":    wimseTarget,
+		"wimseChainHash": chainHash,
+		"wimseToken":     truncate(wTok),
+		"wimseProof":     truncate(wProof),
+		// CB4A simulated outputs
+		"cb4aEnvelope":   string(envBytes),
+		"cb4aDecision":   "Tier 1 (auto-approved: scope within baseline)",
+		"cb4aTokenType":  "OAuth 2.0 bearer (RFC 8693 token exchange)",
+		"cb4aTokenScope": "billing:invoices:read",
+		"cb4aTokenTTL":   "300s, non-renewable",
+		"cb4aDPoP":       "bound to ephemeral key (RFC 9449)",
+	})
+}
+
 // ── WASM registration ─────────────────────────────────────────────────────────
 
 func main() {
 	js.Global().Set("agentFabric", js.ValueOf(map[string]any{
-		"setup":                  js.FuncOf(setup),
-		"issueOrchestratorToken": js.FuncOf(issueOrchestratorToken),
-		"delegateToExecutor":     js.FuncOf(delegateToExecutor),
-		"validateChain":          js.FuncOf(validateChain),
-		"generateProof":          js.FuncOf(generateProof),
-		"simulateReplayAttack":   js.FuncOf(simulateReplayAttack),
-		"simulateTampering":      js.FuncOf(simulateTampering),
+		"setup":                      js.FuncOf(setup),
+		"issueOrchestratorToken":     js.FuncOf(issueOrchestratorToken),
+		"delegateToExecutor":         js.FuncOf(delegateToExecutor),
+		"validateChain":              js.FuncOf(validateChain),
+		"generateProof":              js.FuncOf(generateProof),
+		"simulateReplayAttack":       js.FuncOf(simulateReplayAttack),
+		"simulateTampering":          js.FuncOf(simulateTampering),
 		// OID-FED federation (cross-org agents)
-		"setupFederation":        js.FuncOf(setupFederation),
-		"issueOrgBAgentToken":    js.FuncOf(issueOrgBAgentToken),
-		"validateFederatedToken": js.FuncOf(validateFederatedToken),
+		"setupFederation":            js.FuncOf(setupFederation),
+		"issueOrgBAgentToken":        js.FuncOf(issueOrgBAgentToken),
+		"validateFederatedToken":     js.FuncOf(validateFederatedToken),
 		// mTLS token-cert binding
-		"simulateMTLSBinding":    js.FuncOf(simulateMTLSBinding),
+		"simulateMTLSBinding":        js.FuncOf(simulateMTLSBinding),
+		// CB4A vs WIMSE comparison
+		"simulateCredentialBroker":   js.FuncOf(simulateCredentialBroker),
 	}))
 	<-make(chan struct{}) // block forever
 }

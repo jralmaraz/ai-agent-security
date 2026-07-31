@@ -239,6 +239,7 @@ main{max-width:960px;margin:0 auto;padding:2rem}
   <div class="tab" onclick="showTab('postquantum',this)">Post-Quantum Safety</div>
   <div class="tab" onclick="showTab('paxos',this)">Paxos Consensus</div>
   <div class="tab" onclick="showTab('mtls',this)">mTLS Transport</div>
+  <div class="tab" onclick="showTab('broker',this)">Credential Broker</div>
 </nav>
 
 <main>
@@ -913,6 +914,295 @@ main{max-width:960px;margin:0 auto;padding:2rem}
   </div>
 </div>
 
+<!-- ══ CREDENTIAL BROKER ════════════════════════════════════════════════════ -->
+<div class="scene" id="scene-broker">
+  <div class="card">
+    <div class="card-title">WIMSE Agent Fabric vs. CB4A — Credential Broker for Agents</div>
+    <p class="spec-ref">
+      Comparing <a href="https://datatracker.ietf.org/doc/html/draft-ietf-wimse-arch-08" target="_blank">draft-ietf-wimse-arch-08</a> (WIMSE)
+      with <a href="https://datatracker.ietf.org/doc/html/draft-hartman-credential-broker-4-agents-00" target="_blank">draft-hartman-credential-broker-4-agents-00</a> (CB4A, March 2026).
+    </p>
+    <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">
+      Both address AI agent security using SPIFFE-based workload identity, but they solve different problems.
+      <strong style="color:var(--text)">WIMSE Agent Fabric</strong> handles agent-to-agent authorization via cryptographic delegation chains.
+      <strong style="color:var(--text)">CB4A</strong> handles agent access to <em>external API credentials</em> via a brokered vault.
+    </p>
+    <div class="callout ok">
+      <strong>Key insight:</strong> WIMSE answers "who is this agent and what are they allowed to do here?"
+      CB4A answers "how does this agent safely obtain the external API token it needs to do it?"
+      They are <strong>complementary, not competing</strong>.
+    </div>
+  </div>
+
+  <!-- Animated protocol flows -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem">
+
+    <!-- WIMSE flow -->
+    <div class="card" style="padding:14px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--blue);margin-bottom:10px">WIMSE Agent Fabric — Identity Chain</div>
+      <svg id="wf-svg" viewBox="0 0 550 115" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;background:#21262d;border:1px solid #30363d;border-radius:8px;margin-bottom:8px">
+        <!-- Agent -->
+        <rect x="10" y="28" width="100" height="58" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+        <text x="60" y="50" text-anchor="middle" font-size="10" fill="#58a6ff" font-family="sans-serif" font-weight="700">Agent</text>
+        <text x="60" y="63" text-anchor="middle" font-size="8" fill="#7d8590" font-family="sans-serif">SPIFFE ID</text>
+        <text x="60" y="75" text-anchor="middle" font-size="8" fill="#7d8590" font-family="sans-serif">cnf.jwk key</text>
+        <!-- Gateway -->
+        <rect x="190" y="28" width="160" height="58" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+        <text x="270" y="50" text-anchor="middle" font-size="10" fill="#e6edf3" font-family="sans-serif" font-weight="700">Gateway</text>
+        <text x="270" y="63" text-anchor="middle" font-size="8" fill="#7d8590" font-family="sans-serif">validates AT+APT</text>
+        <text x="270" y="75" text-anchor="middle" font-size="8" fill="#7d8590" font-family="sans-serif">enforces authz</text>
+        <!-- Tool -->
+        <rect x="440" y="28" width="100" height="58" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+        <text x="490" y="50" text-anchor="middle" font-size="10" fill="#3fb950" font-family="sans-serif" font-weight="700">Tool</text>
+        <text x="490" y="63" text-anchor="middle" font-size="8" fill="#7d8590" font-family="sans-serif">tool-server</text>
+        <text x="490" y="75" text-anchor="middle" font-size="8" fill="#7d8590" font-family="sans-serif">.example</text>
+        <!-- Wires -->
+        <line x1="110" y1="57" x2="190" y2="57" stroke="#30363d" stroke-width="1" stroke-dasharray="4,3"/>
+        <line x1="350" y1="57" x2="440" y2="57" stroke="#30363d" stroke-width="1" stroke-dasharray="4,3"/>
+        <!-- Message labels (hidden until animated) -->
+        <text id="wf-lbl1" x="150" y="49" text-anchor="middle" font-size="8" fill="#58a6ff" font-family="monospace" visibility="hidden">AT + APT</text>
+        <text id="wf-lbl2" x="395" y="49" text-anchor="middle" font-size="8" fill="#3fb950" font-family="monospace" visibility="hidden">200 OK</text>
+        <!-- Packets -->
+        <circle id="wf-pk1" cx="60" cy="57" r="5" class="pkt-circle"/>
+        <circle id="wf-pk2" cx="270" cy="57" r="5" class="pkt-circle"/>
+      </svg>
+      <div class="anim-step-sm" id="wf-s1">① Agent attaches <code>Agent-Identity-Token</code> + <code>Agent-Proof-Token</code> headers</div>
+      <div class="anim-step-sm" id="wf-s2">② Gateway: verify AT sig, chain_hash, proof aud, jti replay (local, no roundtrip)</div>
+      <div class="anim-step-sm" id="wf-s3">③ OpenFGA / InMemoryAuthorizer: subject <code>can_call</code> tool — default deny</div>
+      <div class="anim-step-sm" id="wf-s4">④ Request forwarded to tool — identity token IS the authorization proof</div>
+    </div>
+
+    <!-- CB4A flow -->
+    <div class="card" style="padding:14px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--orange);margin-bottom:10px">CB4A — Credential Broker for Agents</div>
+      <svg id="cb-svg" viewBox="0 0 550 115" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;background:#21262d;border:1px solid #30363d;border-radius:8px;margin-bottom:8px">
+        <!-- Agent -->
+        <rect x="5" y="28" width="90" height="58" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+        <text x="50" y="50" text-anchor="middle" font-size="10" fill="#58a6ff" font-family="sans-serif" font-weight="700">Agent</text>
+        <text x="50" y="63" text-anchor="middle" font-size="8" fill="#7d8590" font-family="sans-serif">SPIFFE SVID</text>
+        <text x="50" y="75" text-anchor="middle" font-size="8" fill="#7d8590" font-family="sans-serif">via SPIRE</text>
+        <!-- PDP -->
+        <rect x="155" y="28" width="90" height="58" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+        <text x="200" y="50" text-anchor="middle" font-size="10" fill="#ffa657" font-family="sans-serif" font-weight="700">PDP</text>
+        <text x="200" y="63" text-anchor="middle" font-size="8" fill="#7d8590" font-family="sans-serif">policy engine</text>
+        <text x="200" y="75" text-anchor="middle" font-size="8" fill="#7d8590" font-family="sans-serif">zero-cred access</text>
+        <!-- CDP -->
+        <rect x="305" y="28" width="90" height="58" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+        <text x="350" y="50" text-anchor="middle" font-size="10" fill="#bc8cff" font-family="sans-serif" font-weight="700">CDP</text>
+        <text x="350" y="63" text-anchor="middle" font-size="8" fill="#7d8590" font-family="sans-serif">mints token</text>
+        <text x="350" y="75" text-anchor="middle" font-size="8" fill="#7d8590" font-family="sans-serif">from vault</text>
+        <!-- Ext API -->
+        <rect x="455" y="28" width="90" height="58" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+        <text x="500" y="50" text-anchor="middle" font-size="10" fill="#3fb950" font-family="sans-serif" font-weight="700">Ext API</text>
+        <text x="500" y="63" text-anchor="middle" font-size="8" fill="#7d8590" font-family="sans-serif">billing-api</text>
+        <text x="500" y="75" text-anchor="middle" font-size="8" fill="#7d8590" font-family="sans-serif">.vendor.com</text>
+        <!-- Wires -->
+        <line x1="95" y1="57" x2="155" y2="57" stroke="#30363d" stroke-width="1" stroke-dasharray="4,3"/>
+        <line x1="245" y1="57" x2="305" y2="57" stroke="#30363d" stroke-width="1" stroke-dasharray="4,3"/>
+        <line x1="395" y1="57" x2="455" y2="57" stroke="#30363d" stroke-width="1" stroke-dasharray="4,3"/>
+        <!-- Message labels -->
+        <text id="cb-lbl1" x="125" y="49" text-anchor="middle" font-size="7" fill="#ffa657" font-family="monospace" visibility="hidden">Envelope</text>
+        <text id="cb-lbl2" x="275" y="49" text-anchor="middle" font-size="7" fill="#58a6ff" font-family="monospace" visibility="hidden">Approval</text>
+        <text id="cb-lbl3" x="200" y="70" text-anchor="middle" font-size="7" fill="#bc8cff" font-family="monospace" visibility="hidden">Token</text>
+        <text id="cb-lbl4" x="430" y="49" text-anchor="middle" font-size="7" fill="#3fb950" font-family="monospace" visibility="hidden">DPoP+token</text>
+        <!-- Packets (all at cy=57; step 3 animates right-to-left) -->
+        <circle id="cb-pk1" cx="50" cy="57" r="5" class="pkt-circle"/>
+        <circle id="cb-pk2" cx="200" cy="57" r="5" class="pkt-circle"/>
+        <circle id="cb-pk3" cx="350" cy="57" r="5" class="pkt-circle"/>
+        <circle id="cb-pk4" cx="50" cy="57" r="5" class="pkt-circle"/>
+      </svg>
+      <div class="anim-step-sm" id="cb-s1">① Agent constructs signed Task Request Envelope (SVID + scope + justification)</div>
+      <div class="anim-step-sm" id="cb-s2">② PDP evaluates: SVID valid? scope OK? behavioral baseline? — routes to approval tier</div>
+      <div class="anim-step-sm" id="cb-s3">③ CDP mints short-lived token from HSM vault; token returned to agent (non-renewable)</div>
+      <div class="anim-step-sm" id="cb-s4">④ Agent calls External API with DPoP-bound token (RFC 9449) — expires in 300s</div>
+    </div>
+  </div>
+
+  <div style="margin-bottom:1rem">
+    <button class="btn btn-primary" id="cb-anim-btn" onclick="playBrokerDemo(this)">&#9654; Animate Both Flows</button>
+  </div>
+
+  <!-- Pros / Cons -->
+  <div class="info-grid" style="margin-bottom:1rem">
+    <div class="info-box blue">
+      <div class="ibt">WIMSE Agent Fabric — Strengths</div>
+      <ul style="font-size:12px;padding-left:1.3rem;line-height:1.9;margin-top:4px">
+        <li>Zero extra infrastructure — pure JWT, no vault, no broker process</li>
+        <li>Delegation chain cryptographically auditable (<code>chain_hash</code> in proof)</li>
+        <li>mTLS cert-token binding: stolen token useless without private key</li>
+        <li>Works agent-to-agent, not just agent-to-external-API</li>
+        <li>Standards-track IETF WIMSE Working Group</li>
+      </ul>
+      <div class="ibt" style="margin-top:10px;color:var(--orange)">Limitations</div>
+      <ul style="font-size:12px;padding-left:1.3rem;line-height:1.9;color:var(--muted)">
+        <li>No human-in-the-loop approval workflow</li>
+        <li>Not designed for external API credential management</li>
+        <li>JTI replay store: in-memory per process (no distributed revocation)</li>
+      </ul>
+    </div>
+    <div class="info-box orange">
+      <div class="ibt">CB4A (draft-hartman) — Strengths</div>
+      <ul style="font-size:12px;padding-left:1.3rem;line-height:1.9;margin-top:4px">
+        <li>Eliminates credential sprawl — agents never hold real API keys</li>
+        <li>Tiered approval: auto / HITL / FIDO2 MFA for governance compliance</li>
+        <li>PDP/CDP split: policy and credentials never co-located</li>
+        <li>Immutable audit trail, hash-chained, separate trust boundary</li>
+        <li>Canary credentials + cross-agent correlation engine</li>
+      </ul>
+      <div class="ibt" style="margin-top:10px;color:var(--orange)">Limitations</div>
+      <ul style="font-size:12px;padding-left:1.3rem;line-height:1.9;color:var(--muted)">
+        <li>Complex 5+ component infrastructure (SPIRE + PDP + CDP + Vault + Audit)</li>
+        <li>Latency on every credential request (PDP + CDP round trip)</li>
+        <li>Individual draft — not yet an IETF working group document</li>
+        <li>DPoP binding optional at Tier 1 (auto-approval); only enforced at Tier 2</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Full comparison table -->
+  <div class="card">
+    <div class="card-title">Side-by-Side Feature Comparison</div>
+    <table class="compare-table">
+      <tr>
+        <th>Dimension</th>
+        <th style="color:var(--blue)">WIMSE Agent Fabric</th>
+        <th style="color:var(--orange)">CB4A (draft-hartman)</th>
+      </tr>
+      <tr>
+        <td><strong>Primary purpose</strong></td>
+        <td>Agent-to-agent identity &amp; authorization</td>
+        <td>External API credential brokering for agents</td>
+      </tr>
+      <tr>
+        <td><strong>Identity mechanism</strong></td>
+        <td>AgentToken — ES256 JWT with <code>cnf.jwk</code></td>
+        <td>SPIFFE SVID via SPIRE workload attestation</td>
+      </tr>
+      <tr>
+        <td><strong>Token binding</strong></td>
+        <td><code>cnf.jwk</code> — built into AT, <strong>mandatory</strong></td>
+        <td>DPoP (RFC 9449) — optional Tier 1, required Tier 2+</td>
+      </tr>
+      <tr>
+        <td><strong>Delegation model</strong></td>
+        <td>AgentChain (<code>AT-1~AT-2~…~AT-N</code>, <code>chain_hash</code> in proof)</td>
+        <td>Task Request Envelope — auditable evidence artifact</td>
+      </tr>
+      <tr>
+        <td><strong>Authorization layer</strong></td>
+        <td>InMemoryAuthorizer / OpenFGA — default-deny, per-request</td>
+        <td>Separate Policy Decision Point with typed policy engine</td>
+      </tr>
+      <tr>
+        <td><strong>What agents access</strong></td>
+        <td>Internal tools / agents within trust domain</td>
+        <td>External APIs (AWS, GCP, GitHub, SaaS) via minted tokens</td>
+      </tr>
+      <tr>
+        <td><strong>Credential handling</strong></td>
+        <td>Identity token IS the authorization proof — no external creds</td>
+        <td>CDP mints short-lived derivative tokens from HSM-backed vault</td>
+      </tr>
+      <tr>
+        <td><strong>Human approval</strong></td>
+        <td class="cross">None — fully automated</td>
+        <td class="check">Tiered: auto / HITL async / FIDO2 MFA synchronous</td>
+      </tr>
+      <tr>
+        <td><strong>Audit trail</strong></td>
+        <td>JTI replay store (in-memory per process)</td>
+        <td>Immutable append-only log, hash-chained, separate trust boundary</td>
+      </tr>
+      <tr>
+        <td><strong>mTLS</strong></td>
+        <td>cert URI SAN = AgentToken sub (shared key design)</td>
+        <td>SPIFFE mTLS via SPIRE — standard SVIDs</td>
+      </tr>
+      <tr>
+        <td><strong>Credential sprawl</strong></td>
+        <td>N/A — no external credentials involved</td>
+        <td class="check">Vault isolation — agents never hold real API keys</td>
+      </tr>
+      <tr>
+        <td><strong>Multi-agent threats</strong></td>
+        <td><code>chain_hash</code> ties proof to full delegation history</td>
+        <td class="check">Cross-agent correlation engine + canary credentials</td>
+      </tr>
+      <tr>
+        <td><strong>Infrastructure complexity</strong></td>
+        <td class="check">Low — IdP + Gateway + agents</td>
+        <td>High — SPIRE + PDP + CDP + Vault + Approval Svc + Audit Store</td>
+      </tr>
+      <tr>
+        <td><strong>Fail-closed design</strong></td>
+        <td>Default-deny authorizer; token validation errors = 401</td>
+        <td class="check">Explicit fail-closed per component; audit unavailable = no issuance</td>
+      </tr>
+      <tr>
+        <td><strong>Standards status</strong></td>
+        <td>IETF WIMSE Working Group (active WG)</td>
+        <td>Individual submission — not yet WG-adopted</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Combined deployment -->
+  <div class="callout ok" style="margin-bottom:1rem">
+    <strong>Combined deployment:</strong> Deploy WIMSE for agent-to-agent identity and delegation chains within your platform.
+    Add CB4A when agents must call external APIs — WIMSE proves <em>who the agent is and who authorized it</em>,
+    CB4A safely delivers <em>the external API token it needs to act</em>.
+    The SPIFFE SVID in a CB4A Task Request Envelope can reference the same identity URI as the WIMSE AgentToken <code>sub</code>.
+  </div>
+
+  <!-- WASM live demo -->
+  <div class="card">
+    <div class="card-title">WASM Live Demo — Both Artifacts Side by Side</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:.75rem">
+      Generates a real WIMSE AgentToken + AgentProofToken and a simulated CB4A Task Request Envelope
+      for the same agent identity, showing how the two approaches represent the same agent request.
+    </p>
+    <button class="btn btn-primary" id="cb-wasm-btn" onclick="runBrokerWasm(this)">&#128300; Run WASM Comparison</button>
+    <div id="cb-wasm-out" style="display:none;margin-top:1rem">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <!-- WIMSE side -->
+        <div style="background:rgba(88,166,255,.05);border:1px solid rgba(88,166,255,.3);border-radius:8px;padding:14px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--blue);margin-bottom:10px">WIMSE — AgentToken + AgentProofToken</div>
+          <div class="ibt">Agent sub</div>
+          <div class="ibv" id="cb-wimse-sub">—</div>
+          <div class="ibt" style="margin-top:8px">Token type (<code>typ</code>)</div>
+          <div class="ibv">agent+jwt</div>
+          <div class="ibt" style="margin-top:8px">Proof type (<code>typ</code>)</div>
+          <div class="ibv">application/agent-proof+jwt</div>
+          <div class="ibt" style="margin-top:8px">Target URI (<code>aud</code> in proof)</div>
+          <div class="ibv" id="cb-wimse-target">—</div>
+          <div class="ibt" style="margin-top:8px">Chain hash (<code>wth</code> in proof)</div>
+          <div class="ibv" id="cb-wimse-hash">—</div>
+          <div class="ibt" style="margin-top:8px">AgentToken (truncated)</div>
+          <div class="ibv" id="cb-wimse-token">—</div>
+          <div class="ibt" style="margin-top:8px">AgentProofToken (truncated)</div>
+          <div class="ibv" id="cb-wimse-proof">—</div>
+        </div>
+        <!-- CB4A side -->
+        <div style="background:rgba(255,166,87,.05);border:1px solid rgba(255,166,87,.3);border-radius:8px;padding:14px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--orange);margin-bottom:10px">CB4A — Task Request Envelope + Minted Token</div>
+          <div class="ibt">PDP decision</div>
+          <div class="ibv" id="cb-pdp-decision">—</div>
+          <div class="ibt" style="margin-top:8px">Minted token type</div>
+          <div class="ibv" id="cb-token-type">—</div>
+          <div class="ibt" style="margin-top:8px">Scope</div>
+          <div class="ibv" id="cb-scope">—</div>
+          <div class="ibt" style="margin-top:8px">Token TTL</div>
+          <div class="ibv" id="cb-ttl">—</div>
+          <div class="ibt" style="margin-top:8px">Token binding</div>
+          <div class="ibv" id="cb-dpop">—</div>
+          <div class="ibt" style="margin-top:8px">Task Request Envelope</div>
+          <pre id="cb-envelope" style="font-size:10px;font-family:var(--mono);background:#010409;border:1px solid var(--border);border-radius:6px;padding:8px;margin-top:4px;overflow-x:auto;color:var(--text);white-space:pre">—</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 </main>
 
 <script src="wasm_exec.js"></script>
@@ -1451,6 +1741,92 @@ async function playMTLSDemo(btn) {
 
   if (btn) { btn.disabled = false; btn.textContent = '↺ Run Again'; }
   mtlsRunning = false;
+}
+
+// ── Credential Broker comparison demo ────────────────────────────────────────
+
+let brokerRunning = false;
+
+async function playBrokerDemo(btn) {
+  if (brokerRunning) return;
+  brokerRunning = true;
+  if (btn) { btn.disabled = true; btn.textContent = 'Running…'; }
+
+  // Reset all step boxes and labels
+  ['wf-s1','wf-s2','wf-s3','wf-s4'].forEach(id => afSetStep(id, ''));
+  ['cb-s1','cb-s2','cb-s3','cb-s4'].forEach(id => afSetStep(id, ''));
+  ['wf-lbl1','wf-lbl2','cb-lbl1','cb-lbl2','cb-lbl3','cb-lbl4'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.setAttribute('visibility', 'hidden');
+  });
+
+  // Step 1: Agent → Gateway (WIMSE) + Agent → PDP (CB4A)
+  afSetStep('wf-s1','active'); afSetStep('cb-s1','active');
+  document.getElementById('wf-lbl1').setAttribute('visibility','visible');
+  document.getElementById('cb-lbl1').setAttribute('visibility','visible');
+  await Promise.all([
+    animPktC('wf-pk1', 60, 270, '#58a6ff', 800),
+    animPktC('cb-pk1', 50, 200, '#ffa657', 800),
+  ]);
+  afSetStep('wf-s1','done'); afSetStep('cb-s1','done');
+  await delay(350);
+
+  // Step 2: Gateway validates locally (no packet) + PDP → CDP (CB4A approval)
+  afSetStep('wf-s2','active'); afSetStep('cb-s2','active');
+  document.getElementById('cb-lbl2').setAttribute('visibility','visible');
+  await Promise.all([
+    delay(850),
+    animPktC('cb-pk2', 200, 350, '#58a6ff', 800),
+  ]);
+  afSetStep('wf-s2','done'); afSetStep('cb-s2','done');
+  await delay(350);
+
+  // Step 3: Gateway authz check (no packet) + CDP → Agent token return (right to left)
+  afSetStep('wf-s3','active'); afSetStep('cb-s3','active');
+  document.getElementById('cb-lbl3').setAttribute('visibility','visible');
+  await Promise.all([
+    delay(850),
+    animPktC('cb-pk3', 350, 50, '#bc8cff', 800),
+  ]);
+  afSetStep('wf-s3','done'); afSetStep('cb-s3','done');
+  await delay(350);
+
+  // Step 4: WIMSE → Tool + Agent → External API
+  afSetStep('wf-s4','active'); afSetStep('cb-s4','active');
+  document.getElementById('wf-lbl2').setAttribute('visibility','visible');
+  document.getElementById('cb-lbl4').setAttribute('visibility','visible');
+  await Promise.all([
+    animPktC('wf-pk2', 270, 490, '#3fb950', 750),
+    animPktC('cb-pk4', 50,  500, '#3fb950', 950),
+  ]);
+  afSetStep('wf-s4','done'); afSetStep('cb-s4','done');
+
+  if (btn) { btn.disabled = false; btn.textContent = '↺ Run Again'; }
+  brokerRunning = false;
+}
+
+async function runBrokerWasm(btn) {
+  if (btn) { btn.disabled = true; btn.textContent = 'Running…'; }
+  const r1 = call('setup');
+  if (!r1.ok) { alert('Setup failed: ' + r1.error); if (btn) btn.disabled = false; return; }
+  const r = call('simulateCredentialBroker');
+  if (!r.ok) { alert(r.error); if (btn) btn.disabled = false; return; }
+
+  setText('cb-wimse-sub',    r.wimseSub       || '—');
+  setText('cb-wimse-target', r.wimseTarget     || '—');
+  setText('cb-wimse-hash',   r.wimseChainHash  || '—');
+  setText('cb-wimse-token',  r.wimseToken      || '—');
+  setText('cb-wimse-proof',  r.wimseProof      || '—');
+  setText('cb-pdp-decision', r.cb4aDecision    || '—');
+  setText('cb-token-type',   r.cb4aTokenType   || '—');
+  setText('cb-scope',        r.cb4aTokenScope  || '—');
+  setText('cb-ttl',          r.cb4aTokenTTL    || '—');
+  setText('cb-dpop',         r.cb4aDPoP        || '—');
+  const envEl = document.getElementById('cb-envelope');
+  if (envEl) envEl.textContent = r.cb4aEnvelope || '—';
+
+  document.getElementById('cb-wasm-out').style.display = 'block';
+  if (btn) { btn.disabled = false; btn.textContent = '↺ Run Again'; }
 }
 
 async function doFedValidate() {
