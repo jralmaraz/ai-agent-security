@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WIMSE Agent Fabric — Identity Chain Demo</title>
+<style>
+  :root {
+    --bg: #0d1117; --surface: #161b22; --border: #30363d;
+    --text: #c9d1d9; --muted: #8b949e; --accent: #58a6ff;
+    --green: #3fb950; --red: #f85149; --yellow: #d29922;
+    --purple: #bc8cff; --orange: #ffa657;
+    --font: 'Segoe UI', system-ui, sans-serif; --mono: 'Cascadia Code', 'Fira Code', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
+
+  /* ── header ── */
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; align-items: center; gap: 1rem; }
+  .logo { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+  .tagline { color: var(--muted); font-size: 0.9rem; }
+  .badge { background: var(--purple); color: #000; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 12px; margin-left: auto; }
+
+  /* ── nav ── */
+  nav { display: flex; gap: 0; border-bottom: 1px solid var(--border); background: var(--surface); overflow-x: auto; }
+  .tab { padding: 0.8rem 1.4rem; cursor: pointer; border-bottom: 3px solid transparent; font-size: 0.9rem; white-space: nowrap; transition: all 0.2s; color: var(--muted); }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── layout ── */
+  main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+  .scene { display: none; }
+  .scene.active { display: block; }
+
+  /* ── cards ── */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; }
+  .card-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.75rem; }
+
+  /* ── buttons ── */
+  .btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1.1rem; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; font-size: 0.875rem; transition: all 0.15s; font-family: inherit; }
+  .btn:hover:not(:disabled) { background: #21262d; border-color: var(--accent); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+  .btn-primary:hover:not(:disabled) { background: #79c0ff; }
+  .btn-danger { background: var(--red); color: #fff; border-color: var(--red); font-weight: 600; }
+  .btn-warning { background: var(--yellow); color: #000; border-color: var(--yellow); font-weight: 600; }
+  .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.75rem 0; }
+
+  /* ── output ── */
+  .output { font-family: var(--mono); font-size: 0.8rem; background: #010409; border: 1px solid var(--border); border-radius: 6px; padding: 1rem; min-height: 60px; white-space: pre-wrap; word-break: break-all; }
+  .ok { color: var(--green); }
+  .err { color: var(--red); }
+  .info { color: var(--accent); }
+  .warn { color: var(--yellow); }
+
+  /* ── architecture diagram ── */
+  .arch { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin: 1rem 0; }
+  .node { background: #21262d; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; text-align: center; position: relative; }
+  .node.active-node { border-color: var(--accent); box-shadow: 0 0 12px rgba(88,166,255,0.25); }
+  .node.accepted { border-color: var(--green); box-shadow: 0 0 12px rgba(63,185,80,0.25); }
+  .node.rejected { border-color: var(--red); box-shadow: 0 0 12px rgba(248,81,73,0.25); }
+  .node-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+  .node-label { font-size: 0.8rem; font-weight: 600; color: var(--text); }
+  .node-sub { font-size: 0.7rem; color: var(--muted); margin-top: 0.2rem; }
+
+  /* ── flow arrows ── */
+  .flow { display: flex; align-items: center; gap: 0; margin: 0.5rem 0; }
+  .flow-arrow { flex: 1; height: 2px; background: var(--border); position: relative; }
+  .flow-arrow::after { content: '▶'; position: absolute; right: -8px; top: -8px; color: var(--muted); font-size: 14px; }
+  .flow-arrow.animated { background: linear-gradient(90deg, var(--accent), transparent); animation: flowAnim 1s ease-in-out; }
+  .flow-arrow.ok-flow { background: linear-gradient(90deg, var(--green), transparent); }
+  .flow-arrow.err-flow { background: linear-gradient(90deg, var(--red), transparent); }
+  @keyframes flowAnim { from { opacity: 0; transform: scaleX(0); } to { opacity: 1; transform: scaleX(1); } }
+
+  /* ── token badge ── */
+  .token-badge { display: inline-block; font-family: var(--mono); font-size: 0.7rem; background: #1c2128; border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; margin: 2px; word-break: break-all; }
+  .token-badge.wit { border-color: var(--accent); color: var(--accent); }
+  .token-badge.proof { border-color: var(--purple); color: var(--purple); }
+  .token-badge.chain { border-color: var(--orange); color: var(--orange); }
+
+  /* ── threat cards ── */
+  .threats { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+  .threat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; border-left: 4px solid var(--red); }
+  .threat-card.mitigated { border-left-color: var(--green); }
+  .threat-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.4rem; }
+  .threat-desc { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.6rem; }
+  .mitigation { font-size: 0.8rem; color: var(--green); }
+  .mitigation::before { content: '✓ '; }
+
+  /* ── step list ── */
+  .steps { list-style: none; }
+  .steps li { display: flex; gap: 0.75rem; padding: 0.5rem 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; align-items: flex-start; }
+  .steps li:last-child { border-bottom: none; }
+  .step-num { background: var(--accent); color: #000; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+
+  /* ── status bar ── */
+  .status-bar { display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; background: #010409; border-radius: 6px; font-size: 0.8rem; margin-bottom: 0.5rem; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot.green { background: var(--green); animation: pulse 2s infinite; }
+  .dot.red { background: var(--red); }
+  .dot.grey { background: var(--muted); }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  /* ── loading ── */
+  #loading { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; z-index: 100; }
+  .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <div style="color:var(--muted);font-size:0.9rem">Loading WASM runtime…</div>
+</div>
+
+<header>
+  <div class="logo">WIMSE Agent Fabric</div>
+  <div class="tagline">AI Agent Identity Chain — Interactive Demo</div>
+  <div class="badge">WASM</div>
+</header>
+
+<nav>
+  <div class="tab active" onclick="showTab('happy')">Happy Path</div>
+  <div class="tab" onclick="showTab('replay')">Replay Attack</div>
+  <div class="tab" onclick="showTab('tamper')">Token Tampering</div>
+  <div class="tab" onclick="showTab('threat')">Threat Model</div>
+</nav>
+
+<main>
+
+<!-- ══ HAPPY PATH ══════════════════════════════════════════════════════════ -->
+<div class="scene active" id="scene-happy">
+  <div class="card">
+    <div class="card-title">Architecture — Agent Identity Chain</div>
+    <div class="arch" id="happy-arch">
+      <div class="node" id="node-idp">
+        <div class="node-icon">🏛️</div>
+        <div class="node-label">Identity Provider</div>
+        <div class="node-sub">Issues AgentTokens</div>
+      </div>
+      <div class="node" id="node-orch">
+        <div class="node-icon">🤖</div>
+        <div class="node-label">Orchestrator</div>
+        <div class="node-sub">chain_depth=0</div>
+      </div>
+      <div class="node" id="node-exec">
+        <div class="node-icon">⚙️</div>
+        <div class="node-label">Executor Agent</div>
+        <div class="node-sub">chain_depth=1</div>
+      </div>
+      <div class="node" id="node-gw">
+        <div class="node-icon">🛡️</div>
+        <div class="node-label">Gateway</div>
+        <div class="node-sub">Validates chain + proof</div>
+      </div>
+      <div class="node" id="node-tool">
+        <div class="node-icon">🔧</div>
+        <div class="node-label">Tool Server</div>
+        <div class="node-sub">Protected resource</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Step-by-step walkthrough</div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="doSetup()">1. Generate Keys</button>
+      <button class="btn" id="btn-orch" disabled onclick="doIssueOrch()">2. Issue Orchestrator Token</button>
+      <button class="btn" id="btn-exec" disabled onclick="doDelegate()">3. Delegate to Executor</button>
+      <button class="btn" id="btn-validate" disabled onclick="doValidate()">4. Validate Chain</button>
+      <button class="btn" id="btn-proof" disabled onclick="doProof()">5. Generate Proof</button>
+      <button class="btn btn-primary" id="btn-reset" style="margin-left:auto" onclick="doReset()">Reset</button>
+    </div>
+
+    <div id="happy-status" class="status-bar">
+      <div class="dot grey"></div>
+      <span>Click "Generate Keys" to begin</span>
+    </div>
+    <div id="happy-out" class="output">Waiting for input…</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">How it works</div>
+    <ul class="steps">
+      <li><div class="step-num">1</div><div>The Identity Provider generates an EC P-256 key pair. It's the root of trust for all agent tokens in this domain.</div></li>
+      <li><div class="step-num">2</div><div>The Orchestrator receives a signed <span class="token-badge wit">agent+jwt</span> with <code>role=orchestrator</code> and <code>chain_depth=0</code>. Its public key is bound via <code>cnf.jwk</code>.</div></li>
+      <li><div class="step-num">3</div><div>When delegating work, the Executor also receives a <span class="token-badge wit">agent+jwt</span> with <code>chain_depth=1</code>. The chain is the wire string <span class="token-badge chain">AT-1~AT-2</span>.</div></li>
+      <li><div class="step-num">4</div><div>The Gateway validates every token in the chain: signature, expiry, issuer, and that chain depths are sequential (0, 1, 2…).</div></li>
+      <li><div class="step-num">5</div><div>A per-request <span class="token-badge proof">agent-proof+jwt</span> binds the call to the target URI (<code>aud</code>) and the chain (<code>chain_hash</code>), preventing reuse.</div></li>
+    </ul>
+  </div>
+</div>
+
+<!-- ══ REPLAY ATTACK ═══════════════════════════════════════════════════════ -->
+<div class="scene" id="scene-replay">
+  <div class="card">
+    <div class="card-title">Replay Attack Simulation</div>
+    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem">
+      An attacker intercepts a valid <code>Agent-Proof-Token</code> and immediately replays it to
+      gain unauthorized access. WIMSE prevents this with per-request JTI (JWT ID) replay detection.
+    </p>
+
+    <div class="arch">
+      <div class="node" id="replay-sender">
+        <div class="node-icon">🤖</div>
+        <div class="node-label">Legitimate Agent</div>
+      </div>
+      <div class="node" id="replay-attacker" style="border-color:var(--red)">
+        <div class="node-icon">🦹</div>
+        <div class="node-label">Attacker</div>
+        <div class="node-sub">intercepts proof</div>
+      </div>
+      <div class="node" id="replay-gw">
+        <div class="node-icon">🛡️</div>
+        <div class="node-label">Gateway</div>
+        <div class="node-sub">JTI replay store</div>
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="doReplaySetup()">1. Setup + Build Chain</button>
+      <button class="btn btn-danger" id="btn-replay" disabled onclick="doReplay()">2. Simulate Replay Attack</button>
+    </div>
+
+    <div id="replay-out" class="output">Click "Setup + Build Chain" to begin…</div>
+  </div>
+</div>
+
+<!-- ══ TOKEN TAMPERING ═════════════════════════════════════════════════════ -->
+<div class="scene" id="scene-tamper">
+  <div class="card">
+    <div class="card-title">Token Tampering Simulation</div>
+    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem">
+      An attacker tries to modify the claims in a valid token (e.g., escalate their
+      <code>role</code> from <code>executor</code> to <code>orchestrator</code>). The ES256
+      signature immediately detects the tampering.
+    </p>
+
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="doTamperSetup()">1. Setup + Issue Token</button>
+      <button class="btn btn-warning" id="btn-tamper" disabled onclick="doTamper()">2. Simulate Tampering</button>
+    </div>
+
+    <div id="tamper-out" class="output">Click "Setup + Issue Token" to begin…</div>
+  </div>
+</div>
+
+<!-- ══ THREAT MODEL ════════════════════════════════════════════════════════ -->
+<div class="scene" id="scene-threat">
+  <div class="card">
+    <div class="card-title">WIMSE Agent Fabric — Threat Model</div>
+    <div class="threats">
+      <div class="threat-card mitigated">
+        <div class="threat-title">T1 · Stolen Identity Token</div>
+        <div class="threat-desc">An attacker captures a valid <code>Agent-Identity-Token</code> from network traffic and reuses it to impersonate a legitimate agent.</div>
+        <div class="mitigation">Per-request <code>Agent-Proof-Token</code> is signed by the agent's private key. Without the private key the attacker cannot forge a valid proof.</div>
+      </div>
+      <div class="threat-card mitigated">
+        <div class="threat-title">T2 · Proof Token Replay</div>
+        <div class="threat-desc">An attacker replays a captured <code>Agent-Proof-Token</code> within its validity window to access a resource a second time.</div>
+        <div class="mitigation">The Gateway maintains a JTI replay store. Each proof has a unique <code>jti</code>; reuse is detected and rejected immediately.</div>
+      </div>
+      <div class="threat-card mitigated">
+        <div class="threat-title">T3 · Token Tampering</div>
+        <div class="threat-desc">An attacker modifies the claims of a captured token (e.g., changes <code>role</code>, <code>sub</code>, or <code>chain_depth</code>) to escalate privileges.</div>
+        <div class="mitigation">All tokens are signed with ES256 (EC P-256). Any modification to the header or payload invalidates the signature.</div>
+      </div>
+      <div class="threat-card mitigated">
+        <div class="threat-title">T4 · Unauthorized Tool Access</div>
+        <div class="threat-desc">A compromised executor agent attempts to access a tool or resource it was never authorized to use.</div>
+        <div class="mitigation">The Gateway enforces fine-grained authorization via the <code>Authorizer</code> interface (backed by OpenFGA). Every request is checked: subject × tool × action.</div>
+      </div>
+      <div class="threat-card mitigated">
+        <div class="threat-title">T5 · Chain Depth Escalation</div>
+        <div class="threat-desc">A malicious executor tries to issue a token with <code>chain_depth=0</code> to appear as an orchestrator, or skips depth levels to forge the delegation chain.</div>
+        <div class="mitigation">The Gateway validates that chain depths are strictly sequential (0, 1, 2…). Any gap or reset causes validation to fail.</div>
+      </div>
+      <div class="threat-card mitigated">
+        <div class="threat-title">T6 · Audience Confusion</div>
+        <div class="threat-desc">A proof token generated for Tool A is forwarded to Tool B, where the attacker hopes it will be accepted for a different operation.</div>
+        <div class="mitigation">The <code>aud</code> claim in the proof token is bound to the exact target URI. The Gateway validates that <code>aud</code> matches the request URI precisely.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Security Model Summary</div>
+    <ul class="steps">
+      <li><div class="step-num">🔑</div><div><strong>Identity</strong> — Every agent workload has an EC P-256 key pair. The public key is bound into the AgentToken via <code>cnf.jwk</code>.</div></li>
+      <li><div class="step-num">🔗</div><div><strong>Delegation Chain</strong> — Multi-hop agent calls are represented as <code>AT-1~AT-2~...~AT-N</code>. Each hop's <code>chain_depth</code> is validated sequentially.</div></li>
+      <li><div class="step-num">📝</div><div><strong>Proof of Possession</strong> — Each request carries a short-lived <code>Agent-Proof-Token</code> signed by the caller's private key, bound to the target URI and chain hash.</div></li>
+      <li><div class="step-num">🛡️</div><div><strong>Authorization</strong> — The Gateway enforces per-subject, per-tool, per-action authorization. <code>can_call</code> implies <code>can_read</code>; <code>can_write</code> implies <code>can_read</code>.</div></li>
+      <li><div class="step-num">🚫</div><div><strong>Replay Prevention</strong> — Every proof token has a unique <code>jti</code>. The Gateway's replay store ensures each token can only be used once.</div></li>
+    </ul>
+  </div>
+</div>
+
+</main>
+
+<script src="wasm_exec.js"></script>
+<script>
+// ── WASM bootstrap ─────────────────────────────────────────────────────────
+const go = new Go();
+let wasmReady = false;
+
+WebAssembly.instantiateStreaming(fetch('wimse-agent.wasm'), go.importObject)
+  .then(result => {
+    go.run(result.instance);
+    wasmReady = true;
+    document.getElementById('loading').style.display = 'none';
+  })
+  .catch(e => {
+    document.getElementById('loading').innerHTML =
+      `<div style="color:#f85149;text-align:center;padding:2rem">
+        <b>WASM load failed</b><br><small>${e}</small><br>
+        <small style="color:#8b949e;margin-top:0.5rem;display:block">
+          Serve with: <code>python3 -m http.server 8000</code> (file:// not supported)
+        </small>
+      </div>`;
+  });
+
+// ── Tab navigation ─────────────────────────────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('scene-' + name).classList.add('active');
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function call(fn, ...args) {
+  if (!wasmReady) return { ok: false, error: 'WASM not ready yet' };
+  try { return agentFabric[fn](...args); }
+  catch(e) { return { ok: false, error: String(e) }; }
+}
+
+function setOut(id, result) {
+  const el = document.getElementById(id);
+  if (result.ok) {
+    const { ok, ...rest } = result;
+    el.className = 'output ok';
+    el.textContent = JSON.stringify(rest, null, 2);
+  } else {
+    el.className = 'output err';
+    el.textContent = '✗ Error: ' + result.error;
+  }
+}
+
+function setStatus(id, dotClass, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.querySelector('.dot').className = 'dot ' + dotClass;
+  el.querySelector('span').textContent = msg;
+}
+
+function activateNode(id) {
+  document.querySelectorAll('.node').forEach(n => n.classList.remove('active-node','accepted','rejected'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active-node');
+}
+
+function acceptNode(id) {
+  const el = document.getElementById(id);
+  if (el) { el.classList.remove('active-node'); el.classList.add('accepted'); }
+}
+
+// ── Happy Path ─────────────────────────────────────────────────────────────
+function doSetup() {
+  activateNode('node-idp');
+  const r = call('setup');
+  setOut('happy-out', r);
+  if (r.ok) {
+    setStatus('happy-status', 'green', 'Keys generated — IdP and agents ready');
+    acceptNode('node-idp');
+    document.getElementById('btn-orch').disabled = false;
+  } else {
+    setStatus('happy-status', 'red', 'Setup failed');
+  }
+}
+
+function doIssueOrch() {
+  activateNode('node-orch');
+  const r = call('issueOrchestratorToken');
+  setOut('happy-out', r);
+  if (r.ok) {
+    setStatus('happy-status', 'green', 'Orchestrator AgentToken issued (chain_depth=0)');
+    acceptNode('node-orch');
+    document.getElementById('btn-exec').disabled = false;
+  }
+}
+
+function doDelegate() {
+  activateNode('node-exec');
+  const r = call('delegateToExecutor');
+  setOut('happy-out', r);
+  if (r.ok) {
+    setStatus('happy-status', 'green', 'Executor AgentToken issued (chain_depth=1), chain length=' + r.chainLen);
+    acceptNode('node-exec');
+    document.getElementById('btn-validate').disabled = false;
+  }
+}
+
+function doValidate() {
+  activateNode('node-gw');
+  const r = call('validateChain');
+  setOut('happy-out', r);
+  if (r.ok) {
+    setStatus('happy-status', 'green', 'Chain validated — ' + r.hops + ' hops, all signatures verified');
+    acceptNode('node-gw');
+    document.getElementById('btn-proof').disabled = false;
+  }
+}
+
+function doProof() {
+  const r = call('generateProof', 'https://tool-server.example/api/weather');
+  setOut('happy-out', r);
+  if (r.ok) {
+    setStatus('happy-status', 'green', 'Proof token generated — bound to aud + chain_hash');
+    acceptNode('node-tool');
+    document.getElementById('node-tool').classList.add('accepted');
+  }
+}
+
+function doReset() {
+  document.querySelectorAll('.node').forEach(n => n.classList.remove('active-node','accepted','rejected'));
+  setOut('happy-out', 'Waiting for input…');
+  setStatus('happy-status', 'grey', 'Click "Generate Keys" to begin');
+  ['btn-orch','btn-exec','btn-validate','btn-proof'].forEach(id => {
+    document.getElementById(id).disabled = true;
+  });
+}
+
+// ── Replay Attack ──────────────────────────────────────────────────────────
+function doReplaySetup() {
+  const r1 = call('setup');
+  if (!r1.ok) { setOut('replay-out', r1); return; }
+  const r2 = call('issueOrchestratorToken');
+  if (!r2.ok) { setOut('replay-out', r2); return; }
+  const r3 = call('delegateToExecutor');
+  if (!r3.ok) { setOut('replay-out', r3); return; }
+  setOut('replay-out', { ok: true, message: 'Chain built: orchestrator → executor (2 hops). Click "Simulate Replay Attack" to see protection in action.' });
+  document.getElementById('btn-replay').disabled = false;
+}
+
+function doReplay() {
+  const r = call('simulateReplayAttack', 'https://tool-server.example/api/data');
+  setOut('replay-out', r);
+}
+
+// ── Tampering ──────────────────────────────────────────────────────────────
+function doTamperSetup() {
+  const r1 = call('setup');
+  if (!r1.ok) { setOut('tamper-out', r1); return; }
+  const r2 = call('issueOrchestratorToken');
+  if (!r2.ok) { setOut('tamper-out', r2); return; }
+  setOut('tamper-out', { ok: true, message: 'Orchestrator token issued. Click "Simulate Tampering" to see ES256 signature verification.' });
+  document.getElementById('btn-tamper').disabled = false;
+}
+
+function doTamper() {
+  const r = call('simulateTampering');
+  setOut('tamper-out', r);
+}
+</script>
+</body>
+</html>

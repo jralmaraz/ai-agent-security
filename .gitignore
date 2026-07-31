@@ -1,0 +1,28 @@
+# Binaries
+/bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test and coverage
+*.test
+*.out
+coverage.html
+
+# WASM build artifacts
+demo/wimse-agent.wasm
+demo/wasm_exec.js
+
+# Go workspace
+/vendor/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
