@@ -448,6 +448,33 @@ In production, IdP public keys should be fetched from a JWKS endpoint rather tha
 
 ---
 
+## OpenID Federation (Cross-Organisation Agents)
+
+`pkg/federation` — implements **OpenID Federation 1.0** trust chains so the Agent Gateway can validate tokens from agents belonging to external organisations without any pre-shared key configuration.
+
+### How it works
+
+An agent from Org B presents its `agent+jwt` to Org A's gateway. The gateway:
+1. Peeks at the `iss` claim — no static `AgentValidator` found for `idp.org-b.example`
+2. Falls back to the `FederationResolver` in `Config.FederationResolver`
+3. Resolver fetches (or reads from in-memory store) the Entity Configuration JWT for `idp.org-b.example`
+4. Walks `authority_hints` → locates Trust Anchor → verifies Subordinate Statement with anchor key
+5. Extracts Org B's IdP public key from the SS → verifies EC with that key
+6. Constructs a one-shot `AgentValidator` with the resolved key → validates the agent token
+7. Caches the resolved entity until `min(EC.exp, SS.exp)`
+
+### Browser Demo — Federation tab
+
+The interactive demo (`demo/index.html` → **OpenID Federation** tab) runs the complete three-step flow live in WASM:
+
+| Step | WASM function | What it does |
+|---|---|---|
+| Build Federation Chain | `agentFabric.setupFederation()` | Generates Trust Anchor + Org B IdP keys, builds EC + SS, registers in InMemoryResolver |
+| Issue Cross-Org Token | `agentFabric.issueOrgBAgentToken()` | Issues an `agent+jwt` using Org B's IdP key |
+| Validate via Federation | `agentFabric.validateFederatedToken()` | Resolves Org B's key via trust chain, validates token — zero static config |
+
+---
+
 ## Roadmap
 
 - **Phase 2 — mTLS transport**: add X.509 URI SAN certs (SPIFFE) for transport-layer identity between agents and the gateway.
@@ -469,6 +496,7 @@ In production, IdP public keys should be fetched from a JWKS endpoint rather tha
 | [SPIFFE](https://spiffe.io/docs/latest/spiffe-about/spiffe-concepts/) | Workload identity URI format (`spiffe://`) |
 | [OpenFGA](https://openfga.dev/docs/concepts) | Zanzibar-style fine-grained authorization |
 | [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) | Tool-server protocol the gateway is designed to front |
+| [OpenID Federation 1.0](https://openid.net/specs/openid-federation-1_0.html) | Entity Configurations, Subordinate Statements, trust chains for cross-org agent trust |
 
 ---
 

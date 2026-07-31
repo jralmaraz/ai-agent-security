@@ -3,19 +3,26 @@
 package gateway
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jralmaraz/wimse-agent-fabric/internal/authz"
+	"github.com/jralmaraz/wimse-agent-fabric/pkg/federation"
 	"github.com/jralmaraz/wimse-agent-fabric/pkg/identity"
 )
 
 // Config holds gateway configuration.
 type Config struct {
-	// Validators maps issuer IDs to their AgentValidators (all trusted IdPs).
+	// Validators maps issuer IDs to their AgentValidators (static, Phase 3).
 	Validators map[string]*identity.AgentValidator
+
+	// FederationResolver resolves unknown issuers via OID-FED trust chains (Phase 6).
+	// If nil, only Validators is consulted.
+	FederationResolver federation.Resolver
 
 	// ProofValidator is the shared per-gateway replay store.
 	ProofValidator *identity.ProofValidator
@@ -80,7 +87,7 @@ func (s *Server) agentAuthMiddleware(toolName string) gin.HandlerFunc {
 			abort(c, http.StatusUnauthorized, "missing "+authz.HeaderAgentIdentityToken)
 			return
 		}
-		va, err := validateWithAny(s.cfg.Validators, leafTok)
+		va, err := s.resolveAndValidate(c.Request.Context(), leafTok)
 		if err != nil {
 			abort(c, http.StatusUnauthorized, "invalid agent identity token: "+err.Error())
 			return
@@ -143,6 +150,34 @@ func (s *Server) agentAuthMiddleware(toolName string) gin.HandlerFunc {
 		c.Set(authz.ContextKeyChain, chain)
 		c.Next()
 	}
+}
+
+// resolveAndValidate validates an agent identity token using either the static
+// Validators map or the OID-FED Resolver for dynamically-discovered issuers.
+func (s *Server) resolveAndValidate(ctx context.Context, tok string) (*identity.ValidatedAgent, error) {
+	// Try static validators first (fast path, no network).
+	va, err := validateWithAny(s.cfg.Validators, tok)
+	if err == nil {
+		return va, nil
+	}
+	// Federation fallback: peek at issuer, resolve key, build validator on the fly.
+	if s.cfg.FederationResolver == nil {
+		return nil, err
+	}
+	issuer, peekErr := peekIssuer(tok)
+	if peekErr != nil {
+		return nil, fmt.Errorf("peek issuer: %w", peekErr)
+	}
+	entity, resolveErr := s.cfg.FederationResolver.Resolve(ctx, issuer)
+	if resolveErr != nil {
+		return nil, fmt.Errorf("federation resolve %q: %w", issuer, resolveErr)
+	}
+	pub, keyErr := entity.PublicKey()
+	if keyErr != nil {
+		return nil, fmt.Errorf("extract key for %q: %w", issuer, keyErr)
+	}
+	dynValidator := identity.NewAgentValidator(issuer, pub)
+	return dynValidator.Validate(tok)
 }
 
 func abort(c *gin.Context, code int, msg string) {

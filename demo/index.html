@@ -125,6 +125,7 @@
   <div class="tab" onclick="showTab('replay')">Replay Attack</div>
   <div class="tab" onclick="showTab('tamper')">Token Tampering</div>
   <div class="tab" onclick="showTab('threat')">Threat Model</div>
+  <div class="tab" onclick="showTab('federation')">OpenID Federation</div>
 </nav>
 
 <main>
@@ -296,6 +297,61 @@
   </div>
 </div>
 
+<!-- ══ OPENID FEDERATION ════════════════════════════════════════════════════ -->
+<div class="scene" id="scene-federation">
+  <div class="card">
+    <div class="card-title">Cross-Organisation Agent Federation (OID-FED 1.0)</div>
+    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem">
+      An agent from <strong>Org B</strong> calls a gateway controlled by <strong>Org A</strong>.
+      The gateway has no static entry for Org B's IdP — it resolves the key dynamically via an
+      <strong>OpenID Federation trust chain</strong>: Trust Anchor → Subordinate Statement → Entity Configuration.
+    </p>
+
+    <div class="arch" id="fed-arch">
+      <div class="node" id="fed-node-anchor">
+        <div class="node-icon">⚓</div>
+        <div class="node-label">Trust Anchor</div>
+        <div class="node-sub">enterprise.example</div>
+      </div>
+      <div class="node" id="fed-node-orgb">
+        <div class="node-icon">🏢</div>
+        <div class="node-label">Org B IdP</div>
+        <div class="node-sub">idp.org-b.example</div>
+      </div>
+      <div class="node" id="fed-node-agent">
+        <div class="node-icon">🤖</div>
+        <div class="node-label">Org B Agent</div>
+        <div class="node-sub">foreign agent</div>
+      </div>
+      <div class="node" id="fed-node-gw">
+        <div class="node-icon">🛡️</div>
+        <div class="node-label">Org A Gateway</div>
+        <div class="node-sub">federation resolver</div>
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="doFedSetup()">1. Build Federation Chain</button>
+      <button class="btn" id="btn-fed-issue" disabled onclick="doFedIssue()">2. Issue Cross-Org Token</button>
+      <button class="btn" id="btn-fed-validate" disabled onclick="doFedValidate()">3. Validate via Federation</button>
+    </div>
+
+    <div id="fed-out" class="output">Click "Build Federation Chain" to begin…</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">How it works</div>
+    <ul class="steps">
+      <li><div class="step-num">1</div><div>The <strong>Trust Anchor</strong> generates a key pair and signs a <em>Subordinate Statement</em> (SS) certifying Org B's IdP public key.</div></li>
+      <li><div class="step-num">2</div><div>Org B's IdP publishes a self-signed <em>Entity Configuration</em> (EC) JWT with <code>authority_hints = [trust-anchor.enterprise.example]</code>.</div></li>
+      <li><div class="step-num">3</div><div>Org B's <strong>agent</strong> is issued a standard <span class="token-badge wit">agent+jwt</span> — identical in format to a local agent token.</div></li>
+      <li><div class="step-num">4</div><div>When the token arrives at Org A's <strong>gateway</strong>, it peeks at <code>iss</code>, finds no static validator, and falls back to the <em>Federation Resolver</em>.</div></li>
+      <li><div class="step-num">5</div><div>The resolver walks the chain: EC → authority_hints → SS → anchor key → SS signature verified → leaf key extracted → EC signature verified.</div></li>
+      <li><div class="step-num">6</div><div>The token is validated with the <strong>dynamically-resolved key</strong>. No pre-shared keys or static config were needed for Org B.</div></li>
+    </ul>
+  </div>
+</div>
+
 </main>
 
 <script src="wasm_exec.js"></script>
@@ -446,6 +502,34 @@ function doReplaySetup() {
 function doReplay() {
   const r = call('simulateReplayAttack', 'https://tool-server.example/api/data');
   setOut('replay-out', r);
+}
+
+// ── OpenID Federation ──────────────────────────────────────────────────────
+function doFedSetup() {
+  const r = call('setupFederation');
+  setOut('fed-out', r);
+  if (r.ok) {
+    document.getElementById('fed-node-anchor').classList.add('accepted');
+    document.getElementById('fed-node-orgb').classList.add('accepted');
+    document.getElementById('btn-fed-issue').disabled = false;
+  }
+}
+
+function doFedIssue() {
+  const r = call('issueOrgBAgentToken');
+  setOut('fed-out', r);
+  if (r.ok) {
+    document.getElementById('fed-node-agent').classList.add('accepted');
+    document.getElementById('btn-fed-validate').disabled = false;
+  }
+}
+
+function doFedValidate() {
+  const r = call('validateFederatedToken');
+  setOut('fed-out', r);
+  if (r.ok) {
+    document.getElementById('fed-node-gw').classList.add('accepted');
+  }
 }
 
 // ── Tampering ──────────────────────────────────────────────────────────────

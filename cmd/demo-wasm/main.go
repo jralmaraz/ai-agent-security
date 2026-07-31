@@ -5,6 +5,7 @@
 package main
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -13,7 +14,9 @@ import (
 	"syscall/js"
 	"time"
 
+	"github.com/jralmaraz/wimse-agent-fabric/pkg/federation"
 	"github.com/jralmaraz/wimse-agent-fabric/pkg/identity"
+	"github.com/jralmaraz/wimse-agent-fabric/pkg/keys"
 )
 
 // ── global demo state ─────────────────────────────────────────────────────────
@@ -271,17 +274,168 @@ func simulateTampering(_ js.Value, _ []js.Value) any {
 	})
 }
 
+// ── Federation (OID-FED) state ────────────────────────────────────────────────
+
+var (
+	fedAnchorPriv  *ecdsa.PrivateKey
+	fedAnchorPub   *ecdsa.PublicKey
+	fedOrgBPriv    *ecdsa.PrivateKey
+	fedOrgBPub     *ecdsa.PublicKey
+	fedOrgBIssuer  *identity.AgentIssuer
+	fedOrgBEC      string // Entity Configuration JWT
+	fedOrgBSS      string // Subordinate Statement JWT
+	fedOrgBToken   string // Agent token issued by Org-B IdP
+	fedResolver    *federation.InMemoryResolver
+)
+
+const (
+	fedAnchorID = "https://trust-anchor.enterprise.example"
+	fedOrgBID   = "https://idp.org-b.example"
+	fedOrgBSub  = "spiffe://org-b.example/agent/data-collector"
+)
+
+// setupFederation creates a complete OID-FED trust chain for a cross-org agent.
+func setupFederation(_ js.Value, _ []js.Value) any {
+	var err error
+
+	fedAnchorPriv, err = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return errObj("generate anchor key: " + err.Error())
+	}
+	fedAnchorPub = &fedAnchorPriv.PublicKey
+
+	fedOrgBPriv, err = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return errObj("generate Org-B IdP key: " + err.Error())
+	}
+	fedOrgBPub = &fedOrgBPriv.PublicKey
+
+	fedOrgBEC, err = federation.BuildEntityConfiguration(
+		fedOrgBID, fedOrgBPriv, "orgb-key",
+		"Org B Agent Platform",
+		[]string{fedAnchorID},
+		24*time.Hour,
+	)
+	if err != nil {
+		return errObj("build entity configuration: " + err.Error())
+	}
+
+	fedOrgBSS, err = federation.BuildSubordinateStatement(
+		fedAnchorID, fedOrgBID,
+		fedOrgBPub, "orgb-key",
+		fedAnchorPriv, "anchor-key",
+		24*time.Hour,
+	)
+	if err != nil {
+		return errObj("build subordinate statement: " + err.Error())
+	}
+
+	fedOrgBIssuer = identity.NewAgentIssuer(fedOrgBID, fedOrgBPriv, time.Hour)
+
+	fedResolver = federation.NewInMemoryResolver(map[string]*ecdsa.PublicKey{
+		fedAnchorID: fedAnchorPub,
+	})
+	fedResolver.RegisterEntityConfig(fedOrgBID, fedOrgBEC)
+	fedResolver.RegisterSubordinateStatement(fedOrgBID, fedOrgBSS)
+
+	anchorJWK, _ := keys.PublicKeyToJWK(fedAnchorPub, "anchor-key")
+	orgBJWK, _ := keys.PublicKeyToJWK(fedOrgBPub, "orgb-key")
+
+	ec, _ := federation.ParseEntityConfiguration(fedOrgBEC)
+	ss, _ := federation.ParseSubordinateStatement(fedOrgBSS)
+
+	return okObj(map[string]any{
+		"anchorID":      fedAnchorID,
+		"orgBID":        fedOrgBID,
+		"anchorJWK":     anchorJWK,
+		"orgBJWK":       orgBJWK,
+		"ecIss":         ec.Issuer,
+		"ecHints":       ec.AuthorityHints,
+		"ssIss":         ss.Issuer,
+		"ssSub":         ss.Subject,
+	})
+}
+
+// issueOrgBAgentToken issues an AgentToken using Org-B's federated IdP.
+func issueOrgBAgentToken(_ js.Value, _ []js.Value) any {
+	if fedOrgBIssuer == nil {
+		return errObj("call setupFederation() first")
+	}
+
+	workloadKP, err := keys.GenerateECKeyPair()
+	if err != nil {
+		return errObj("generate workload key: " + err.Error())
+	}
+
+	fedOrgBToken, err = fedOrgBIssuer.Issue(identity.IssueOptions{
+		Subject:     fedOrgBSub,
+		Role:        identity.RoleOrchestrator,
+		ChainDepth:  0,
+		WorkloadKey: workloadKP.Public,
+	})
+	if err != nil {
+		return errObj("issue Org-B token: " + err.Error())
+	}
+
+	return okObj(map[string]any{
+		"token":   fedOrgBToken,
+		"issuer":  fedOrgBID,
+		"subject": fedOrgBSub,
+	})
+}
+
+// validateFederatedToken simulates the gateway resolving an unknown issuer via OID-FED.
+func validateFederatedToken(_ js.Value, _ []js.Value) any {
+	if fedResolver == nil {
+		return errObj("call setupFederation() first")
+	}
+	if fedOrgBToken == "" {
+		return errObj("call issueOrgBAgentToken() first")
+	}
+
+	// Peek at the issuer (no static config for Org-B).
+	entity, err := fedResolver.Resolve(context.Background(), fedOrgBID)
+	if err != nil {
+		return errObj("federation resolve: " + err.Error())
+	}
+	resolvedPub, err := entity.PublicKey()
+	if err != nil {
+		return errObj("extract resolved key: " + err.Error())
+	}
+
+	// Validate with the dynamically-resolved key.
+	dynValidator := identity.NewAgentValidator(fedOrgBID, resolvedPub)
+	va, err := dynValidator.Validate(fedOrgBToken)
+	if err != nil {
+		return errObj("validate federated token: " + err.Error())
+	}
+
+	orgBJWK, _ := keys.PublicKeyToJWK(resolvedPub, "orgb-key")
+
+	return okObj(map[string]any{
+		"subject":          va.Claims.Subject,
+		"issuer":           va.Claims.Issuer,
+		"resolvedViaChain": true,
+		"trustAnchor":      fedAnchorID,
+		"resolvedKey":      orgBJWK,
+	})
+}
+
 // ── WASM registration ─────────────────────────────────────────────────────────
 
 func main() {
 	js.Global().Set("agentFabric", js.ValueOf(map[string]any{
-		"setup":                 js.FuncOf(setup),
+		"setup":                  js.FuncOf(setup),
 		"issueOrchestratorToken": js.FuncOf(issueOrchestratorToken),
-		"delegateToExecutor":    js.FuncOf(delegateToExecutor),
-		"validateChain":         js.FuncOf(validateChain),
-		"generateProof":         js.FuncOf(generateProof),
-		"simulateReplayAttack":  js.FuncOf(simulateReplayAttack),
-		"simulateTampering":     js.FuncOf(simulateTampering),
+		"delegateToExecutor":     js.FuncOf(delegateToExecutor),
+		"validateChain":          js.FuncOf(validateChain),
+		"generateProof":          js.FuncOf(generateProof),
+		"simulateReplayAttack":   js.FuncOf(simulateReplayAttack),
+		"simulateTampering":      js.FuncOf(simulateTampering),
+		// OID-FED federation (cross-org agents)
+		"setupFederation":        js.FuncOf(setupFederation),
+		"issueOrgBAgentToken":    js.FuncOf(issueOrgBAgentToken),
+		"validateFederatedToken": js.FuncOf(validateFederatedToken),
 	}))
 	<-make(chan struct{}) // block forever
 }
