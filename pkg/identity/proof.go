@@ -4,7 +4,6 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -73,18 +72,31 @@ func GenerateProof(opts ProofGenerateOptions) (string, error) {
 	return t.SignedString(opts.WorkloadKey)
 }
 
-// ProofValidator validates AgentProofTokens and optionally detects replays.
+// ProofValidator validates AgentProofTokens and optionally detects replays
+// via a pluggable JTIStore.
+//
+// The default store (InMemoryJTIStore) is suitable for single-process
+// deployments. Swap it for a distributed store (etcd, Redis, CockroachDB)
+// to share replay state across replicas — the plug-in point for
+// multi-cloud / multi-replica deployments.
 type ProofValidator struct {
-	mu      sync.Mutex
-	seen    map[string]struct{} // jti → already used
-	parser  *jwt.Parser
+	store  JTIStore
+	parser *jwt.Parser
 }
 
-// NewProofValidator creates a validator. Each instance maintains its own
-// in-memory replay store; create one per service endpoint.
+// NewProofValidator creates a validator backed by an InMemoryJTIStore.
 func NewProofValidator() *ProofValidator {
 	return &ProofValidator{
-		seen:   make(map[string]struct{}),
+		store:  NewInMemoryJTIStore(),
+		parser: jwt.NewParser(jwt.WithExpirationRequired(), jwt.WithIssuedAt()),
+	}
+}
+
+// NewProofValidatorWithStore creates a validator backed by the provided JTIStore.
+// Use this to inject a distributed store in multi-replica deployments.
+func NewProofValidatorWithStore(s JTIStore) *ProofValidator {
+	return &ProofValidator{
+		store:  s,
 		parser: jwt.NewParser(jwt.WithExpirationRequired(), jwt.WithIssuedAt()),
 	}
 }
@@ -156,25 +168,16 @@ func (v *ProofValidator) Validate(opts ProofValidateOptions) (*AgentProofClaims,
 		return nil, fmt.Errorf("chain_hash mismatch: want %s got %s", wantHash, claims.ChainHash)
 	}
 
-	// Replay detection.
+	// Replay detection: delegate to the JTIStore.
 	if opts.CheckReplay {
-		if err := v.recordJTI(claims.ID); err != nil {
-			return nil, err
+		jti := claims.ID
+		if jti == "" {
+			return nil, errors.New("proof token missing jti")
+		}
+		if err := v.store.Record(jti, claims.ExpiresAt.Time); err != nil {
+			return nil, fmt.Errorf("proof replay check: %w", err)
 		}
 	}
 
 	return claims, nil
-}
-
-func (v *ProofValidator) recordJTI(jti string) error {
-	if jti == "" {
-		return errors.New("proof token missing jti")
-	}
-	v.mu.Lock()
-	defer v.mu.Unlock()
-	if _, used := v.seen[jti]; used {
-		return fmt.Errorf("replay detected: jti %q already used", jti)
-	}
-	v.seen[jti] = struct{}{}
-	return nil
 }
