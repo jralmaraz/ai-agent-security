@@ -183,6 +183,34 @@ main{max-width:960px;margin:0 auto;padding:2rem}
 /* ── Collapse sections ── */
 .reveal{display:none}
 .reveal.show{display:block}
+
+/* ── Post-Quantum + Paxos shared ── */
+.pq-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1rem}
+@media(max-width:680px){.pq-grid{grid-template-columns:1fr}}
+.pq-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px}
+.pq-card h4{font-size:13px;font-weight:700;margin-bottom:4px;color:var(--text)}
+.pq-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;margin-bottom:8px}
+.pq-sig{background:rgba(88,166,255,.15);color:var(--blue)}
+.pq-kem{background:rgba(63,185,80,.15);color:var(--green)}
+.pq-hash{background:rgba(188,140,255,.15);color:var(--purple)}
+.tl-bar{display:flex;border-radius:8px;overflow:hidden;border:1px solid var(--border);margin-bottom:1rem}
+.tl-seg{flex:1;padding:11px;font-size:12px;text-align:center;border-right:1px solid var(--border)}
+.tl-seg:last-child{border-right:none}
+.tl-seg strong{display:block;font-size:13px;margin-bottom:3px}
+.tl-seg span{color:var(--muted);font-size:11px}
+.tl-now{background:rgba(63,185,80,.07)}
+.tl-near{background:rgba(255,166,87,.07)}
+.tl-q{background:rgba(248,81,73,.06)}
+.anim-step-sm{padding:8px 13px;border-left:3px solid var(--border);background:var(--surface2);border-radius:0 6px 6px 0;font-size:12px;opacity:.35;transition:opacity .3s,border-color .3s;margin-bottom:5px}
+.anim-step-sm.active{opacity:1;border-color:var(--orange);background:rgba(255,166,87,.05)}
+.anim-step-sm.done{opacity:.75;border-color:var(--green)}
+.paxos-svg{width:100%;height:auto;display:block;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:.75rem}
+.compare-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:1rem}
+.compare-table th{background:var(--surface2);padding:8px 12px;text-align:left;border:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.compare-table td{padding:8px 12px;border:1px solid var(--border)}
+.compare-table tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+.check{color:var(--green);font-weight:700}
+.cross{color:var(--red);font-weight:700}
 </style>
 </head>
 <body>
@@ -208,6 +236,8 @@ main{max-width:960px;margin:0 auto;padding:2rem}
   <div class="tab" onclick="showTab('tamper',this)">Token Tampering</div>
   <div class="tab" onclick="showTab('threat',this)">Threat Model</div>
   <div class="tab" onclick="showTab('federation',this)">OpenID Federation</div>
+  <div class="tab" onclick="showTab('postquantum',this)">Post-Quantum Safety</div>
+  <div class="tab" onclick="showTab('paxos',this)">Paxos Consensus</div>
 </nav>
 
 <main>
@@ -636,6 +666,146 @@ main{max-width:960px;margin:0 auto;padding:2rem}
   </div>
 </div>
 
+<!-- ── Post-Quantum Safety ─────────────────────────────────────────────── -->
+<div class="scene" id="scene-postquantum">
+  <div class="card">
+    <div class="card-title">Post-Quantum Safety for Agent Fabric</div>
+    <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">
+      Agent Fabric tokens (<code>agent+jwt</code>), proof tokens (<code>application/agent-proof+jwt</code>), and OID-FED entity statements all use <strong>ES256 (EC P-256)</strong>. Shor's algorithm on a quantum computer breaks EC in polynomial time — every delegation chain, every proof token, every trust chain becomes forgeable.
+    </p>
+    <div class="callout danger">
+      <strong>Harvest Now, Decrypt Later:</strong> Adversaries collecting today's inter-agent traffic can break the signatures retroactively once a cryptographically-relevant quantum computer (CRQC) is available (~2030–2035 estimates). Agent delegation chains are high-value targets — they encode full audit trails.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Threat timeline</div>
+    <div class="tl-bar">
+      <div class="tl-seg tl-now"><strong style="color:var(--green)">Now — 2028</strong><span>EC P-256 secure. Begin inventory of agent key material. Adopt hybrid-capable validators.</span></div>
+      <div class="tl-seg tl-near"><strong style="color:var(--orange)">2028 — 2032</strong><span>Hybrid mode: agent+jwt carries both ES256 and ML-DSA-44 signatures. Both accepted by gateways.</span></div>
+      <div class="tl-seg tl-q"><strong style="color:var(--red)">2032+</strong><span>ES256-only agent tokens rejected. ML-DSA-44 mandatory for all chain links, proofs, and OID-FED JWTs.</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">NIST PQC 2024 standards — what replaces EC</div>
+    <div class="pq-grid">
+      <div class="pq-card">
+        <span class="pq-badge pq-sig">Signature</span>
+        <h4>ML-DSA (Dilithium)</h4>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Primary NIST recommendation. Lattice-based. Replaces ECDSA for all agent+jwt and proof+jwt signing.</p>
+        <table class="compare-table">
+          <tr><td>Pub key</td><td><strong>1312 B</strong> vs 64 B (EC)</td></tr>
+          <tr><td>Signature</td><td><strong>2420 B</strong> vs 64 B</td></tr>
+          <tr><td>Used for</td><td>AgentToken, ProofToken, OID-FED EC</td></tr>
+        </table>
+      </div>
+      <div class="pq-card">
+        <span class="pq-badge pq-kem">KEM</span>
+        <h4>ML-KEM (Kyber)</h4>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Replaces ECDH in TLS 1.3 key exchange. Protects the transport layer for mTLS agent-to-gateway connections.</p>
+        <table class="compare-table">
+          <tr><td>Pub key</td><td><strong>1184 B</strong> vs 32 B (ECDH)</td></tr>
+          <tr><td>Ciphertext</td><td><strong>1088 B</strong></td></tr>
+          <tr><td>Used for</td><td>mTLS key exchange (Phase 2 mTLS)</td></tr>
+        </table>
+      </div>
+      <div class="pq-card">
+        <span class="pq-badge pq-hash">Hash-Based</span>
+        <h4>SLH-DSA (SPHINCS+)</h4>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Conservative option. Only relies on hash function security. Ideal for Trust Anchor signing (long-lived, high-assurance).</p>
+        <table class="compare-table">
+          <tr><td>Pub key</td><td><strong>32 B</strong> (small)</td></tr>
+          <tr><td>Signature</td><td><strong>8–50 KB</strong></td></tr>
+          <tr><td>Used for</td><td>OID-FED Trust Anchor subordinate statements</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Agent Fabric component impact</div>
+    <table class="compare-table">
+      <tr><th>Component</th><th>Current</th><th>PQ-Safe</th><th>Migration</th></tr>
+      <tr><td><strong>AgentToken (agent+jwt)</strong></td><td class="cross">ES256</td><td class="check">ML-DSA-44</td><td>Hybrid: both sigs during transition; validators accept either</td></tr>
+      <tr><td><strong>AgentProofToken</strong></td><td class="cross">ES256 + cnf.jwk binding</td><td class="check">ML-DSA-44 + PQ cnf.jwk</td><td>cnf.jwk becomes OKP key with ML-DSA curve</td></tr>
+      <tr><td><strong>AgentChain links</strong></td><td class="cross">Each AT-N: ES256</td><td class="check">Each AT-N: ML-DSA-44</td><td>Chain validator must support both alg types per link</td></tr>
+      <tr><td><strong>OID-FED Entity Config</strong></td><td class="cross">entity-statement+jwt ES256</td><td class="check">ML-DSA or SLH-DSA for Trust Anchor</td><td>Publish both EC and PQ keys in JWKS during transition</td></tr>
+      <tr><td><strong>mTLS agent certs</strong></td><td class="cross">EC P-256 X.509</td><td class="check">ML-DSA cert + ML-KEM key exchange</td><td>Dual-cert: present both EC and PQ cert; server picks best</td></tr>
+      <tr><td><strong>JTI replay store</strong></td><td class="partial">In-memory (single node)</td><td class="check">Distributed (Raft-replicated)</td><td>JTI store upgrade is independent of PQ algorithm migration</td></tr>
+    </table>
+  </div>
+
+  <div class="callout ok">
+    <strong>Agent Fabric advantage:</strong> Because each delegation link carries its own <code>cnf.jwk</code>, upgrading to PQ is link-by-link — you don't need to migrate all agents simultaneously. An orchestrator with an ML-DSA key can issue chains to executors that still use EC, and a mixed-alg chain can still be validated if the validator supports both.
+  </div>
+</div>
+
+<!-- ── Paxos Consensus ────────────────────────────────────────────────── -->
+<div class="scene" id="scene-paxos">
+  <div class="card">
+    <div class="card-title">Paxos / Raft Consensus for Agent Fabric</div>
+    <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">
+      A production Agent Fabric IdP cluster runs multiple replicas. Without distributed consensus, the JTI replay store is per-node (replay attacks succeed by hitting different replicas), key rotation creates a split-brain window, and token revocation propagates with unpredictable delay.
+    </p>
+    <table class="compare-table">
+      <tr><th>Problem</th><th>Without Consensus</th><th>With Raft/Paxos</th></tr>
+      <tr><td><strong>JTI replay across replicas</strong></td><td class="cross">Replay hits replica that hasn't seen the JTI</td><td class="check">JTI log replicated; replay rejected cluster-wide</td></tr>
+      <tr><td><strong>AgentToken issuance in HA</strong></td><td class="cross">Two leaders race → duplicate JTIs</td><td class="check">One Raft leader issues; committed before returning</td></tr>
+      <tr><td><strong>Signing key rotation</strong></td><td class="cross">Replicas briefly serve old and new keys</td><td class="check">Key swap committed as Raft entry with activation time</td></tr>
+      <tr><td><strong>Revocation propagation</strong></td><td class="cross">Revoked token accepted by lagging replica</td><td class="check">Revocation log replicated; instant cluster-wide effect</td></tr>
+      <tr><td><strong>OID-FED SS cache invalidation</strong></td><td class="cross">Stale SS used after Trust Anchor update</td><td class="check">Cache invalidation event committed as Raft entry</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Animated Paxos round — agent token issuance</div>
+    <p style="font-size:.875rem;color:var(--muted);margin-bottom:.75rem">Proposal value = <code>{sub, chain_depth, cnf.jwk, jti, exp}</code>. Proposer = IdP primary. Acceptors = IdP replicas. Quorum = 2 of 3.</p>
+    <button class="btn btn-primary" id="af-paxos-btn" onclick="playAgentPaxos()" style="margin-bottom:.75rem">&#9654; Run Paxos Round</button>
+    <svg id="af-paxos-svg" viewBox="0 0 680 180" xmlns="http://www.w3.org/2000/svg" class="paxos-svg">
+      <rect id="afpn0" x="10"  y="60" width="140" height="60" rx="8" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
+      <text x="80"  y="87" text-anchor="middle" fill="#ffa657" font-family="sans-serif" font-size="11" font-weight="700">Proposer</text>
+      <text x="80"  y="103" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="9">idp-primary</text>
+      <rect id="afpn1" x="270" y="60" width="140" height="60" rx="8" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
+      <text x="340" y="87" text-anchor="middle" fill="#58a6ff" font-family="sans-serif" font-size="11" font-weight="700">Acceptor 1</text>
+      <text x="340" y="103" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="9">idp-replica-1</text>
+      <rect id="afpn2" x="530" y="60" width="140" height="60" rx="8" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
+      <text x="600" y="87" text-anchor="middle" fill="#58a6ff" font-family="sans-serif" font-size="11" font-weight="700">Acceptor 2</text>
+      <text x="600" y="103" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="9">idp-replica-2</text>
+      <line x1="150" y1="90" x2="270" y2="90" stroke="#30363d" stroke-dasharray="4,3" stroke-width="1"/>
+      <line x1="410" y1="90" x2="530" y2="90" stroke="#30363d" stroke-dasharray="4,3" stroke-width="1"/>
+      <circle id="afppkt1" cx="80" cy="90" r="7" fill="#ffa657" class="pkt-circle"/>
+      <circle id="afppkt2" cx="80" cy="90" r="7" fill="#58a6ff" class="pkt-circle"/>
+      <text id="afpmsg1" x="210" y="80" text-anchor="middle" fill="#7d8590" font-family="monospace" font-size="9" visibility="hidden">Prepare(n=1)</text>
+      <text id="afpmsg2" x="210" y="108" text-anchor="middle" fill="#58a6ff" font-family="monospace" font-size="9" visibility="hidden">Promise(n=1)</text>
+      <text id="afpmsg3" x="470" y="80" text-anchor="middle" fill="#7d8590" font-family="monospace" font-size="9" visibility="hidden">Prepare(n=1)</text>
+      <text id="afpmsg4" x="470" y="108" text-anchor="middle" fill="#58a6ff" font-family="monospace" font-size="9" visibility="hidden">Promise(n=1)</text>
+      <text id="afpmsg5" x="210" y="80" text-anchor="middle" fill="#3fb950" font-family="monospace" font-size="9" visibility="hidden">Accept(n=1,{jti,sub})</text>
+      <text id="afpmsg6" x="470" y="80" text-anchor="middle" fill="#3fb950" font-family="monospace" font-size="9" visibility="hidden">Accept(n=1,{jti,sub})</text>
+      <text id="af-paxos-status" x="340" y="165" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="12" font-weight="700">Click ▶ to begin</text>
+    </svg>
+    <div>
+      <div class="anim-step-sm" id="afpxs1"><strong>Phase 1a — Prepare(n)</strong> — Proposer broadcasts ballot number to all acceptors</div>
+      <div class="anim-step-sm" id="afpxs2"><strong>Phase 1b — Promise(n)</strong> — Acceptors promise not to accept lower ballots; return any prior accepted value</div>
+      <div class="anim-step-sm" id="afpxs3"><strong>Phase 2a — Accept(n, v)</strong> — Proposer has quorum, broadcasts token payload for acceptance</div>
+      <div class="anim-step-sm" id="afpxs4"><strong>Phase 2b — Committed</strong> — Quorum accepted; agent+jwt issued; JTI recorded on all 3 replicas</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Practical: Raft over Classic Paxos</div>
+    <div class="callout">
+      <strong>Most deployments use Raft</strong> (Multi-Paxos equivalent with deterministic leader election). etcd, CockroachDB, and TiKV all use Raft. A 3-node or 5-node Agent Fabric IdP cluster backed by etcd (as used by Kubernetes) gets Raft consensus for free, including a replicated JTI store, consistent key rotation, and revocation log.
+    </div>
+    <ul class="steps" style="list-style:none;padding:0">
+      <li><div class="step-num">1</div><div>3 IdP replicas (or 5 for 2-failure tolerance). Raft leader handles all token issuance writes.</div></li>
+      <li><div class="step-num">2</div><div>JTI written to Raft log before token returned to caller. All replicas see the same JTI history.</div></li>
+      <li><div class="step-num">3</div><div>Key rotation committed as a Raft entry with a future activation timestamp. All replicas switch simultaneously.</div></li>
+      <li><div class="step-num">4</div><div>Gateways subscribe to revocation SSE stream from Raft leader. Revoked JTIs propagated within one RTT.</div></li>
+    </ul>
+  </div>
+</div>
+
 </main>
 
 <script src="wasm_exec.js"></script>
@@ -1012,6 +1182,92 @@ async function doFedIssue() {
   setText('orgb-iss', r.issuer  || '—');
   reveal('out-fed-issue');
   document.getElementById('btn-fed-validate').disabled = false;
+}
+
+// ── Agent Fabric Paxos animation ─────────────────────────────────────────────
+// Wrapper: sets fill color then delegates to existing animPkt (x-axis only at y=90)
+function animPktC(id, x1, x2, color, dur=700) {
+  const el = document.getElementById(id);
+  if (el) el.setAttribute('fill', color);
+  return animPkt(id, x1, x2, dur);
+}
+
+let afPaxosRunning = false;
+
+function afPaxosStatus(msg) {
+  const el = document.getElementById('af-paxos-status');
+  if (el) el.textContent = msg;
+}
+function afShow(id) { const el=document.getElementById(id); if(el) el.setAttribute('visibility','visible'); }
+function afHide(id) { const el=document.getElementById(id); if(el) el.setAttribute('visibility','hidden'); }
+function afNodeHi(id, col) {
+  const el=document.getElementById(id);
+  if(el){ el.setAttribute('stroke',col); el.setAttribute('stroke-width','2.5'); }
+}
+function afNodeReset(id) {
+  const el=document.getElementById(id);
+  if(el){ el.setAttribute('stroke','#30363d'); el.setAttribute('stroke-width','1.5'); }
+}
+function afSetStep(id, cls) {
+  const el=document.getElementById(id);
+  if(!el) return;
+  ['active','done'].forEach(c=>el.classList.remove(c));
+  if(cls) el.classList.add(cls);
+}
+
+async function playAgentPaxos() {
+  if (afPaxosRunning) return;
+  afPaxosRunning = true;
+  const btn=document.getElementById('af-paxos-btn');
+  btn.disabled = true;
+  ['afpn0','afpn1','afpn2'].forEach(afNodeReset);
+  ['afpmsg1','afpmsg2','afpmsg3','afpmsg4','afpmsg5','afpmsg6'].forEach(afHide);
+  ['afpxs1','afpxs2','afpxs3','afpxs4'].forEach(id=>afSetStep(id,''));
+
+  // Phase 1a
+  afSetStep('afpxs1','active');
+  afPaxosStatus('Phase 1a — Broadcasting Prepare(n=1) to acceptors…');
+  afNodeHi('afpn0','#ffa657');
+  afShow('afpmsg1'); afShow('afpmsg3');
+  await Promise.all([
+    animPktC('afppkt1', 80, 340, '#ffa657', 700),
+    animPktC('afppkt2', 80, 600, '#ffa657', 900),
+  ]);
+  await delay(300);
+
+  // Phase 1b
+  afSetStep('afpxs1','done'); afSetStep('afpxs2','active');
+  afPaxosStatus('Phase 1b — Acceptors Promise(n=1)…');
+  afNodeHi('afpn1','#58a6ff'); afNodeHi('afpn2','#58a6ff');
+  afHide('afpmsg1'); afHide('afpmsg3');
+  afShow('afpmsg2'); afShow('afpmsg4');
+  await Promise.all([
+    animPktC('afppkt1', 340, 80, '#58a6ff', 700),
+    animPktC('afppkt2', 600, 80, '#58a6ff', 900),
+  ]);
+  await delay(300);
+
+  // Phase 2a
+  afSetStep('afpxs2','done'); afSetStep('afpxs3','active');
+  afPaxosStatus('Phase 2a — Proposer has quorum, broadcasting Accept(n=1, v={jti, sub})…');
+  afHide('afpmsg2'); afHide('afpmsg4');
+  afShow('afpmsg5'); afShow('afpmsg6');
+  await Promise.all([
+    animPktC('afppkt1', 80, 340, '#3fb950', 700),
+    animPktC('afppkt2', 80, 600, '#3fb950', 900),
+  ]);
+  await delay(300);
+
+  // Phase 2b
+  afSetStep('afpxs3','done'); afSetStep('afpxs4','active');
+  afHide('afpmsg5'); afHide('afpmsg6');
+  afNodeHi('afpn0','#3fb950'); afNodeHi('afpn1','#3fb950'); afNodeHi('afpn2','#3fb950');
+  afPaxosStatus('✓ Quorum accepted — agent+jwt issued, JTI replicated across all 3 nodes');
+  await delay(800);
+  afSetStep('afpxs4','done');
+
+  btn.disabled=false; btn.textContent='↺ Run Again';
+  afPaxosRunning=false;
 }
 
 async function doFedValidate() {
