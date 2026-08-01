@@ -308,7 +308,7 @@ main{max-width:960px;margin:0 auto;padding:2rem}
   <div class="card">
     <div class="card-title">Step-by-step walkthrough</div>
     <div class="btn-group">
-      <button class="btn btn-primary" onclick="doSetup()">1. Generate Keys</button>
+      <button class="btn btn-primary" id="btn-setup" onclick="doSetup()">1. Generate Keys</button>
       <button class="btn" id="btn-orch"     disabled onclick="doIssueOrch()">2. Issue Orchestrator Token</button>
       <button class="btn" id="btn-exec"     disabled onclick="doDelegate()">3. Delegate to Executor</button>
       <button class="btn" id="btn-validate" disabled onclick="doValidate()">4. Validate Chain</button>
@@ -1184,6 +1184,17 @@ No EC keys accepted</pre>
       and a <em>Credential Delivery Point</em> (CDP) that mints short-lived, DPoP-bound tokens from a vault.
       <strong style="color:var(--text)">Agents never hold real credentials.</strong>
     </p>
+    <div style="background:rgba(88,166,255,.07);border:1px solid rgba(88,166,255,.2);border-radius:8px;padding:12px;font-size:13px;margin-bottom:1rem;display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px">
+        <strong style="color:#58a6ff">WIMSE Agent Fabric</strong> handles <em>who the agent is</em>:<br>
+        <span style="font-size:12px;color:var(--muted)">AgentToken (<code>agent+jwt</code>) + SPIFFE SVID prove agent identity to the gateway. Delegation chains show the full call path. mTLS binds cert to token.</span>
+      </div>
+      <div style="color:var(--muted);font-size:20px;align-self:center">→</div>
+      <div style="flex:1;min-width:200px">
+        <strong style="color:#bc8cff">CB4A</strong> handles <em>what credentials the agent may use</em>:<br>
+        <span style="font-size:12px;color:var(--muted)">The agent presents its SPIFFE SVID in the Task Request Envelope. CB4A's PDP evaluates the request; the CDP mints a short-lived DPoP-bound token from the vault. The base secret never leaves the vault.</span>
+      </div>
+    </div>
     <div class="info-grid c3">
       <div class="info-box blue">
         <div class="ibt">PDP — Policy Decision Point</div>
@@ -1754,7 +1765,7 @@ No EC keys accepted</pre>
       </tr>
       <tr>
         <td><strong>External API access</strong></td>
-        <td class="cross">Not designed for this</td>
+        <td style="color:var(--blue)">→ CB4A handles this</td>
         <td class="check">Core use case — vault-backed</td>
         <td class="check">Yes — any HTTP resource</td>
         <td class="check">Yes — OAuth-protected only</td>
@@ -1806,34 +1817,34 @@ No EC keys accepted</pre>
 
   <!-- Deployment stack -->
   <div class="card">
-    <div class="card-title">How They Fit Together — Recommended Stack</div>
+    <div class="card-title">How They Fit Together — Complementary Layers</div>
     <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">
-      A mature enterprise agent deployment uses multiple layers simultaneously. Each solves a different problem — none overlap.
+      These four standards are <strong style="color:var(--text)">not alternatives</strong> — they solve different problems at different layers. A mature agent deployment uses whichever combination its architecture requires.
     </p>
     <div class="info-grid" style="grid-template-columns:1fr 1fr;margin-bottom:1rem">
-      <div class="info-box purple">
-        <div class="ibt">Layer 1 — Agent Identity (AAuth)</div>
-        <div class="ibv" style="font-size:11px;line-height:1.7">Every agent process gets cryptographic identity via <code>agent_token</code> + HTTPSig. Requests carry per-call intent. No shared secrets anywhere in the pipeline. Foundation for all other layers.</div>
-      </div>
       <div class="info-box blue">
-        <div class="ibt">Layer 2 — Internal Mesh Identity (WIMSE)</div>
-        <div class="ibv" style="font-size:11px;line-height:1.7">Agent-to-agent calls within the platform use WIMSE AgentTokens + AgentProofTokens. JWT delegation chains prove the full call path cryptographically. mTLS cert-token binding prevents stolen-token attacks.</div>
+        <div class="ibt">Agent-to-Agent Identity — WIMSE (this project)</div>
+        <div class="ibv" style="font-size:11px;line-height:1.7">Agent-to-agent calls use AgentTokens (<code>agent+jwt</code>) + AgentProofTokens. JWT delegation chains prove the full call path. mTLS cert-token binding. SPIFFE SVID as the universal identifier across all layers.</div>
       </div>
       <div class="info-box green">
-        <div class="ibt">Layer 3 — External API Credentials (CB4A)</div>
-        <div class="ibv" style="font-size:11px;line-height:1.7">Agents needing real API keys (Stripe, GitHub, AWS) request short-lived DPoP-bound tokens from CB4A's CDP. Agents present their WIMSE AgentToken as SPIFFE SVID in the Task Request Envelope.</div>
+        <div class="ibt">External API Credentials — CB4A (this project)</div>
+        <div class="ibv" style="font-size:11px;line-height:1.7">When agents call external APIs (Stripe, GitHub, AWS), CB4A brokers short-lived DPoP-bound tokens from an HSM-backed vault. The agent's WIMSE SVID authenticates the request. Base secrets never touch the agent.</div>
+      </div>
+      <div class="info-box purple">
+        <div class="ibt">Per-Call Agent Authorization — AAuth</div>
+        <div class="ibv" style="font-size:11px;line-height:1.7">AAuth gives agents cryptographic identity via <code>agent_token</code> + HTTPSig, with native support for mid-task consent states (pending/approved/denied). Complements WIMSE for HTTP-native agent environments.</div>
       </div>
       <div class="info-box orange">
-        <div class="ibt">Layer 4 — Enterprise App Delegation (XAA)</div>
-        <div class="ibv" style="font-size:11px;line-height:1.7">When agents call third-party OAuth APIs on behalf of enterprise users (Salesforce, Workday, GSuite), XAA handles delegation without consent friction. Complements CB4A for non-OAuth resources.</div>
+        <div class="ibt">Enterprise App Delegation — XAA</div>
+        <div class="ibv" style="font-size:11px;line-height:1.7">XAA extends OAuth for enterprise app-to-app delegation without per-user consent prompts. When agents call OAuth-protected SaaS (Salesforce, Workday), XAA handles delegation. Complements CB4A for OAuth resources.</div>
       </div>
     </div>
     <div class="callout ok">
-      <strong>Practical example:</strong> A billing agent uses <strong>AAuth</strong> as its base identity,
-      <strong>WIMSE</strong> to call the internal invoice service,
-      <strong>CB4A</strong> to get a short-lived Stripe API token from the vault, and
-      <strong>XAA</strong> to read customer CRM data from Salesforce.
-      Each layer solves a different problem — none overlap.
+      <strong>Practical example:</strong> A billing agent uses <strong>WIMSE</strong> to call the internal invoice service,
+      <strong>CB4A</strong> to broker a short-lived Stripe API token from the vault,
+      <strong>XAA</strong> to read customer data from Salesforce without a consent prompt, and
+      <strong>AAuth</strong> for per-call authorization when the resource server requires explicit intent.
+      None of these overlap — each covers a distinct part of the problem.
     </div>
   </div>
 </div>
@@ -2007,6 +2018,15 @@ function renderChain(chainStr, id) {
 }
 
 // ── Happy Path ───────────────────────────────────────────────────────────────
+function advanceStep(doneId, nextId) {
+  const done = document.getElementById(doneId);
+  if (done) { done.classList.remove('btn-primary'); done.style.opacity = '.65'; }
+  if (nextId) {
+    const next = document.getElementById(nextId);
+    if (next) { next.disabled = false; next.classList.add('btn-primary'); next.style.opacity = ''; }
+  }
+}
+
 function doSetup() {
   nodeState('nb-idp','hi');
   const r = call('setup');
@@ -2014,7 +2034,7 @@ function doSetup() {
   nodeState('nb-idp','ok');
   setStatus('happy-status','green','Keys generated — IdP and agents ready');
   reveal('out-setup');
-  document.getElementById('btn-orch').disabled = false;
+  advanceStep('btn-setup', 'btn-orch');
 }
 
 async function doIssueOrch() {
@@ -2041,7 +2061,7 @@ async function doIssueOrch() {
     setText('orch-depth', String(p.chain_depth ?? '—'));
   }
   reveal('out-orch');
-  document.getElementById('btn-exec').disabled = false;
+  advanceStep('btn-orch', 'btn-exec');
 }
 
 async function doDelegate() {
@@ -2063,7 +2083,7 @@ async function doDelegate() {
   setText('exec-hash',  r.chainHash || '—');
   renderChain(r.chain || (tok ? ('AT-1~' + tok) : ''), 'chain-display');
   reveal('out-exec');
-  document.getElementById('btn-validate').disabled = false;
+  advanceStep('btn-exec', 'btn-validate');
 }
 
 async function doValidate() {
@@ -2089,7 +2109,7 @@ async function doValidate() {
   await delay(1300);
   setText('validate-hops', r.hops || 2);
   document.getElementById('validate-verdict').style.display = 'flex';
-  document.getElementById('btn-proof').disabled = false;
+  advanceStep('btn-validate', 'btn-proof');
 }
 
 async function doProof() {
@@ -2110,6 +2130,7 @@ async function doProof() {
   setText('proof-aud',        r.targetURI || '—');
   setText('proof-chain-hash', r.chainHash || '—');
   reveal('out-proof');
+  advanceStep('btn-proof', null);
 }
 
 function doReset() {
@@ -2118,8 +2139,14 @@ function doReset() {
   setStatus('happy-status','grey','Click "Generate Keys" to begin');
   ['out-setup','out-orch','out-exec','out-validate','out-proof'].forEach(hide);
   ['btn-orch','btn-exec','btn-validate','btn-proof'].forEach(id => {
-    document.getElementById(id).disabled = true;
+    const b = document.getElementById(id);
+    b.disabled = true;
+    b.classList.remove('btn-primary');
+    b.style.opacity = '';
   });
+  const setup = document.getElementById('btn-setup');
+  setup.classList.add('btn-primary');
+  setup.style.opacity = '';
 }
 
 // ── Replay Attack ────────────────────────────────────────────────────────────
