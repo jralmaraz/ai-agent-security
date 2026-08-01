@@ -273,6 +273,7 @@ main{max-width:960px;margin:0 auto;padding:2rem}
     <div class="tab" onclick="showTab('mtls',this)">mTLS Transport</div>
     <div class="tab" onclick="showTab('broker',this)">Credential Broker</div>
     <div class="tab" onclick="showTab('landscape',this)">Agent Auth Landscape</div>
+    <div class="tab" onclick="showTab('standards',this)">Standards</div>
   </nav>
   <div class="nav-fade" id="nav-fade"></div>
   <button class="nav-arrow nav-arrow-right" id="nav-next" onclick="navScroll(1)" aria-label="Scroll tabs right">&#8250;</button>
@@ -1976,6 +1977,116 @@ No EC keys accepted</pre>
       <strong>XAA</strong> to read customer data from Salesforce without a consent prompt, and
       <strong>AAuth</strong> for per-call authorization when the resource server requires explicit intent.
       None of these overlap — each covers a distinct part of the problem.
+    </div>
+  </div>
+</div>
+
+<div class="scene" id="scene-standards">
+  <div class="card">
+    <div class="card-title">Standards Tracker</div>
+    <p class="spec-ref">
+      This PoC implements eight IETF and OpenID standards — most of them active drafts still evolving toward production readiness.
+      A GitHub Actions workflow checks the IETF Datatracker API daily and opens a labelled issue when any revision changes.
+    </p>
+    <p style="font-size:.8rem;color:var(--muted);margin-bottom:1rem">
+      Last checked: <code>2026-08-01</code> &nbsp;·&nbsp;
+      <a href="standards-baseline.json" target="_blank" style="color:var(--blue)">standards-baseline.json</a> &nbsp;·&nbsp;
+      <a href=".github/workflows/standards-tracker.yml" target="_blank" style="color:var(--blue)">standards-tracker.yml</a>
+    </p>
+    <table class="compare-table" style="font-size:12px">
+      <tr>
+        <th>Standard</th>
+        <th>Working Group</th>
+        <th>Status</th>
+        <th style="text-align:center">Rev</th>
+        <th>Files</th>
+        <th>PoC impact</th>
+      </tr>
+      <tr>
+        <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-workload-creds/" target="_blank" style="color:var(--blue)">WIT — Workload Identity Credentials</a></td>
+        <td style="white-space:nowrap;font-size:11px">IETF WIMSE WG</td>
+        <td><span style="color:var(--orange);white-space:nowrap">● Active draft</span></td>
+        <td style="text-align:center"><code>-02</code></td>
+        <td style="font-size:10px;color:var(--muted)"><code>pkg/identity/token.go</code>, <code>pkg/identity/chain.go</code></td>
+        <td style="font-size:11px">AgentToken (<code>agent+jwt</code>) extends WIT — any <code>cnf.jwk</code> or <code>typ</code> changes affect <code>pkg/identity</code></td>
+      </tr>
+      <tr>
+        <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-wpt/" target="_blank" style="color:var(--blue)">WPT — Workload Proof Token</a></td>
+        <td style="white-space:nowrap;font-size:11px">IETF WIMSE WG</td>
+        <td><span style="color:var(--orange);white-space:nowrap">● Active draft</span></td>
+        <td style="text-align:center"><code>-01</code></td>
+        <td style="font-size:10px;color:var(--muted)"><code>pkg/identity/proof.go</code>, <code>internal/gateway</code></td>
+        <td style="font-size:11px">AgentProofToken (<code>application/agent-proof+jwt</code>) mirrors WPT claims — <code>aud</code>, <code>wth</code>, <code>jti</code></td>
+      </tr>
+      <tr>
+        <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-identifier/" target="_blank" style="color:var(--blue)">Identifiers — Workload Identifier</a></td>
+        <td style="white-space:nowrap;font-size:11px">IETF WIMSE WG</td>
+        <td><span style="color:var(--orange);white-space:nowrap">● Active draft</span></td>
+        <td style="text-align:center"><code>-03</code></td>
+        <td style="font-size:10px;color:var(--muted)"><code>pkg/identity/token.go</code>, <code>pkg/keys/mtls.go</code></td>
+        <td style="font-size:11px">SPIFFE URI format for agent SVIDs — <code>spiffe://trust-domain/path</code></td>
+      </tr>
+      <tr>
+        <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-mutual-tls/" target="_blank" style="color:var(--blue)">mTLS — Mutual TLS Binding</a></td>
+        <td style="white-space:nowrap;font-size:11px">IETF WIMSE WG</td>
+        <td><span style="color:var(--orange);white-space:nowrap">● Active draft</span></td>
+        <td style="text-align:center"><code>-02</code></td>
+        <td style="font-size:10px;color:var(--muted)"><code>pkg/keys/mtls.go</code>, <code>internal/gateway/server.go</code></td>
+        <td style="font-size:11px">Token-cert binding in gateway middleware — URI SAN matching against AgentToken <code>sub</code></td>
+      </tr>
+      <tr>
+        <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-arch/" target="_blank" style="color:var(--blue)">Arch — WIMSE Architecture</a></td>
+        <td style="white-space:nowrap;font-size:11px">IETF WIMSE WG</td>
+        <td><span style="color:var(--orange);white-space:nowrap">● Active draft</span></td>
+        <td style="text-align:center"><code>-08</code></td>
+        <td style="font-size:10px;color:var(--muted)"><code>pkg/identity/chain.go</code>, <code>internal/gateway</code></td>
+        <td style="font-size:11px">Token exchange, trust domain boundaries, delegation chain semantics</td>
+      </tr>
+      <tr>
+        <td><a href="https://datatracker.ietf.org/doc/draft-hartman-credential-broker-4-agents/" target="_blank" style="color:var(--blue)">CB4A — Credential Broker for Agents</a></td>
+        <td style="white-space:nowrap;font-size:11px">Individual (S. Hartman)</td>
+        <td><span style="color:var(--purple);white-space:nowrap">● Individual draft</span></td>
+        <td style="text-align:center"><code>-00</code></td>
+        <td style="font-size:10px;color:var(--muted)"><code>pkg/cb4a</code></td>
+        <td style="font-size:11px">TRE JWT, PDP decision JWT, CB4A token, Tier model, DPoP binding via <code>cnf.jkt</code></td>
+      </tr>
+      <tr>
+        <td><a href="https://datatracker.ietf.org/doc/rfc9449/" target="_blank" style="color:var(--blue)">DPoP — OAuth 2.0 Demonstrating Proof of Possession</a></td>
+        <td style="white-space:nowrap;font-size:11px">IETF OAuth WG</td>
+        <td><span style="color:var(--green);white-space:nowrap">● RFC</span></td>
+        <td style="text-align:center"><code>RFC 9449</code></td>
+        <td style="font-size:10px;color:var(--muted)"><code>pkg/cb4a/cdp.go</code></td>
+        <td style="font-size:11px">DPoP proof JWT (<code>dpop+jwt</code>), <code>cnf.jkt</code> thumbprint, <code>ath</code> binding, <code>jti</code> replay protection in CDP</td>
+      </tr>
+      <tr>
+        <td><a href="https://openid.net/specs/openid-federation-1_0.html" target="_blank" style="color:var(--blue)">OID-FED — OpenID Federation 1.0</a></td>
+        <td style="white-space:nowrap;font-size:11px">OpenID Foundation</td>
+        <td><span style="color:var(--orange);white-space:nowrap">● Active draft</span></td>
+        <td style="text-align:center"><code>1.0-41</code></td>
+        <td style="font-size:10px;color:var(--muted)"><code>pkg/federation</code>, <code>internal/gateway/multivalidator.go</code></td>
+        <td style="font-size:11px">Entity Configuration, Subordinate Statement, <code>authority_hints</code>, chain resolution for cross-org AgentToken validation</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Automated tracking — how it works</div>
+    <div class="info-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="info-box blue">
+        <div class="ibt">Daily cron — 09:00 UTC</div>
+        <div class="ibv" style="font-size:11px;line-height:1.6">GitHub Actions runs <code>scripts/check_standards.py</code> each morning. The script queries the IETF Datatracker REST API for each tracked draft and compares the returned <code>rev</code> field against <code>standards-baseline.json</code>.</div>
+      </div>
+      <div class="info-box green">
+        <div class="ibt">Revision detected → baseline committed</div>
+        <div class="ibv" style="font-size:11px;line-height:1.6">When a new revision appears, <code>last_known_rev</code> is updated and committed with <code>[skip ci]</code>. A developer manually sets <code>implemented_rev</code> in the baseline file after updating the Go code to match the new revision.</div>
+      </div>
+      <div class="info-box orange">
+        <div class="ibt">GitHub issue created automatically</div>
+        <div class="ibv" style="font-size:11px;line-height:1.6">A <code>standards-update</code> labelled issue lists the new revision, PoC impact, affected files, and a checklist: read the IETF diff, check for breaking <code>typ</code> / claim / header changes, update the Go implementation, bump <code>implemented_rev</code>.</div>
+      </div>
+    </div>
+    <div class="callout ok" style="margin-top:1rem">
+      <strong>RFC and manual-only standards:</strong> DPoP is an RFC (stable, no API polling needed). OpenID Federation 1.0 has no IETF Datatracker API — the tracker skips it and flags it for manual review in any generated issue.
     </div>
   </div>
 </div>

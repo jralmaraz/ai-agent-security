@@ -1,0 +1,110 @@
+{
+  "_comment": "Tracks IETF/OpenID drafts implemented in this PoC. Updated daily by the standards-tracker GitHub Actions workflow. Set implemented_rev when the PoC code is updated to match a new revision.",
+  "last_checked": "2026-08-01",
+  "standards": [
+    {
+      "id": "draft-ietf-wimse-workload-creds",
+      "label": "WIMSE Workload Identity Credentials (WIT / AgentToken base)",
+      "short": "WIT",
+      "wg": "IETF WIMSE WG",
+      "last_known_rev": "02",
+      "implemented_rev": "02",
+      "status": "active-draft",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-wimse-workload-creds/",
+      "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-ietf-wimse-workload-creds/",
+      "impact": "AgentToken (agent+jwt) extends WIT structure — any cnf.jwk or typ changes affect pkg/identity",
+      "used_in": ["pkg/identity/token.go", "pkg/identity/chain.go"]
+    },
+    {
+      "id": "draft-ietf-wimse-wpt",
+      "label": "WIMSE Workload Proof Token (AgentProofToken base)",
+      "short": "WPT",
+      "wg": "IETF WIMSE WG",
+      "last_known_rev": "01",
+      "implemented_rev": "01",
+      "status": "active-draft",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-wimse-wpt/",
+      "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-ietf-wimse-wpt/",
+      "impact": "AgentProofToken (application/agent-proof+jwt) mirrors WPT claims — aud, wth, jti",
+      "used_in": ["pkg/identity/proof.go", "internal/gateway"]
+    },
+    {
+      "id": "draft-ietf-wimse-identifier",
+      "label": "WIMSE Workload Identifier",
+      "short": "Identifiers",
+      "wg": "IETF WIMSE WG",
+      "last_known_rev": "03",
+      "implemented_rev": "03",
+      "status": "active-draft",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-wimse-identifier/",
+      "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-ietf-wimse-identifier/",
+      "impact": "SPIFFE URI format for agent SVIDs — spiffe://trust-domain/path",
+      "used_in": ["pkg/identity/token.go", "pkg/keys/mtls.go"]
+    },
+    {
+      "id": "draft-ietf-wimse-mutual-tls",
+      "label": "WIMSE Mutual TLS Binding",
+      "short": "mTLS",
+      "wg": "IETF WIMSE WG",
+      "last_known_rev": "02",
+      "implemented_rev": "02",
+      "status": "active-draft",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-wimse-mutual-tls/",
+      "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-ietf-wimse-mutual-tls/",
+      "impact": "Token-cert binding in gateway middleware — URI SAN matching against AgentToken.sub",
+      "used_in": ["pkg/keys/mtls.go", "internal/gateway/server.go"]
+    },
+    {
+      "id": "draft-ietf-wimse-arch",
+      "label": "WIMSE Architecture",
+      "short": "Arch",
+      "wg": "IETF WIMSE WG",
+      "last_known_rev": "08",
+      "implemented_rev": "08",
+      "status": "active-draft",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-wimse-arch/",
+      "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-ietf-wimse-arch/",
+      "impact": "Token exchange, trust domain boundaries, delegation chain semantics",
+      "used_in": ["pkg/identity/chain.go", "internal/gateway"]
+    },
+    {
+      "id": "draft-hartman-credential-broker-4-agents",
+      "label": "Credential Broker for Agents (CB4A)",
+      "short": "CB4A",
+      "wg": "Individual Draft (S. Hartman)",
+      "last_known_rev": "00",
+      "implemented_rev": "00",
+      "status": "individual-draft",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-hartman-credential-broker-4-agents/",
+      "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-hartman-credential-broker-4-agents/",
+      "impact": "TRE JWT (tre+jwt), PDP decision (pdp-decision+jwt), CB4A token (cb4a-token+jwt), Tier model, DPoP binding via cnf.jkt",
+      "used_in": ["pkg/cb4a"]
+    },
+    {
+      "id": "rfc9449",
+      "label": "OAuth 2.0 DPoP (RFC 9449)",
+      "short": "DPoP",
+      "wg": "IETF OAuth WG",
+      "last_known_rev": "rfc",
+      "implemented_rev": "rfc",
+      "status": "rfc",
+      "datatracker_url": "https://datatracker.ietf.org/doc/rfc9449/",
+      "api_url": null,
+      "impact": "DPoP proof JWT (dpop+jwt), cnf.jkt thumbprint, ath binding, jti replay protection in CDP",
+      "used_in": ["pkg/cb4a/cdp.go"]
+    },
+    {
+      "id": "openid-federation-1_0",
+      "label": "OpenID Federation 1.0",
+      "short": "OID-FED",
+      "wg": "OpenID Foundation",
+      "last_known_rev": "1.0-41",
+      "implemented_rev": "1.0-41",
+      "status": "active-draft",
+      "datatracker_url": "https://openid.net/specs/openid-federation-1_0.html",
+      "api_url": null,
+      "impact": "Entity Configuration, Subordinate Statement, authority_hints, chain resolution for cross-org AgentToken validation",
+      "used_in": ["pkg/federation", "internal/gateway/multivalidator.go"]
+    }
+  ]
+}

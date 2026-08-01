@@ -1,0 +1,59 @@
+name: Standards Tracker
+
+# Checks IETF Datatracker daily for new revisions of the drafts this PoC
+# implements.  When a revision is found it commits the updated baseline and
+# opens a GitHub issue with an action checklist.
+
+on:
+  schedule:
+    - cron: '0 9 * * *'   # 09:00 UTC every day
+  workflow_dispatch:        # allow on-demand runs from the Actions tab
+
+permissions:
+  contents: write   # push updated standards-baseline.json
+  issues: write     # open tracking issues
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Create label once; --force makes this idempotent
+      - name: Ensure label exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create "standards-update" \
+            --description "IETF/OpenID draft revision changed — review required" \
+            --color "0075ca" \
+            --force 2>/dev/null || true
+
+      - name: Run standards tracker
+        id: tracker
+        run: python3 scripts/check_standards.py
+
+      # Only runs when at least one draft was updated
+      - name: Commit updated baseline
+        if: steps.tracker.outputs.updates_found == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add standards-baseline.json
+          # Guard: only commit if the file actually changed
+          git diff --cached --quiet || \
+            git commit -m "chore(standards): update baseline after daily check [skip ci]"
+          git push
+
+      - name: Open GitHub issue
+        if: steps.tracker.outputs.updates_found == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "${{ steps.tracker.outputs.issue_title }}" \
+            --body-file /tmp/standards_issue_body.md \
+            --label "standards-update"
