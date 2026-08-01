@@ -262,7 +262,8 @@ main{max-width:960px;margin:0 auto;padding:2rem}
 <div class="nav-wrapper">
   <button class="nav-arrow nav-arrow-left" id="nav-prev" onclick="navScroll(-1)" aria-label="Scroll tabs left">&#8249;</button>
   <nav id="main-nav">
-    <div class="tab active" onclick="showTab('problem',this)">The Problem</div>
+    <div class="tab active" onclick="showTab('standards',this)" style="border-bottom-color:var(--blue);color:var(--blue)">📋 Standards</div>
+    <div class="tab" onclick="showTab('problem',this)">The Problem</div>
     <div class="tab" onclick="showTab('happy',this)">Happy Path</div>
     <div class="tab" onclick="showTab('replay',this)">Replay Attack</div>
     <div class="tab" onclick="showTab('tamper',this)">Token Tampering</div>
@@ -273,7 +274,6 @@ main{max-width:960px;margin:0 auto;padding:2rem}
     <div class="tab" onclick="showTab('mtls',this)">mTLS Transport</div>
     <div class="tab" onclick="showTab('broker',this)">Credential Broker</div>
     <div class="tab" onclick="showTab('landscape',this)">Agent Auth Landscape</div>
-    <div class="tab" onclick="showTab('standards',this)">Standards</div>
   </nav>
   <div class="nav-fade" id="nav-fade"></div>
   <button class="nav-arrow nav-arrow-right" id="nav-next" onclick="navScroll(1)" aria-label="Scroll tabs right">&#8250;</button>
@@ -283,7 +283,7 @@ main{max-width:960px;margin:0 auto;padding:2rem}
 <main>
 
 <!-- ══ THE PROBLEM ════════════════════════════════════════════════════════ -->
-<div class="scene active" id="scene-problem">
+<div class="scene" id="scene-problem">
   <h2 style="font-size:1.5rem;font-weight:700;margin-bottom:.5rem">Why Agent Identity Matters</h2>
   <p style="color:var(--muted);margin-bottom:1.5rem;font-size:.95rem;line-height:1.7">
     As AI agents proliferate — spawning sub-agents, calling external APIs, acting on behalf of humans —
@@ -1981,7 +1981,7 @@ No EC keys accepted</pre>
   </div>
 </div>
 
-<div class="scene" id="scene-standards">
+<div class="scene active" id="scene-standards">
   <div class="card">
     <div class="card-title">Standards Tracker</div>
     <p class="spec-ref">
