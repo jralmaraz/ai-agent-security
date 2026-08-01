@@ -211,6 +211,25 @@ main{max-width:960px;margin:0 auto;padding:2rem}
 .compare-table tr:nth-child(even) td{background:rgba(255,255,255,.02)}
 .check{color:var(--green);font-weight:700}
 .cross{color:var(--red);font-weight:700}
+
+/* ── CB4A demo additions ── */
+.input-field{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:.45rem .7rem;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;transition:border-color .2s}
+.input-field:focus{border-color:var(--blue)}
+.tier-badge{display:inline-flex;align-items:center;gap:8px;padding:7px 16px;border-radius:8px;font-size:13px;font-weight:700}
+.tier-1{background:rgba(63,185,80,.12);color:var(--green);border:1px solid rgba(63,185,80,.4)}
+.tier-2{background:rgba(255,166,87,.12);color:var(--orange);border:1px solid rgba(255,166,87,.4)}
+.tier-3{background:rgba(248,81,73,.12);color:var(--red);border:1px solid rgba(248,81,73,.4)}
+.audit-tbl{width:100%;border-collapse:collapse;font-size:11px;font-family:var(--mono)}
+.audit-tbl th{background:var(--surface2);padding:5px 8px;text-align:left;border:1px solid var(--border);color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+.audit-tbl td{padding:5px 8px;border:1px solid var(--border);word-break:break-word}
+.audit-tbl tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+.scenario-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:1rem}
+.scenario-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.2rem;border-top:3px solid var(--blue)}
+.scenario-card.complement{border-top-color:var(--green)}
+.scenario-card.superior{border-top-color:var(--orange)}
+.scenario-card h4{font-size:.88rem;font-weight:700;margin-bottom:.4rem}
+.scenario-card p{font-size:.8rem;color:var(--muted);line-height:1.6;margin-bottom:.5rem}
+.scenario-card .tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -917,25 +936,326 @@ main{max-width:960px;margin:0 auto;padding:2rem}
 <!-- ══ CREDENTIAL BROKER ════════════════════════════════════════════════════ -->
 <div class="scene" id="scene-broker">
   <div class="card">
-    <div class="card-title">WIMSE Agent Fabric vs. CB4A — Credential Broker for Agents</div>
+    <div class="card-title">CB4A — Credential Broker for Agents</div>
     <p class="spec-ref">
-      Comparing <a href="https://datatracker.ietf.org/doc/html/draft-ietf-wimse-arch-08" target="_blank">draft-ietf-wimse-arch-08</a> (WIMSE)
-      with <a href="https://datatracker.ietf.org/doc/html/draft-hartman-credential-broker-4-agents-00" target="_blank">draft-hartman-credential-broker-4-agents-00</a> (CB4A, March 2026).
+      Implementing <a href="https://datatracker.ietf.org/doc/html/draft-hartman-credential-broker-4-agents-00" target="_blank">draft-hartman-credential-broker-4-agents-00</a> (March 2026) in Go — compiled to WASM.
+      All JWT signing, PDP evaluation, CDP minting, DPoP binding and verification run live in your browser.
     </p>
     <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">
-      Both address AI agent security using SPIFFE-based workload identity, but they solve different problems.
-      <strong style="color:var(--text)">WIMSE Agent Fabric</strong> handles agent-to-agent authorization via cryptographic delegation chains.
-      <strong style="color:var(--text)">CB4A</strong> handles agent access to <em>external API credentials</em> via a brokered vault.
+      CB4A solves <strong style="color:var(--text)">AI agent credential sprawl</strong>: AI agents increasingly need to call external APIs
+      (Stripe, GitHub, AWS, databases). Injecting long-lived API keys into agents creates massive exposure.
+      CB4A introduces a <em>Policy Decision Point</em> (PDP) that evaluates every credential request,
+      and a <em>Credential Delivery Point</em> (CDP) that mints short-lived, DPoP-bound tokens from a vault.
+      <strong style="color:var(--text)">Agents never hold real credentials.</strong>
     </p>
-    <div class="callout ok">
-      <strong>Key insight:</strong> WIMSE answers "who is this agent and what are they allowed to do here?"
-      CB4A answers "how does this agent safely obtain the external API token it needs to do it?"
-      They are <strong>complementary, not competing</strong>.
+    <div class="info-grid c3">
+      <div class="info-box blue">
+        <div class="ibt">PDP — Policy Decision Point</div>
+        <div class="ibv" style="font-size:11px;line-height:1.7">Evaluates every request against policy rules. Routes to Tier 1 (auto), Tier 2 (human), or Tier 3 (MFA). <strong>Zero credential access</strong> — policy authority only.</div>
+      </div>
+      <div class="info-box purple">
+        <div class="ibt">CDP — Credential Delivery Point</div>
+        <div class="ibv" style="font-size:11px;line-height:1.7">Verifies signed PDP decisions. Mints short-lived DPoP-bound tokens from HSM-backed vault. <strong>Zero policy authority</strong> — credentials only.</div>
+      </div>
+      <div class="info-box green">
+        <div class="ibt">DPoP — Sender Constraint (RFC 9449)</div>
+        <div class="ibv" style="font-size:11px;line-height:1.7">Fresh ephemeral key pair per mint. JWK thumbprint in token <code>cnf.jkt</code>. Per-request DPoP proof with <code>htm</code>, <code>htu</code>, <code>ath</code>. Stolen tokens are useless.</div>
+      </div>
     </div>
   </div>
 
-  <!-- Animated protocol flows -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem">
+  <!-- Architecture SVG -->
+  <div class="card">
+    <div class="card-title">Protocol Architecture</div>
+    <div class="diagram">
+      <svg viewBox="0 0 830 120" xmlns="http://www.w3.org/2000/svg">
+        <!-- Agent -->
+        <rect x="5" y="25" width="95" height="55" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+        <text x="52" y="46" text-anchor="middle" font-size="10" fill="#58a6ff" font-family="sans-serif" font-weight="700">Agent</text>
+        <text x="52" y="59" text-anchor="middle" font-size="8" fill="#7d8590" font-family="sans-serif">SPIFFE SVID</text>
+        <text x="52" y="72" text-anchor="middle" font-size="8" fill="#7d8590" font-family="sans-serif">signs TRE</text>
+        <!-- PDP -->
+        <rect x="175" y="25" width="110" height="55" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+        <text x="230" y="46" text-anchor="middle" font-size="10" fill="#ffa657" font-family="sans-serif" font-weight="700">PDP</text>
+        <text x="230" y="59" text-anchor="middle" font-size="8" fill="#7d8590" font-family="sans-serif">policy engine</text>
+        <text x="230" y="72" text-anchor="middle" font-size="8" fill="#ffa657" font-family="sans-serif">zero-cred access</text>
+        <!-- CDP -->
+        <rect x="375" y="25" width="110" height="55" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+        <text x="430" y="46" text-anchor="middle" font-size="10" fill="#bc8cff" font-family="sans-serif" font-weight="700">CDP</text>
+        <text x="430" y="59" text-anchor="middle" font-size="8" fill="#7d8590" font-family="sans-serif">mints DPoP token</text>
+        <text x="430" y="72" text-anchor="middle" font-size="8" fill="#bc8cff" font-family="sans-serif">zero-policy access</text>
+        <!-- Vault -->
+        <rect x="575" y="25" width="90" height="55" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+        <text x="620" y="46" text-anchor="middle" font-size="10" fill="#d29922" font-family="sans-serif" font-weight="700">Vault</text>
+        <text x="620" y="59" text-anchor="middle" font-size="8" fill="#7d8590" font-family="sans-serif">HSM / KMS</text>
+        <text x="620" y="72" text-anchor="middle" font-size="8" fill="#7d8590" font-family="sans-serif">CDP access only</text>
+        <!-- Ext API -->
+        <rect x="720" y="25" width="105" height="55" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+        <text x="772" y="46" text-anchor="middle" font-size="10" fill="#3fb950" font-family="sans-serif" font-weight="700">External API</text>
+        <text x="772" y="59" text-anchor="middle" font-size="8" fill="#7d8590" font-family="sans-serif">Stripe / AWS /</text>
+        <text x="772" y="72" text-anchor="middle" font-size="8" fill="#7d8590" font-family="sans-serif">GitHub / DB</text>
+        <!-- Wires -->
+        <line x1="100" y1="52" x2="175" y2="52" stroke="#30363d" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <line x1="285" y1="52" x2="375" y2="52" stroke="#30363d" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <line x1="485" y1="52" x2="575" y2="52" stroke="#30363d" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <line x1="665" y1="52" x2="720" y2="52" stroke="#30363d" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <!-- Labels on wires -->
+        <text x="137" y="44" text-anchor="middle" font-size="7.5" fill="#ffa657" font-family="monospace">TRE JWT</text>
+        <text x="330" y="44" text-anchor="middle" font-size="7.5" fill="#bc8cff" font-family="monospace">Decision JWT</text>
+        <text x="530" y="44" text-anchor="middle" font-size="7.5" fill="#d29922" font-family="monospace">base cred</text>
+        <text x="692" y="44" text-anchor="middle" font-size="7.5" fill="#3fb950" font-family="monospace">DPoP token</text>
+        <!-- Return arrow: CDP → Agent (token return) -->
+        <path d="M 430 80 Q 430 105 52 105 Q 52 105 52 90" stroke="#bc8cff" stroke-width="1.5" fill="none" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+        <text x="240" y="114" text-anchor="middle" font-size="7.5" fill="#bc8cff" font-family="monospace">DPoP-bound token returned to agent</text>
+        <defs>
+          <marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+            <path d="M 0 0 L 6 3 L 0 6 Z" fill="#bc8cff"/>
+          </marker>
+        </defs>
+        <!-- Packets for animation -->
+        <circle id="cb-pk1" cx="52" cy="52" r="5" class="pkt-circle"/>
+        <circle id="cb-pk2" cx="230" cy="52" r="5" class="pkt-circle"/>
+        <circle id="cb-pk3" cx="430" cy="52" r="5" class="pkt-circle"/>
+        <circle id="cb-pk4" cx="52" cy="52" r="5" class="pkt-circle"/>
+      </svg>
+    </div>
+    <div style="margin-bottom:10px">
+      <button class="btn btn-primary" id="cb-anim-btn" onclick="playBrokerAnim(this)">&#9654; Animate Flow</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+      <div class="anim-step-sm" id="cb-s1">① Agent signs Task Request Envelope (TRE JWT, typ: <code>tre+jwt</code>)</div>
+      <div class="anim-step-sm" id="cb-s2">② PDP evaluates policy — routes to Tier 1/2/3; issues signed Decision JWT</div>
+      <div class="anim-step-sm" id="cb-s3">③ CDP verifies Decision, retrieves base cred from vault, mints DPoP-bound token</div>
+      <div class="anim-step-sm" id="cb-s4">④ Agent calls External API: <code>Authorization: DPoP &lt;token&gt;</code> + <code>DPoP: &lt;proof&gt;</code></div>
+    </div>
+  </div>
+
+  <!-- Approval tiers -->
+  <div class="info-grid c3" style="margin-bottom:1rem">
+    <div class="info-box green">
+      <div class="ibt" style="color:var(--green)">Tier 1 — Auto-Approved</div>
+      <div class="ibv" style="font-size:11px;line-height:1.7;margin-bottom:6px">Instant approval. No human action. Low-risk scopes: read-only access to non-production data.</div>
+      <div class="ibv" style="font-size:10px;color:var(--muted)">Example: <code>analytics:events:read</code></div>
+    </div>
+    <div class="info-box orange">
+      <div class="ibt" style="color:var(--orange)">Tier 2 — Human-in-the-Loop</div>
+      <div class="ibv" style="font-size:11px;line-height:1.7;margin-bottom:6px">Request parked. Human reviews via dashboard and approves/denies async. Audit records approver identity.</div>
+      <div class="ibv" style="font-size:10px;color:var(--muted)">Example: <code>billing:invoices:write</code></div>
+    </div>
+    <div class="info-box red">
+      <div class="ibt" style="color:var(--red)">Tier 3 — FIDO2 / MFA</div>
+      <div class="ibv" style="font-size:11px;line-height:1.7;margin-bottom:6px">Synchronous MFA required. Approver must complete FIDO2 challenge before decision is issued. Highest-risk operations only.</div>
+      <div class="ibv" style="font-size:10px;color:var(--muted)">Example: admin identity + any scope</div>
+    </div>
+  </div>
+
+  <!-- Interactive Live Demo -->
+  <div class="card">
+    <div class="card-title">Live Interactive Demo — Real Go WASM (pkg/cb4a)</div>
+
+    <!-- Step 0: Init -->
+    <div id="bk-step-init">
+      <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">
+        Click Initialize to boot the CB4A system in your browser. Ephemeral PDP signing keys are generated,
+        a CDP is wired to an in-memory vault pre-seeded with 5 credential scopes, and an immutable audit log is created.
+        No network calls — all Go code runs via WASM.
+      </p>
+      <button class="btn btn-primary" id="bk-init-btn" onclick="bkInit(this)">⚙ Initialize CB4A System</button>
+    </div>
+
+    <!-- Main demo (shown after init) -->
+    <div id="bk-step-main" style="display:none">
+
+      <!-- Preset selector -->
+      <div style="margin-bottom:14px;padding-top:14px;border-top:1px solid var(--border)">
+        <div class="ibt" style="margin-bottom:8px">Choose a Scenario (or fill in custom below)</div>
+        <div class="btn-group">
+          <button class="btn" id="bk-p-auto" onclick="bkPreset('auto',this)">📊 Analytics Read — Tier 1 Auto</button>
+          <button class="btn" id="bk-p-hitl" onclick="bkPreset('hitl',this)">💰 Invoice Write — Tier 2 HITL</button>
+          <button class="btn" id="bk-p-mfa"  onclick="bkPreset('mfa',this)">🛡 Admin Deploy — Tier 3 MFA</button>
+        </div>
+      </div>
+
+      <!-- Request form -->
+      <div class="info-grid" style="margin-bottom:10px">
+        <div>
+          <div class="ibt">Agent SVID</div>
+          <input id="bk-svid"   class="input-field" placeholder="spiffe://cloud.example/svc/...">
+        </div>
+        <div>
+          <div class="ibt">OAuth Scope</div>
+          <input id="bk-scope-in" class="input-field" placeholder="billing:invoices:read">
+        </div>
+        <div>
+          <div class="ibt">Target API</div>
+          <input id="bk-target-in" class="input-field" placeholder="api.stripe.com">
+        </div>
+        <div>
+          <div class="ibt">HTTP Action</div>
+          <input id="bk-action-in" class="input-field" placeholder="POST">
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <div class="ibt">Justification <span style="font-weight:400;color:var(--green);font-size:10px">(forensics only — excluded from authorization decisions)</span></div>
+        <input id="bk-just-in" class="input-field" placeholder="Why does this agent need access?">
+      </div>
+      <button class="btn btn-primary" id="bk-submit-btn" onclick="bkSubmit(this)">➤ Submit Task Request to PDP</button>
+
+      <!-- PDP Result -->
+      <div id="bk-pdp-result" style="display:none;margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border)">
+        <div class="ibt" style="margin-bottom:8px">PDP Evaluation Result</div>
+        <div id="bk-tier-badge"><!-- injected --></div>
+        <div id="bk-pdp-detail" style="font-size:13px;color:var(--muted);margin:8px 0 12px">—</div>
+
+        <!-- HITL / MFA approval panel -->
+        <div id="bk-approval-ui" style="display:none">
+          <div class="callout warn" style="margin-bottom:12px">
+            <strong>Human action required.</strong> The agent is waiting. Review the request and approve or deny.
+            In production this would be a Slack notification / web dashboard with FIDO2 MFA for Tier 3.
+          </div>
+          <div id="bk-req-summary" style="background:rgba(255,166,87,.05);border:1px solid rgba(255,166,87,.3);border-radius:8px;padding:12px;font-size:12px;font-family:var(--mono);margin-bottom:12px;white-space:pre-wrap">—</div>
+          <div class="btn-group">
+            <button class="btn btn-primary" id="bk-approve-btn" onclick="bkApprove(this)">✓ Approve Request</button>
+            <button class="btn btn-danger"  id="bk-deny-btn"   onclick="bkDeny(this)">✗ Deny Request</button>
+          </div>
+        </div>
+
+        <!-- Mint button (shown after approval or auto-approve) -->
+        <div id="bk-mint-ready" style="display:none;margin-top:10px">
+          <div class="callout ok" style="margin-bottom:10px">
+            Decision JWT issued and signed. The agent can now present it to the CDP to mint a DPoP-bound token.
+          </div>
+          <button class="btn btn-primary" id="bk-mint-btn" onclick="bkMint(this)">🪙 Mint DPoP-Bound Token (CDP)</button>
+        </div>
+      </div>
+
+      <!-- Minted token panel -->
+      <div id="bk-token-result" style="display:none;margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border)">
+        <div class="ibt" style="margin-bottom:8px">Minted Credential</div>
+        <div class="info-grid c3" style="margin-bottom:10px">
+          <div class="info-box green">
+            <div class="ibt">Scope</div>
+            <div class="ibv" id="bk-tok-scope">—</div>
+          </div>
+          <div class="info-box purple">
+            <div class="ibt">Ephemeral Key Fingerprint (DPoP)</div>
+            <div class="ibv" id="bk-tok-key">—</div>
+          </div>
+          <div class="info-box blue">
+            <div class="ibt">Token Expires</div>
+            <div class="ibv" id="bk-tok-exp">—</div>
+          </div>
+        </div>
+        <div class="callout ok" style="margin-bottom:14px">
+          The actual API key <strong>never left the vault</strong>. The agent holds only a short-lived token
+          sender-constrained to the ephemeral key. A stolen token cannot be replayed without the private key.
+        </div>
+        <div class="ibt" style="margin-bottom:6px">Simulate API Call</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+          <select id="bk-method-sel" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:.45rem .7rem;border-radius:6px;font-size:12px;font-family:var(--mono)">
+            <option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option>
+          </select>
+          <input id="bk-uri-in" class="input-field" style="flex:1" placeholder="https://api.example.com/v1/resource">
+        </div>
+        <button class="btn btn-primary" id="bk-api-btn" onclick="bkAPICall(this)">⚡ Call API with DPoP Proof</button>
+        <div id="bk-api-result" style="display:none;margin-top:10px"></div>
+      </div>
+
+      <!-- Audit trail -->
+      <div id="bk-audit-section" style="display:none;margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border)">
+        <div class="ibt" style="margin-bottom:8px">Immutable Audit Trail <span id="bk-audit-count" style="color:var(--muted);font-size:11px"></span></div>
+        <button class="btn" style="margin-bottom:10px" onclick="bkAudit(this)">↻ Refresh</button>
+        <div id="bk-audit-out" style="overflow-x:auto"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Credential Management Comparison -->
+  <div class="card">
+    <div class="card-title">Why CB4A? Comparison with Other Credential Management Approaches</div>
+    <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">
+      AI agents need credentials to call external APIs. How you manage those credentials determines your blast radius
+      when an agent is compromised. Here's how CB4A compares — and where it <em>complements</em> tools you already have.
+    </p>
+    <table class="compare-table">
+      <tr>
+        <th>Approach</th>
+        <th>Agents hold real creds?</th>
+        <th>Per-request policy?</th>
+        <th>Human approval?</th>
+        <th>Token binding?</th>
+        <th>Immutable audit?</th>
+      </tr>
+      <tr>
+        <td><strong>Static Secrets</strong><br><small style="color:var(--muted)">env vars / baked into containers</small></td>
+        <td class="cross">Always — in memory, logs, cores</td>
+        <td class="cross">None</td>
+        <td class="cross">None</td>
+        <td class="cross">None</td>
+        <td class="cross">None</td>
+      </tr>
+      <tr>
+        <td><strong>HashiCorp Vault</strong><br><small style="color:var(--muted)">agent retrieves secret via API</small></td>
+        <td style="color:var(--yellow)">⚠ Briefly (after retrieval)</td>
+        <td class="cross">None post-retrieval</td>
+        <td class="cross">None</td>
+        <td class="cross">None</td>
+        <td style="color:var(--yellow)">⚠ Vault access log only</td>
+      </tr>
+      <tr>
+        <td><strong>1Password / AWS Secrets Mgr</strong><br><small style="color:var(--muted)">cloud-native secret stores</small></td>
+        <td style="color:var(--yellow)">⚠ Briefly (after retrieval)</td>
+        <td class="cross">None post-retrieval</td>
+        <td class="cross">None</td>
+        <td class="cross">None</td>
+        <td style="color:var(--yellow)">⚠ Access log only</td>
+      </tr>
+      <tr style="background:rgba(63,185,80,.04)">
+        <td><strong style="color:var(--green)">CB4A</strong><br><small style="color:var(--muted)">brokered credential issuance</small></td>
+        <td class="check">Never — DPoP token only</td>
+        <td class="check">Every request — PDP evaluates</td>
+        <td class="check">Tiered: auto / HITL / FIDO2 MFA</td>
+        <td class="check">DPoP RFC 9449 (cnf.jkt)</td>
+        <td class="check">Append-only, fail-closed</td>
+      </tr>
+    </table>
+
+    <h3 style="font-size:.9rem;font-weight:700;margin:1.5rem 0 .5rem">Deployment Scenarios</h3>
+
+    <div class="scenario-cards">
+      <div class="scenario-card superior">
+        <span class="tag pill-o">CB4A superior</span>
+        <h4>Migrating from Static Secrets</h4>
+        <p>API keys baked into Docker images or injected as env vars are the worst credential pattern. Any agent compromise, log leak, or process dump exposes the key with no TTL and no scope constraint.</p>
+        <p><strong style="color:var(--text)">CB4A replaces key injection entirely.</strong> Agents authenticate with their SPIFFE SVID and receive short-lived, scoped, DPoP-bound tokens per request. The API key never leaves the vault. A compromised agent can only use its current token until expiry — and only for the approved scope and URI.</p>
+        <div style="font-size:11px;color:var(--muted)">Migration: Vault stores the old API keys; CB4A's CDP becomes the only caller. Agents get new binaries that call CB4A instead of env vars.</div>
+      </div>
+
+      <div class="scenario-card complement">
+        <span class="tag pill-g">Complementary with Vault</span>
+        <h4>HashiCorp Vault Already Deployed</h4>
+        <p>Your team already uses Vault for secret storage — dynamic secrets, PKI, KV v2. Agents currently call <code>vault read secret/api-key</code> and use the returned value directly. The problem: after retrieval, the agent holds a long-lived credential Vault can't revoke without a full rotation.</p>
+        <p><strong style="color:var(--text)">CB4A adds the governance layer Vault lacks.</strong> The CDP is the only entity in Vault's access policy for the credential paths. Agents call CB4A, not Vault. CB4A adds: per-request PDP evaluation, DPoP sender-constraint (stolen token useless), tiered human approval for sensitive scopes, and an immutable audit trail correlating request → decision → API usage.</p>
+        <div style="font-size:11px;color:var(--muted)">Integration: Replace <code>vault policy: agent-read</code> with <code>cdp-only-read</code>. No secret migration needed — Vault stays as the HSM backend.</div>
+      </div>
+
+      <div class="scenario-card complement">
+        <span class="tag pill-g">Complementary with Cloud SM</span>
+        <h4>AWS Secrets Manager / 1Password for Business</h4>
+        <p>Cloud-native secret stores offer rotation, cross-region replication, IAM policies, and audit logs. Agents use SDK calls to retrieve credentials at startup or per-request. But retrieval still hands the raw credential to the agent process — post-retrieval exposure is identical to static secrets.</p>
+        <p><strong style="color:var(--text)">CB4A uses your cloud SM as the vault backend.</strong> The CDP reads from AWS Secrets Manager or 1Password's API. Your existing secrets, rotation schedules, and IAM policies remain unchanged. What changes: agents never call AWS SM directly; they call CB4A. The cloud SM IAM policy restricts direct access to the CDP service account only. CB4A adds per-request approval, DPoP binding, and cross-agent correlation that cloud SM audit logs cannot provide.</p>
+        <div style="font-size:11px;color:var(--muted)">Integration: Create a CDP service account with read-only access to specific secret paths. All other IAM entities denied. Zero migration cost for existing secrets.</div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:1rem">
+      <strong>Bottom line:</strong> If you already run Vault or AWS Secrets Manager, CB4A is an upgrade path, not a replacement.
+      Your stored credentials stay where they are — CB4A's CDP becomes the exclusive caller, adding per-request governance
+      on top of your existing investment. The more sensitive the AI agent's scope, the higher the value of CB4A's tiered approval.
+    </div>
+  </div>
+
+</div>
 
     <!-- WIMSE flow -->
     <div class="card" style="padding:14px">
@@ -1743,90 +2063,251 @@ async function playMTLSDemo(btn) {
   mtlsRunning = false;
 }
 
-// ── Credential Broker comparison demo ────────────────────────────────────────
+// ── CB4A architecture animation ───────────────────────────────────────────────
 
-let brokerRunning = false;
-
-async function playBrokerDemo(btn) {
-  if (brokerRunning) return;
-  brokerRunning = true;
+let bkAnimRunning = false;
+async function playBrokerAnim(btn) {
+  if (bkAnimRunning) return;
+  bkAnimRunning = true;
   if (btn) { btn.disabled = true; btn.textContent = 'Running…'; }
-
-  // Reset all step boxes and labels
-  ['wf-s1','wf-s2','wf-s3','wf-s4'].forEach(id => afSetStep(id, ''));
   ['cb-s1','cb-s2','cb-s3','cb-s4'].forEach(id => afSetStep(id, ''));
-  ['wf-lbl1','wf-lbl2','cb-lbl1','cb-lbl2','cb-lbl3','cb-lbl4'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.setAttribute('visibility', 'hidden');
-  });
-
-  // Step 1: Agent → Gateway (WIMSE) + Agent → PDP (CB4A)
-  afSetStep('wf-s1','active'); afSetStep('cb-s1','active');
-  document.getElementById('wf-lbl1').setAttribute('visibility','visible');
-  document.getElementById('cb-lbl1').setAttribute('visibility','visible');
-  await Promise.all([
-    animPktC('wf-pk1', 60, 270, '#58a6ff', 800),
-    animPktC('cb-pk1', 50, 200, '#ffa657', 800),
-  ]);
-  afSetStep('wf-s1','done'); afSetStep('cb-s1','done');
-  await delay(350);
-
-  // Step 2: Gateway validates locally (no packet) + PDP → CDP (CB4A approval)
-  afSetStep('wf-s2','active'); afSetStep('cb-s2','active');
-  document.getElementById('cb-lbl2').setAttribute('visibility','visible');
-  await Promise.all([
-    delay(850),
-    animPktC('cb-pk2', 200, 350, '#58a6ff', 800),
-  ]);
-  afSetStep('wf-s2','done'); afSetStep('cb-s2','done');
-  await delay(350);
-
-  // Step 3: Gateway authz check (no packet) + CDP → Agent token return (right to left)
-  afSetStep('wf-s3','active'); afSetStep('cb-s3','active');
-  document.getElementById('cb-lbl3').setAttribute('visibility','visible');
-  await Promise.all([
-    delay(850),
-    animPktC('cb-pk3', 350, 50, '#bc8cff', 800),
-  ]);
-  afSetStep('wf-s3','done'); afSetStep('cb-s3','done');
-  await delay(350);
-
-  // Step 4: WIMSE → Tool + Agent → External API
-  afSetStep('wf-s4','active'); afSetStep('cb-s4','active');
-  document.getElementById('wf-lbl2').setAttribute('visibility','visible');
-  document.getElementById('cb-lbl4').setAttribute('visibility','visible');
-  await Promise.all([
-    animPktC('wf-pk2', 270, 490, '#3fb950', 750),
-    animPktC('cb-pk4', 50,  500, '#3fb950', 950),
-  ]);
-  afSetStep('wf-s4','done'); afSetStep('cb-s4','done');
-
+  afSetStep('cb-s1','active');
+  await animPktC('cb-pk1', 52, 230, '#ffa657', 800);
+  afSetStep('cb-s1','done'); await delay(200);
+  afSetStep('cb-s2','active');
+  await animPktC('cb-pk2', 230, 430, '#bc8cff', 800);
+  afSetStep('cb-s2','done'); await delay(200);
+  afSetStep('cb-s3','active');
+  await animPktC('cb-pk3', 430, 52, '#bc8cff', 900);  // token return right-to-left
+  afSetStep('cb-s3','done'); await delay(200);
+  afSetStep('cb-s4','active');
+  await animPktC('cb-pk4', 52, 772, '#3fb950', 1000);
+  afSetStep('cb-s4','done');
   if (btn) { btn.disabled = false; btn.textContent = '↺ Run Again'; }
-  brokerRunning = false;
+  bkAnimRunning = false;
 }
 
-async function runBrokerWasm(btn) {
-  if (btn) { btn.disabled = true; btn.textContent = 'Running…'; }
-  const r1 = call('setup');
-  if (!r1.ok) { alert('Setup failed: ' + r1.error); if (btn) btn.disabled = false; return; }
-  const r = call('simulateCredentialBroker');
-  if (!r.ok) { alert(r.error); if (btn) btn.disabled = false; return; }
+// ── CB4A live interactive demo ────────────────────────────────────────────────
 
-  setText('cb-wimse-sub',    r.wimseSub       || '—');
-  setText('cb-wimse-target', r.wimseTarget     || '—');
-  setText('cb-wimse-hash',   r.wimseChainHash  || '—');
-  setText('cb-wimse-token',  r.wimseToken      || '—');
-  setText('cb-wimse-proof',  r.wimseProof      || '—');
-  setText('cb-pdp-decision', r.cb4aDecision    || '—');
-  setText('cb-token-type',   r.cb4aTokenType   || '—');
-  setText('cb-scope',        r.cb4aTokenScope  || '—');
-  setText('cb-ttl',          r.cb4aTokenTTL    || '—');
-  setText('cb-dpop',         r.cb4aDPoP        || '—');
-  const envEl = document.getElementById('cb-envelope');
-  if (envEl) envEl.textContent = r.cb4aEnvelope || '—';
+let bkDecisionJWT = '';
+let bkRequestID   = '';
+let bkCurrentTier = 0;
+const bkPresets = {
+  auto: {
+    svid:   'spiffe://cloud.example/svc/dashboard',
+    scope:  'analytics:events:read',
+    target: 'api.analytics.example',
+    action: 'GET',
+    just:   'Dashboard data refresh for morning report'
+  },
+  hitl: {
+    svid:   'spiffe://cloud.example/svc/billing',
+    scope:  'billing:invoices:write',
+    target: 'api.stripe.com',
+    action: 'POST',
+    just:   'Monthly invoice batch run — scheduled job'
+  },
+  mfa: {
+    svid:   'spiffe://cloud.example/admin/deployer',
+    scope:  'billing:invoices:write',
+    target: 'api.stripe.com',
+    action: 'POST',
+    just:   'Emergency refund processing by admin'
+  }
+};
 
-  document.getElementById('cb-wasm-out').style.display = 'block';
-  if (btn) { btn.disabled = false; btn.textContent = '↺ Run Again'; }
+const uriForScope = {
+  'analytics:events:read':  'https://api.analytics.example/v1/events',
+  'billing:invoices:read':  'https://api.stripe.com/v1/invoices',
+  'billing:invoices:write': 'https://api.stripe.com/v1/invoices',
+  'github:repos:read':      'https://api.github.com/repos',
+  'stripe:charges:write':   'https://api.stripe.com/v1/charges'
+};
+
+function bkPreset(type, _btn) {
+  const p = bkPresets[type];
+  if (!p) return;
+  document.getElementById('bk-svid').value      = p.svid;
+  document.getElementById('bk-scope-in').value  = p.scope;
+  document.getElementById('bk-target-in').value = p.target;
+  document.getElementById('bk-action-in').value = p.action;
+  document.getElementById('bk-just-in').value   = p.just;
+  // Pre-fill API call URI based on scope
+  const uriEl = document.getElementById('bk-uri-in');
+  if (uriEl) uriEl.value = uriForScope[p.scope] || 'https://api.example.com/v1/resource';
+  // Pre-select method
+  const methodEl = document.getElementById('bk-method-sel');
+  if (methodEl) methodEl.value = p.action;
+}
+
+function bkInit(btn) {
+  if (btn) { btn.disabled = true; btn.textContent = 'Initializing…'; }
+  const r = call('cb4aInit');
+  if (!r.ok) { alert('Init failed: ' + (r.error || '?')); if (btn) { btn.disabled = false; btn.textContent = '⚙ Initialize CB4A System'; } return; }
+  document.getElementById('bk-step-main').style.display = 'block';
+  document.getElementById('bk-step-init').innerHTML =
+    '<div class="callout ok">CB4A system initialized. PDP + CDP + vault ready. Vault holds 5 credential scopes. <strong>Go WASM running.</strong></div>';
+  // Reset state
+  bkDecisionJWT = ''; bkRequestID = ''; bkCurrentTier = 0;
+  ['bk-pdp-result','bk-token-result','bk-audit-section'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  // Apply auto preset by default
+  bkPreset('auto', null);
+}
+
+async function bkSubmit(btn) {
+  if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
+  bkDecisionJWT = ''; bkRequestID = '';
+  ['bk-token-result'].forEach(id => { const e = document.getElementById(id); if(e) e.style.display='none'; });
+
+  const r = call('cb4aSubmit',
+    document.getElementById('bk-svid').value,
+    document.getElementById('bk-scope-in').value,
+    document.getElementById('bk-target-in').value,
+    document.getElementById('bk-action-in').value,
+    document.getElementById('bk-just-in').value
+  );
+  if (btn) { btn.disabled = false; btn.textContent = '➤ Submit Task Request to PDP'; }
+  if (!r.ok) { alert('PDP error: ' + (r.error || '?')); return; }
+
+  bkCurrentTier = r.tier || 0;
+  const tierClass = ['','tier-1','tier-2','tier-3'][bkCurrentTier] || '';
+  const tierEl = document.getElementById('bk-tier-badge');
+  tierEl.innerHTML = `<span class="tier-badge ${tierClass}">${r.tierName || 'Unknown Tier'}</span>`;
+
+  document.getElementById('bk-pdp-result').style.display = 'block';
+  document.getElementById('bk-approval-ui').style.display  = 'none';
+  document.getElementById('bk-mint-ready').style.display   = 'none';
+
+  if (r.status === 'auto-approved') {
+    bkDecisionJWT = r.decisionJWT || '';
+    document.getElementById('bk-pdp-detail').textContent =
+      'Policy matched: auto-approved by rule. Signed PDP Decision JWT ready.';
+    document.getElementById('bk-mint-ready').style.display = 'block';
+  } else {
+    bkRequestID = r.requestID || '';
+    const tier3note = bkCurrentTier === 3 ? ' FIDO2 MFA would be required in production.' : '';
+    document.getElementById('bk-pdp-detail').textContent =
+      `Request parked (ID: ${bkRequestID}). Awaiting human action.${tier3note}`;
+    document.getElementById('bk-req-summary').textContent =
+      `SVID:   ${document.getElementById('bk-svid').value}\n` +
+      `Scope:  ${document.getElementById('bk-scope-in').value}\n` +
+      `Target: ${document.getElementById('bk-target-in').value}\n` +
+      `Action: ${document.getElementById('bk-action-in').value}\n` +
+      `Tier:   ${r.tierName}\n` +
+      `ReqID:  ${bkRequestID}`;
+    document.getElementById('bk-approval-ui').style.display = 'block';
+  }
+  bkShowAudit();
+}
+
+async function bkApprove(btn) {
+  if (!bkRequestID) { alert('No pending request ID.'); return; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Approving…'; }
+  const r = call('cb4aApprove', bkRequestID);
+  if (btn) { btn.disabled = false; btn.textContent = '✓ Approve Request'; }
+  if (!r.ok) { alert('Approve failed: ' + (r.error || '?')); return; }
+  bkDecisionJWT = r.decisionJWT || '';
+  document.getElementById('bk-approval-ui').style.display = 'none';
+  document.getElementById('bk-pdp-detail').textContent = `Approved by ${r.approver || 'demo-approver'}. Decision JWT signed.`;
+  document.getElementById('bk-mint-ready').style.display = 'block';
+  bkShowAudit();
+}
+
+async function bkDeny(btn) {
+  if (!bkRequestID) { alert('No pending request ID.'); return; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Denying…'; }
+  const r = call('cb4aDeny', bkRequestID);
+  if (btn) { btn.disabled = false; btn.textContent = '✗ Deny Request'; }
+  if (!r.ok) { alert('Deny failed: ' + (r.error || '?')); return; }
+  document.getElementById('bk-approval-ui').style.display = 'none';
+  document.getElementById('bk-pdp-detail').textContent = 'Request denied. No credential will be issued.';
+  bkShowAudit();
+}
+
+async function bkMint(btn) {
+  if (!bkDecisionJWT) { alert('No decision JWT available. Submit and approve first.'); return; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Minting…'; }
+  const r = call('cb4aMint', bkDecisionJWT);
+  if (btn) { btn.disabled = false; btn.textContent = '🪙 Mint DPoP-Bound Token (CDP)'; }
+  if (!r.ok) { alert('Mint failed: ' + (r.error || '?')); return; }
+
+  setText('bk-tok-scope', r.scope || '—');
+  setText('bk-tok-key',   (r.ephKeyFingerprint || '—') + ' (P-256 X)');
+  setText('bk-tok-exp',   r.expiresAt || '—');
+
+  // Pre-fill API call fields from current form values
+  const scope = document.getElementById('bk-scope-in').value;
+  const uriEl = document.getElementById('bk-uri-in');
+  if (uriEl && (!uriEl.value || uriEl.value === 'https://api.example.com/v1/resource')) {
+    uriEl.value = uriForScope[scope] || 'https://api.example.com/v1/resource';
+  }
+  const methodEl = document.getElementById('bk-method-sel');
+  if (methodEl) methodEl.value = document.getElementById('bk-action-in').value || 'GET';
+
+  document.getElementById('bk-token-result').style.display = 'block';
+  document.getElementById('bk-api-result').style.display = 'none';
+  bkShowAudit();
+}
+
+async function bkAPICall(btn) {
+  if (btn) { btn.disabled = true; btn.textContent = 'Calling…'; }
+  const method = document.getElementById('bk-method-sel').value;
+  const uri    = document.getElementById('bk-uri-in').value;
+  const r = call('cb4aAPICall', method, uri);
+  if (btn) { btn.disabled = false; btn.textContent = '⚡ Call API with DPoP Proof'; }
+
+  const resEl = document.getElementById('bk-api-result');
+  resEl.style.display = 'block';
+  if (r.ok) {
+    resEl.innerHTML = `<div class="verdict allow">✓ AUTHORIZED — ${r.detail || ''}</div>
+      <div class="callout ok" style="font-size:12px">DPoP proof verified: htm ✓ htu ✓ ath ✓ cnf.jkt ✓ jti-unique ✓. Audit record written.</div>`;
+  } else {
+    resEl.innerHTML = `<div class="verdict deny">✗ REJECTED — ${r.detail || r.error || '?'}</div>`;
+  }
+  bkShowAudit();
+}
+
+function bkShowAudit() {
+  document.getElementById('bk-audit-section').style.display = 'block';
+  bkAudit(null);
+}
+
+function bkAudit(_btn) {
+  const r = call('cb4aAudit');
+  if (!r.ok) return;
+  const count = r.count || 0;
+  document.getElementById('bk-audit-count').textContent = `(${count} event${count !== 1 ? 's' : ''})`;
+  let entries = [];
+  try { entries = JSON.parse(r.entries || '[]'); } catch(_) {}
+
+  const eventColor = {
+    envelope_received:  '#58a6ff',
+    policy_evaluated:   '#ffa657',
+    approved:           '#3fb950',
+    denied:             '#f85149',
+    credential_minted:  '#bc8cff',
+    api_call:           '#3fb950',
+    replay_rejected:    '#f85149'
+  };
+
+  let html = '<table class="audit-tbl"><thead><tr><th>Time</th><th>Event</th><th>SVID</th><th>Scope</th><th>Tier</th><th>Detail</th><th>OK</th></tr></thead><tbody>';
+  entries.forEach(e => {
+    const col = eventColor[e.event] || '#7d8590';
+    html += `<tr>
+      <td>${e.timestamp}</td>
+      <td style="color:${col};white-space:nowrap">${e.event}</td>
+      <td style="color:var(--muted)">${(e.agent_svid||'').replace('spiffe://cloud.example/','…/')}</td>
+      <td>${e.scope||''}</td>
+      <td style="text-align:center">${e.tier || ''}</td>
+      <td style="color:var(--muted)">${e.detail||''}</td>
+      <td style="text-align:center">${e.success ? '<span class="check">✓</span>' : '<span class="cross">✗</span>'}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('bk-audit-out').innerHTML = entries.length ? html : '<div style="color:var(--muted);font-size:12px;padding:8px">No audit entries yet.</div>';
 }
 
 async function doFedValidate() {

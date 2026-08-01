@@ -14,6 +14,7 @@ import (
 	"syscall/js"
 	"time"
 
+	"github.com/jralmaraz/wimse-agent-fabric/pkg/cb4a"
 	"github.com/jralmaraz/wimse-agent-fabric/pkg/federation"
 	"github.com/jralmaraz/wimse-agent-fabric/pkg/identity"
 	"github.com/jralmaraz/wimse-agent-fabric/pkg/keys"
@@ -275,6 +276,262 @@ func simulateTampering(_ js.Value, _ []js.Value) any {
 		"result":        "REJECTED: " + err.Error(),
 		"protection":    "ES256 signature verification working correctly",
 	})
+}
+
+// ── CB4A (Credential Broker for Agents) state ─────────────────────────────────
+
+var (
+	globalPDP    *cb4a.InMemoryPDP
+	globalCDP    *cb4a.CDP
+	globalAudit  *cb4a.AuditLog
+	globalPDPKP  *keys.ECKeyPair
+	globalMinted *cb4a.MintedCredential // most recently minted credential
+)
+
+// cb4aInit initialises the PDP, CDP, and audit log for the live demo.
+func cb4aInit(_ js.Value, _ []js.Value) any {
+	var err error
+	globalPDPKP, err = keys.GenerateECKeyPair()
+	if err != nil {
+		return errObj("generate PDP key: " + err.Error())
+	}
+	cdpKP, err := keys.GenerateECKeyPair()
+	if err != nil {
+		return errObj("generate CDP key: " + err.Error())
+	}
+
+	globalAudit = cb4a.NewAuditLog()
+	globalPDP = cb4a.NewInMemoryPDP(
+		"https://pdp.demo.example",
+		globalPDPKP.Private,
+		cb4a.DefaultPolicyRules(),
+		15*time.Minute,
+		globalAudit,
+	)
+	globalCDP = cb4a.NewCDP(
+		cb4a.NewInMemoryVault(),
+		globalPDPKP.Public,
+		cdpKP.Private,
+		"https://cdp.demo.example",
+		15*time.Minute,
+		globalAudit,
+	)
+	globalMinted = nil
+
+	pdpJWK, _ := keys.PublicKeyToJWK(globalPDPKP.Public, "pdp-key")
+	pdpKeyX := ""
+	if pdpJWK != nil {
+		pdpKeyX = pdpJWK.X
+	}
+
+	return okObj(map[string]any{
+		"message":  "CB4A demo initialised. PDP, CDP, and vault ready.",
+		"pdpKeyX":  pdpKeyX,
+		"vaultSize": 5,
+	})
+}
+
+// cb4aSubmit submits a credential request to the PDP.
+// args: [agentSVID, scope, target, action, justification?]
+func cb4aSubmit(_ js.Value, args []js.Value) any {
+	if globalPDP == nil {
+		return errObj("call cb4aInit() first")
+	}
+	if len(args) < 4 {
+		return errObj("usage: cb4aSubmit(svid, scope, target, action [, justification])")
+	}
+	agentSVID := args[0].String()
+	scope := args[1].String()
+	target := args[2].String()
+	action := args[3].String()
+	justification := ""
+	if len(args) > 4 {
+		justification = args[4].String()
+	}
+
+	env := &cb4a.EnvelopeClaims{
+		AgentSVID:     agentSVID,
+		Target:        target,
+		Action:        action,
+		Scope:         scope,
+		Justification: justification,
+	}
+	_ = globalAudit.Append(cb4a.AuditEntry{
+		Event:     cb4a.EventEnvelopeReceived,
+		AgentSVID: agentSVID,
+		Target:    target,
+		Action:    action,
+		Scope:     scope,
+		Detail:    "TRE submitted to PDP",
+		Success:   true,
+	})
+
+	decisionJWT, reqID, err := globalPDP.Evaluate(env)
+	if err != nil {
+		return errObj("PDP evaluate: " + err.Error())
+	}
+
+	tierNames := map[cb4a.ApprovalTier]string{
+		cb4a.TierAuto: "Tier 1 — Auto-Approved",
+		cb4a.TierHITL: "Tier 2 — Human-in-the-Loop",
+		cb4a.TierMFA:  "Tier 3 — MFA Required",
+	}
+
+	if decisionJWT != "" {
+		return okObj(map[string]any{
+			"tier":        int(cb4a.TierAuto),
+			"tierName":    tierNames[cb4a.TierAuto],
+			"status":      "auto-approved",
+			"decisionJWT": decisionJWT,
+		})
+	}
+
+	req := globalPDP.Get(reqID)
+	tier := cb4a.TierHITL
+	if req != nil {
+		tier = req.Tier
+	}
+	return okObj(map[string]any{
+		"tier":      int(tier),
+		"tierName":  tierNames[tier],
+		"status":    "pending",
+		"requestID": reqID,
+	})
+}
+
+// cb4aApprove approves a pending HITL/MFA request.
+// args: [requestID]
+func cb4aApprove(_ js.Value, args []js.Value) any {
+	if globalPDP == nil {
+		return errObj("call cb4aInit() first")
+	}
+	if len(args) < 1 {
+		return errObj("usage: cb4aApprove(requestID)")
+	}
+	reqID := args[0].String()
+	decisionJWT, err := globalPDP.Approve(reqID, "demo-approver")
+	if err != nil {
+		return errObj("approve: " + err.Error())
+	}
+	return okObj(map[string]any{
+		"decisionJWT": decisionJWT,
+		"approver":    "demo-approver",
+	})
+}
+
+// cb4aDeny denies a pending HITL/MFA request.
+// args: [requestID]
+func cb4aDeny(_ js.Value, args []js.Value) any {
+	if globalPDP == nil {
+		return errObj("call cb4aInit() first")
+	}
+	if len(args) < 1 {
+		return errObj("usage: cb4aDeny(requestID)")
+	}
+	reqID := args[0].String()
+	if err := globalPDP.Deny(reqID, "demo-approver"); err != nil {
+		return errObj("deny: " + err.Error())
+	}
+	return okObj(map[string]any{"denied": true, "requestID": reqID})
+}
+
+// cb4aMint mints a DPoP-bound access token from a signed PDP decision.
+// args: [decisionJWT]
+func cb4aMint(_ js.Value, args []js.Value) any {
+	if globalCDP == nil {
+		return errObj("call cb4aInit() first")
+	}
+	if len(args) < 1 {
+		return errObj("usage: cb4aMint(decisionJWT)")
+	}
+	decisionJWT := args[0].String()
+	mc, err := globalCDP.Mint(decisionJWT)
+	if err != nil {
+		return errObj("mint: " + err.Error())
+	}
+	globalMinted = mc
+
+	// Derive a short key fingerprint for display (no secret data exposed).
+	ephJWK, _ := keys.PublicKeyToJWK(mc.EphemeralPub, "")
+	keyFingerprint := "(key error)"
+	if ephJWK != nil && len(ephJWK.X) >= 8 {
+		keyFingerprint = ephJWK.X[:8] + "..."
+	}
+
+	return okObj(map[string]any{
+		"scope":          mc.Scope,
+		"expiresAt":      mc.ExpiresAt.Format(time.RFC3339),
+		"tokenPreview":   truncate(mc.Token),
+		"ephKeyFingerprint": keyFingerprint,
+		"dpopBound":      true,
+	})
+}
+
+// cb4aAPICall simulates an agent making a DPoP-bound API call.
+// args: [method, uri]
+func cb4aAPICall(_ js.Value, args []js.Value) any {
+	if globalCDP == nil {
+		return errObj("call cb4aInit() first")
+	}
+	if globalMinted == nil {
+		return errObj("call cb4aMint() first")
+	}
+	if len(args) < 2 {
+		return errObj("usage: cb4aAPICall(method, uri)")
+	}
+	method := args[0].String()
+	uri := args[1].String()
+
+	proof, err := cb4a.GenerateDPoPProof(globalMinted, method, uri)
+	if err != nil {
+		return errObj("generate DPoP proof: " + err.Error())
+	}
+	if err := globalCDP.SimulateAPICall(globalMinted.Token, proof, method, uri); err != nil {
+		return map[string]any{
+			"ok":     false,
+			"detail": "REJECTED: " + err.Error(),
+		}
+	}
+	return okObj(map[string]any{
+		"detail":    fmt.Sprintf("%s %s — authorized", method, uri),
+		"dpopProof": truncate(proof),
+	})
+}
+
+// cb4aAudit returns the full audit trail as a JSON string.
+func cb4aAudit(_ js.Value, _ []js.Value) any {
+	if globalAudit == nil {
+		return errObj("call cb4aInit() first")
+	}
+	entries := globalAudit.Entries()
+	type auditRow struct {
+		Event     string `json:"event"`
+		AgentSVID string `json:"agent_svid"`
+		Scope     string `json:"scope"`
+		Tier      int    `json:"tier,omitempty"`
+		RequestID string `json:"request_id,omitempty"`
+		Detail    string `json:"detail,omitempty"`
+		Success   bool   `json:"success"`
+		Timestamp string `json:"timestamp"`
+	}
+	rows := make([]auditRow, len(entries))
+	for i, e := range entries {
+		rows[i] = auditRow{
+			Event:     string(e.Event),
+			AgentSVID: e.AgentSVID,
+			Scope:     e.Scope,
+			Tier:      e.Tier,
+			RequestID: e.RequestID,
+			Detail:    e.Detail,
+			Success:   e.Success,
+			Timestamp: e.Timestamp.Format("15:04:05.000"),
+		}
+	}
+	b, err := json.Marshal(rows)
+	if err != nil {
+		return errObj("marshal audit: " + err.Error())
+	}
+	return okObj(map[string]any{"entries": string(b), "count": len(rows)})
 }
 
 // ── Federation (OID-FED) state ────────────────────────────────────────────────
@@ -626,8 +883,16 @@ func main() {
 		"validateFederatedToken":     js.FuncOf(validateFederatedToken),
 		// mTLS token-cert binding
 		"simulateMTLSBinding":        js.FuncOf(simulateMTLSBinding),
-		// CB4A vs WIMSE comparison
+		// CB4A static comparison (kept for backward compat)
 		"simulateCredentialBroker":   js.FuncOf(simulateCredentialBroker),
+		// CB4A live interactive demo
+		"cb4aInit":    js.FuncOf(cb4aInit),
+		"cb4aSubmit":  js.FuncOf(cb4aSubmit),
+		"cb4aApprove": js.FuncOf(cb4aApprove),
+		"cb4aDeny":    js.FuncOf(cb4aDeny),
+		"cb4aMint":    js.FuncOf(cb4aMint),
+		"cb4aAPICall": js.FuncOf(cb4aAPICall),
+		"cb4aAudit":   js.FuncOf(cb4aAudit),
 	}))
 	<-make(chan struct{}) // block forever
 }
