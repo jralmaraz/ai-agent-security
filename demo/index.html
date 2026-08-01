@@ -17,7 +17,8 @@
 body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;font-size:15px;line-height:1.6}
 
 /* ── Header ── */
-.site-header{border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:14px;position:sticky;top:0;background:var(--bg);z-index:100}
+#sticky-shell{position:sticky;top:0;z-index:100;background:var(--bg)}
+.site-header{border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:14px;background:var(--bg)}
 .site-logo{font-size:17px;font-weight:700;color:var(--blue)}
 .site-subtitle{color:var(--muted);font-size:12px}
 .header-links{margin-left:auto;display:flex;align-items:center;gap:10px}
@@ -28,8 +29,17 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ── Nav ── */
-nav{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto}
-.tab{padding:.8rem 1.4rem;cursor:pointer;border-bottom:3px solid transparent;font-size:.9rem;white-space:nowrap;transition:all .2s;color:var(--muted)}
+.nav-wrapper{position:relative;display:flex;align-items:stretch;background:var(--surface);border-bottom:1px solid var(--border)}
+nav{flex:1;display:flex;gap:0;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+.nav-arrow{flex-shrink:0;width:32px;border:none;background:var(--surface);color:var(--muted);font-size:1.3rem;cursor:pointer;transition:color .15s,background .15s;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;padding-bottom:2px;line-height:1}
+.nav-arrow-left{border-right:1px solid var(--border)}
+.nav-arrow-right{border-left:1px solid var(--border)}
+.nav-arrow.show{opacity:1;pointer-events:auto}
+.nav-arrow:hover{color:var(--blue);background:var(--surface2)}
+.nav-fade{position:absolute;right:32px;top:0;bottom:0;width:44px;background:linear-gradient(to right,transparent,var(--surface));pointer-events:none;opacity:0;transition:opacity .2s;z-index:1}
+.nav-fade.show{opacity:1}
+.tab{padding:.75rem 1.2rem;cursor:pointer;border-bottom:3px solid transparent;font-size:.875rem;white-space:nowrap;transition:all .2s;color:var(--muted)}
 .tab:hover{color:var(--text)}
 .tab.active{color:var(--blue);border-bottom-color:var(--blue)}
 
@@ -239,6 +249,7 @@ main{max-width:960px;margin:0 auto;padding:2rem}
   <div style="color:var(--muted);font-size:.9rem">Loading WASM runtime…</div>
 </div>
 
+<div id="sticky-shell">
 <header class="site-header">
   <div>
     <div class="site-logo">WIMSE Agent Fabric</div>
@@ -248,19 +259,24 @@ main{max-width:960px;margin:0 auto;padding:2rem}
     <div class="wasm-badge loading" id="wasm-badge"><div class="spin"></div> Loading WASM…</div>
   </div>
 </header>
-
-<nav>
-  <div class="tab active" onclick="showTab('happy',this)">Happy Path</div>
-  <div class="tab" onclick="showTab('replay',this)">Replay Attack</div>
-  <div class="tab" onclick="showTab('tamper',this)">Token Tampering</div>
-  <div class="tab" onclick="showTab('threat',this)">Threat Model</div>
-  <div class="tab" onclick="showTab('federation',this)">OpenID Federation</div>
-  <div class="tab" onclick="showTab('postquantum',this)">Post-Quantum Safety</div>
-  <div class="tab" onclick="showTab('paxos',this)">Paxos Consensus</div>
-  <div class="tab" onclick="showTab('mtls',this)">mTLS Transport</div>
-  <div class="tab" onclick="showTab('broker',this)">Credential Broker</div>
-  <div class="tab" onclick="showTab('landscape',this)">Agent Auth Landscape</div>
-</nav>
+<div class="nav-wrapper">
+  <button class="nav-arrow nav-arrow-left" id="nav-prev" onclick="navScroll(-1)" aria-label="Scroll tabs left">&#8249;</button>
+  <nav id="main-nav">
+    <div class="tab active" onclick="showTab('happy',this)">Happy Path</div>
+    <div class="tab" onclick="showTab('replay',this)">Replay Attack</div>
+    <div class="tab" onclick="showTab('tamper',this)">Token Tampering</div>
+    <div class="tab" onclick="showTab('threat',this)">Threat Model</div>
+    <div class="tab" onclick="showTab('federation',this)">OpenID Federation</div>
+    <div class="tab" onclick="showTab('postquantum',this)">Post-Quantum Safety</div>
+    <div class="tab" onclick="showTab('paxos',this)">Paxos Consensus</div>
+    <div class="tab" onclick="showTab('mtls',this)">mTLS Transport</div>
+    <div class="tab" onclick="showTab('broker',this)">Credential Broker</div>
+    <div class="tab" onclick="showTab('landscape',this)">Agent Auth Landscape</div>
+  </nav>
+  <div class="nav-fade" id="nav-fade"></div>
+  <button class="nav-arrow nav-arrow-right" id="nav-next" onclick="navScroll(1)" aria-label="Scroll tabs right">&#8250;</button>
+</div>
+</div>
 
 <main>
 
@@ -313,12 +329,22 @@ main{max-width:960px;margin:0 auto;padding:2rem}
       <button class="btn" id="btn-exec"     disabled onclick="doDelegate()">3. Delegate to Executor</button>
       <button class="btn" id="btn-validate" disabled onclick="doValidate()">4. Validate Chain</button>
       <button class="btn" id="btn-proof"    disabled onclick="doProof()">5. Generate Proof</button>
-      <button class="btn" style="margin-left:auto" onclick="doReset()">Reset</button>
+      <button class="btn btn-warning" style="margin-left:auto" onclick="doReset()">&#8635; Restart</button>
+    </div>
+    <div style="font-size:.78rem;color:var(--muted);margin:-.25rem 0 .5rem;padding:0 .1rem">
+      Run through the steps in order — each button unlocks the next. Click <strong style="color:var(--yellow)">Restart</strong> to reset anytime.
     </div>
     <div id="happy-status" class="status-bar">
       <div class="dot grey"></div>
       <span>Click "Generate Keys" to begin</span>
     </div>
+  </div>
+  <div id="happy-complete" style="display:none;background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.35);border-radius:8px;padding:1rem 1.25rem;margin-bottom:1rem;display:none;align-items:center;gap:1rem">
+    <div style="flex:1">
+      <strong style="color:var(--green)">Demo complete!</strong>
+      <span style="color:var(--muted);font-size:.875rem;margin-left:.5rem">All 5 steps finished — the full identity chain is verified.</span>
+    </div>
+    <button class="btn btn-warning" onclick="doReset()">&#8635; Restart Demo</button>
   </div>
 
   <!-- Step 1 output -->
@@ -1881,7 +1907,30 @@ function showTab(name, el) {
   document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('scene-' + name).classList.add('active');
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  updateNavArrows();
 }
+
+function navScroll(dir) {
+  document.getElementById('main-nav').scrollBy({ left: dir * 220, behavior: 'smooth' });
+}
+
+function updateNavArrows() {
+  const nav = document.getElementById('main-nav');
+  if (!nav) return;
+  const atStart = nav.scrollLeft <= 4;
+  const atEnd = nav.scrollLeft + nav.clientWidth >= nav.scrollWidth - 4;
+  document.getElementById('nav-prev').classList.toggle('show', !atStart);
+  document.getElementById('nav-next').classList.toggle('show', !atEnd);
+  document.getElementById('nav-fade').classList.toggle('show', !atEnd);
+}
+
+(function() {
+  const nav = document.getElementById('main-nav');
+  nav.addEventListener('scroll', updateNavArrows);
+  window.addEventListener('resize', updateNavArrows);
+  setTimeout(updateNavArrows, 80);
+})();
 
 // ── Core helpers ────────────────────────────────────────────────────────────
 function call(fn, ...args) {
@@ -2131,6 +2180,8 @@ async function doProof() {
   setText('proof-chain-hash', r.chainHash || '—');
   reveal('out-proof');
   advanceStep('btn-proof', null);
+  const c = document.getElementById('happy-complete');
+  if (c) c.style.display = 'flex';
 }
 
 function doReset() {
@@ -2147,6 +2198,8 @@ function doReset() {
   const setup = document.getElementById('btn-setup');
   setup.classList.add('btn-primary');
   setup.style.opacity = '';
+  const c = document.getElementById('happy-complete');
+  if (c) c.style.display = 'none';
 }
 
 // ── Replay Attack ────────────────────────────────────────────────────────────
