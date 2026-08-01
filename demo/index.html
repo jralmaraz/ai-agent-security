@@ -262,7 +262,8 @@ main{max-width:960px;margin:0 auto;padding:2rem}
 <div class="nav-wrapper">
   <button class="nav-arrow nav-arrow-left" id="nav-prev" onclick="navScroll(-1)" aria-label="Scroll tabs left">&#8249;</button>
   <nav id="main-nav">
-    <div class="tab active" onclick="showTab('happy',this)">Happy Path</div>
+    <div class="tab active" onclick="showTab('problem',this)">The Problem</div>
+    <div class="tab" onclick="showTab('happy',this)">Happy Path</div>
     <div class="tab" onclick="showTab('replay',this)">Replay Attack</div>
     <div class="tab" onclick="showTab('tamper',this)">Token Tampering</div>
     <div class="tab" onclick="showTab('threat',this)">Threat Model</div>
@@ -280,8 +281,101 @@ main{max-width:960px;margin:0 auto;padding:2rem}
 
 <main>
 
+<!-- ══ THE PROBLEM ════════════════════════════════════════════════════════ -->
+<div class="scene active" id="scene-problem">
+  <h2 style="font-size:1.5rem;font-weight:700;margin-bottom:.5rem">Why Agent Identity Matters</h2>
+  <p style="color:var(--muted);margin-bottom:1.5rem;font-size:.95rem;line-height:1.7">
+    As AI agents proliferate — spawning sub-agents, calling external APIs, acting on behalf of humans —
+    the industry is hitting a wall: <strong style="color:var(--text)">no standard way to prove which agent
+    did what, on whose behalf, and with what authority.</strong> Existing identity primitives were designed
+    for services, not for autonomous reasoning processes that delegate to one another at runtime.
+  </p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 730 168" xmlns="http://www.w3.org/2000/svg">
+      <text x="365" y="18" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="11" font-weight="700" letter-spacing="1">TODAY — AGENTS SHARE STATIC CREDENTIALS, NO DELEGATION TRAIL</text>
+      <!-- Boxes -->
+      <rect x="10"  y="30" width="130" height="52" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+      <text x="75"  y="52" text-anchor="middle" fill="#e6edf3" font-family="sans-serif" font-size="11" font-weight="700">Orchestrator</text>
+      <text x="75"  y="68" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="9">AI Agent (LLM)</text>
+
+      <rect x="200" y="30" width="130" height="52" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+      <text x="265" y="52" text-anchor="middle" fill="#e6edf3" font-family="sans-serif" font-size="11" font-weight="700">Sub-Agent</text>
+      <text x="265" y="68" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="9">Executor (spawned)</text>
+
+      <rect x="390" y="30" width="130" height="52" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+      <text x="455" y="52" text-anchor="middle" fill="#e6edf3" font-family="sans-serif" font-size="11" font-weight="700">Tool / API</text>
+      <text x="455" y="68" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="9">External service</text>
+
+      <rect x="580" y="30" width="140" height="52" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+      <text x="650" y="52" text-anchor="middle" fill="#e6edf3" font-family="sans-serif" font-size="11" font-weight="700">Audit / SIEM</text>
+      <text x="650" y="68" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="9">Who called what?</text>
+
+      <!-- Arrows -->
+      <line x1="140" y1="56" x2="200" y2="56" stroke="#30363d" stroke-width="2"/>
+      <polygon points="196,51 206,56 196,61" fill="#30363d"/>
+      <line x1="330" y1="56" x2="390" y2="56" stroke="#30363d" stroke-width="2"/>
+      <polygon points="386,51 396,56 386,61" fill="#30363d"/>
+      <line x1="520" y1="56" x2="580" y2="56" stroke="#30363d" stroke-width="2"/>
+      <polygon points="576,51 586,56 576,61" fill="#30363d"/>
+
+      <!-- Shared key labels on arrows -->
+      <rect x="142" y="40" width="56" height="14" rx="3" fill="#1c2128" stroke="#f85149" stroke-width="1"/>
+      <text x="170" y="51" text-anchor="middle" fill="#f85149" font-family="monospace" font-size="8">sk-api-XXXXX</text>
+      <rect x="332" y="40" width="56" height="14" rx="3" fill="#1c2128" stroke="#f85149" stroke-width="1"/>
+      <text x="360" y="51" text-anchor="middle" fill="#f85149" font-family="monospace" font-size="8">sk-api-XXXXX</text>
+
+      <!-- Problem annotations below -->
+      <line x1="75"  y1="82" x2="75"  y2="105" stroke="#f85149" stroke-dasharray="3,2" stroke-width="1"/>
+      <text x="75"  y="118" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="9" font-weight="700">No attestation</text>
+      <text x="75"  y="131" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="8">Any process can</text>
+      <text x="75"  y="143" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="8">claim any identity</text>
+
+      <line x1="265" y1="82" x2="265" y2="105" stroke="#f85149" stroke-dasharray="3,2" stroke-width="1"/>
+      <text x="265" y="118" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="9" font-weight="700">No delegation trail</text>
+      <text x="265" y="131" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="8">Who authorised this</text>
+      <text x="265" y="143" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="8">sub-agent to act?</text>
+
+      <line x1="455" y1="82" x2="455" y2="105" stroke="#f85149" stroke-dasharray="3,2" stroke-width="1"/>
+      <text x="455" y="118" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="9" font-weight="700">Shared + replayable</text>
+      <text x="455" y="131" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="8">Static key, broad scope,</text>
+      <text x="455" y="143" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="8">no per-request binding</text>
+
+      <line x1="650" y1="82" x2="650" y2="105" stroke="#f85149" stroke-dasharray="3,2" stroke-width="1"/>
+      <text x="650" y="118" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="9" font-weight="700">Blind audit log</text>
+      <text x="650" y="131" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="8">Caller = "my-app"</text>
+      <text x="650" y="143" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="8">— no chain visible</text>
+    </svg>
+  </div>
+
+  <div class="info-grid c3" style="margin-bottom:1rem">
+    <div class="info-box red">
+      <div class="ibt">No Workload Identity</div>
+      <div class="ibv" style="font-family:var(--font);font-size:12px;line-height:1.5">Each cloud assigns its own credential (IAM role, service account, managed identity). Agents running inside a workload inherit that coarse-grained identity — there's no way to distinguish <em>which agent</em> made a call.</div>
+    </div>
+    <div class="info-box red">
+      <div class="ibt">Invisible Delegation Chains</div>
+      <div class="ibv" style="font-family:var(--font);font-size:12px;line-height:1.5">When an orchestrator spawns sub-agents, there's no cryptographic record of the delegation. The API sees a static key — it can't tell if the call was authorised by a human, a policy, or an arbitrary agent process.</div>
+    </div>
+    <div class="info-box red">
+      <div class="ibt">Static, Shared Credentials</div>
+      <div class="ibv" style="font-family:var(--font);font-size:12px;line-height:1.5">API keys and secrets are long-lived, shared across agent instances, and scoped to the entire service — not the specific task. A compromised agent or leaked key gives an attacker full service-level access.</div>
+    </div>
+  </div>
+
+  <div class="callout danger" style="margin-bottom:1.25rem">
+    <strong>The core gap:</strong> IETF WIMSE (Workload Identity in Multi-System Environments) was created specifically to address this. It provides a standard, portable workload identity primitive — <span class="pill pill-b">agent+jwt</span> — that works across clouds, carries cryptographic proof of the delegation chain, and binds each request to a non-replayable proof token.
+  </div>
+
+  <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+    <button class="btn btn-primary" onclick="goToTab('happy')">Explore the Solution: Happy Path &#8594;</button>
+    <button class="btn" onclick="goToTab('threat')">View Threat Model &#8594;</button>
+    <button class="btn" onclick="goToTab('broker')">External API Credentials (CB4A) &#8594;</button>
+  </div>
+</div>
+
 <!-- ══ HAPPY PATH ══════════════════════════════════════════════════════════ -->
-<div class="scene active" id="scene-happy">
+<div class="scene" id="scene-happy">
   <div class="card">
     <div class="card-title">Architecture — Agent Identity Chain</div>
     <div class="diagram">
@@ -638,10 +732,21 @@ main{max-width:960px;margin:0 auto;padding:2rem}
       </svg>
     </div>
     <div class="btn-group">
-      <button class="btn btn-primary" onclick="doFedSetup()">1. Build Federation Chain</button>
+      <button class="btn btn-primary" id="btn-fed-setup" onclick="doFedSetup()">1. Build Federation Chain</button>
       <button class="btn" id="btn-fed-issue"    disabled onclick="doFedIssue()">2. Issue Cross-Org Token</button>
       <button class="btn" id="btn-fed-validate" disabled onclick="doFedValidate()">3. Validate via Federation</button>
+      <button class="btn btn-warning" style="margin-left:auto" onclick="doFedReset()">&#8635; Restart</button>
     </div>
+    <div style="font-size:.78rem;color:var(--muted);margin:-.25rem 0 .5rem;padding:0 .1rem">
+      Run through the steps in order — each button unlocks the next. Click <strong style="color:var(--yellow)">Restart</strong> to reset anytime.
+    </div>
+  </div>
+  <div id="fed-complete" style="display:none;background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.35);border-radius:8px;padding:1rem 1.25rem;margin-bottom:1rem;align-items:center;gap:1rem">
+    <div style="flex:1">
+      <strong style="color:var(--green)">Demo complete!</strong>
+      <span style="color:var(--muted);font-size:.875rem;margin-left:.5rem">Cross-org token issued and validated via OID-FED trust chain.</span>
+    </div>
+    <button class="btn btn-warning" onclick="doFedReset()">&#8635; Restart Demo</button>
   </div>
 
   <!-- Federation step 1 output -->
@@ -1911,6 +2016,11 @@ function showTab(name, el) {
   updateNavArrows();
 }
 
+function goToTab(name) {
+  const tab = document.querySelector(`#main-nav .tab[onclick*="'${name}'"]`);
+  if (tab) showTab(name, tab);
+}
+
 function navScroll(dir) {
   document.getElementById('main-nav').scrollBy({ left: dir * 220, behavior: 'smooth' });
 }
@@ -2278,7 +2388,7 @@ async function doFedSetup() {
   renderJWT(ecJWT, 'jwt-ec-raw');
   renderJWTPanels(ecJWT, 'jwt-ec-hdr', 'jwt-ec-pld');
   reveal('out-fed-setup');
-  document.getElementById('btn-fed-issue').disabled = false;
+  advanceStep('btn-fed-setup', 'btn-fed-issue');
 }
 
 async function doFedIssue() {
@@ -2293,7 +2403,7 @@ async function doFedIssue() {
   setText('orgb-sub', r.subject || '—');
   setText('orgb-iss', r.issuer  || '—');
   reveal('out-fed-issue');
-  document.getElementById('btn-fed-validate').disabled = false;
+  advanceStep('btn-fed-issue', 'btn-fed-validate');
 }
 
 // ── Agent Fabric Paxos animation ─────────────────────────────────────────────
@@ -2880,6 +2990,26 @@ async function doFedValidate() {
 
   setText('fed-subject', r.subject || '—');
   document.getElementById('fed-verdict').style.display = 'flex';
+  advanceStep('btn-fed-validate', null);
+  const c = document.getElementById('fed-complete');
+  if (c) c.style.display = 'flex';
+}
+
+function doFedReset() {
+  ['fn-anchor','fn-orgb','fn-agent','fn-gw'].forEach(id => nodeState(id, ''));
+  ['out-fed-setup','out-fed-issue','out-fed-validate'].forEach(hide);
+  document.getElementById('fed-verdict').style.display = 'none';
+  ['btn-fed-issue','btn-fed-validate'].forEach(id => {
+    const b = document.getElementById(id);
+    b.disabled = true;
+    b.classList.remove('btn-primary');
+    b.style.opacity = '';
+  });
+  const setup = document.getElementById('btn-fed-setup');
+  setup.classList.add('btn-primary');
+  setup.style.opacity = '';
+  const c = document.getElementById('fed-complete');
+  if (c) c.style.display = 'none';
 }
 </script>
 </body>
