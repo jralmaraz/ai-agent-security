@@ -272,6 +272,7 @@ main{max-width:960px;margin:0 auto;padding:2rem}
     <div class="tab" onclick="showTab('postquantum',this)">Post-Quantum Safety</div>
     <div class="tab" onclick="showTab('paxos',this)">Paxos Consensus</div>
     <div class="tab" onclick="showTab('mtls',this)">mTLS Transport</div>
+    <div class="tab" onclick="showTab('txntoken',this)">Txn-Token</div>
     <div class="tab" onclick="showTab('broker',this)">Credential Broker</div>
     <div class="tab" onclick="showTab('landscape',this)">Agent Auth Landscape</div>
   </nav>
@@ -1301,7 +1302,196 @@ No EC keys accepted</pre>
   </div>
 </div>
 
-<!-- ══ CREDENTIAL BROKER ════════════════════════════════════════════════════ -->
+<!-- ══ CREDENTIAL BROTRANSACTION TOKENS ══════════════════════════════════ -->
+<div class="scene" id="scene-txntoken">
+  <div class="card-title" style="font-size:11px;color:var(--muted);letter-spacing:.08em;margin-bottom:4px">SCENARIO</div>
+  <h1 class="scene-title">Transaction Tokens</h1>
+  <p class="scene-lead">Each service in a multi-agent call chain sees an isolated request. Without a shared context token, there is no cryptographic way to link every hop back to the original user intent — making audit trails, authorization budgets, and per-transaction rate-limits impossible. <strong>Transaction Tokens</strong> (draft-ietf-oauth-transaction-tokens-11) solve this by issuing a signed JWT at the entry point that propagates unchanged through the entire chain.</p>
+
+  <!-- Architecture flow -->
+  <div class="card">
+    <div class="card-title">Call chain with Txn-Token propagation</div>
+    <svg viewBox="0 0 780 160" style="width:100%;max-width:780px;display:block;margin:16px auto">
+      <!-- User -->
+      <rect x="10" y="50" width="100" height="60" rx="8" fill="#21262d" stroke="#30363d"/>
+      <text x="60" y="76" text-anchor="middle" fill="#e6edf3" font-size="11" font-weight="600">User</text>
+      <text x="60" y="91" text-anchor="middle" fill="#7d8590" font-size="9">alice@corp</text>
+      <text x="60" y="103" text-anchor="middle" fill="#58a6ff" font-size="8">OIDC token</text>
+
+      <!-- TTS -->
+      <rect x="150" y="30" width="120" height="100" rx="8" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+      <text x="210" y="56" text-anchor="middle" fill="#58a6ff" font-size="11" font-weight="700">TTS</text>
+      <text x="210" y="71" text-anchor="middle" fill="#7d8590" font-size="9">Transaction Token</text>
+      <text x="210" y="84" text-anchor="middle" fill="#7d8590" font-size="9">Service</text>
+      <text x="210" y="101" text-anchor="middle" fill="#3fb950" font-size="9">issues txntoken+jwt</text>
+      <text x="210" y="113" text-anchor="middle" fill="#3fb950" font-size="9">txn=uuid, sub=alice</text>
+
+      <!-- Orchestrator -->
+      <rect x="320" y="50" width="120" height="60" rx="8" fill="#21262d" stroke="#30363d"/>
+      <text x="380" y="76" text-anchor="middle" fill="#e6edf3" font-size="11" font-weight="600">Orchestrator</text>
+      <text x="380" y="91" text-anchor="middle" fill="#7d8590" font-size="9">spiffe://.../orch</text>
+      <text x="380" y="103" text-anchor="middle" fill="#ffa657" font-size="8">WIT + proof (tth set)</text>
+
+      <!-- Service B -->
+      <rect x="490" y="50" width="120" height="60" rx="8" fill="#21262d" stroke="#30363d"/>
+      <text x="550" y="76" text-anchor="middle" fill="#e6edf3" font-size="11" font-weight="600">Service B</text>
+      <text x="550" y="91" text-anchor="middle" fill="#7d8590" font-size="9">spiffe://.../svc-b</text>
+      <text x="550" y="103" text-anchor="middle" fill="#ffa657" font-size="8">WIT + proof (tth set)</text>
+
+      <!-- Service C -->
+      <rect x="650" y="50" width="120" height="60" rx="8" fill="#21262d" stroke="#30363d"/>
+      <text x="710" y="76" text-anchor="middle" fill="#e6edf3" font-size="11" font-weight="600">Service C</text>
+      <text x="710" y="91" text-anchor="middle" fill="#7d8590" font-size="9">spiffe://.../svc-c</text>
+      <text x="710" y="103" text-anchor="middle" fill="#3fb950" font-size="8">verifies tth ✓</text>
+
+      <!-- Arrows -->
+      <defs><marker id="arTT" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#7d8590"/></marker></defs>
+      <line x1="110" y1="80" x2="148" y2="80" stroke="#7d8590" stroke-width="1.5" marker-end="url(#arTT)"/>
+      <line x1="270" y1="80" x2="318" y2="80" stroke="#58a6ff" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arTT)"/>
+      <line x1="440" y1="80" x2="488" y2="80" stroke="#ffa657" stroke-width="1.5" marker-end="url(#arTT)"/>
+      <line x1="610" y1="80" x2="648" y2="80" stroke="#ffa657" stroke-width="1.5" marker-end="url(#arTT)"/>
+
+      <!-- Labels on arrows -->
+      <text x="284" y="72" fill="#58a6ff" font-size="9" text-anchor="middle">txntoken+jwt</text>
+      <text x="464" y="72" fill="#ffa657" font-size="9" text-anchor="middle">tth bound</text>
+      <text x="629" y="72" fill="#ffa657" font-size="9" text-anchor="middle">tth bound</text>
+    </svg>
+    <p style="font-size:12px;color:var(--muted);margin-top:8px">The Txn-Token is issued once at the entry point and forwarded unchanged at every hop. Each agent attaches a fresh <code>agent-proof+jwt</code> with <code>tth = SHA-256(txntoken)</code>, cryptographically binding the per-request proof to the originating transaction.</p>
+  </div>
+
+  <!-- Token anatomy -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+    <div class="card">
+      <div class="card-title">Txn-Token structure (<code>txntoken+jwt</code>)</div>
+      <pre style="font-size:11px;background:var(--bg);padding:12px;border-radius:6px;overflow-x:auto;margin-top:10px;color:var(--text);line-height:1.7"><span style="color:var(--muted)">// Header</span>
+{
+  <span style="color:var(--blue)">"alg"</span>: <span style="color:var(--green)">"ES256"</span>,
+  <span style="color:var(--blue)">"typ"</span>: <span style="color:var(--green)">"txntoken+jwt"</span>
+}
+
+<span style="color:var(--muted)">// Payload</span>
+{
+  <span style="color:var(--blue)">"iss"</span>: <span style="color:var(--green)">"https://tts.example"</span>,
+  <span style="color:var(--blue)">"sub"</span>: <span style="color:var(--green)">"alice@corp"</span>,
+  <span style="color:var(--blue)">"aud"</span>: [<span style="color:var(--green)">"https://api.example"</span>],
+  <span style="color:var(--blue)">"txn"</span>: <span style="color:var(--green)">"a3f8-b12c-…"</span>,    <span style="color:var(--muted)">// unique txn ID</span>
+  <span style="color:var(--blue)">"rctx"</span>: {
+    <span style="color:var(--blue)">"req_ip"</span>: <span style="color:var(--green)">"10.0.0.1"</span>,
+    <span style="color:var(--blue)">"req_wl"</span>: <span style="color:var(--green)">"spiffe://.../orch"</span>
+  },
+  <span style="color:var(--blue)">"azd"</span>: [{ <span style="color:var(--blue)">"type"</span>: <span style="color:var(--green)">"payment"</span> }]
+}</pre>
+    </div>
+    <div class="card">
+      <div class="card-title">AgentProofToken with <code>tth</code> binding</div>
+      <pre style="font-size:11px;background:var(--bg);padding:12px;border-radius:6px;overflow-x:auto;margin-top:10px;color:var(--text);line-height:1.7"><span style="color:var(--muted)">// Header</span>
+{
+  <span style="color:var(--blue)">"alg"</span>: <span style="color:var(--green)">"ES256"</span>,
+  <span style="color:var(--blue)">"typ"</span>: <span style="color:var(--green)">"application/agent-proof+jwt"</span>
+}
+
+<span style="color:var(--muted)">// Payload</span>
+{
+  <span style="color:var(--blue)">"aud"</span>: <span style="color:var(--green)">"https://svc-b.example/api"</span>,
+  <span style="color:var(--blue)">"chain_hash"</span>: <span style="color:var(--green)">"SHA-256(chain)"</span>,
+  <span style="color:var(--orange)">"tth"</span>: <span style="color:var(--orange)">"SHA-256(txntoken)"</span>,  <span style="color:var(--muted)">// ← binds to txn</span>
+  <span style="color:var(--blue)">"jti"</span>: <span style="color:var(--green)">"unique-per-request"</span>,
+  <span style="color:var(--blue)">"exp"</span>: <span style="color:var(--green)">1753649999</span>
+}</pre>
+    </div>
+  </div>
+
+  <!-- Problems solved / ADR -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">Architecture decision — why implement Txn-Token?</div>
+    <table class="compare-table" style="font-size:12px;margin-top:12px">
+      <tr>
+        <th style="width:30%">Problem without Txn-Token</th>
+        <th style="width:35%">How Txn-Token resolves it</th>
+        <th style="width:35%">Tradeoffs</th>
+      </tr>
+      <tr>
+        <td>No cryptographic link between hop-level proofs and the original user request — audit logs show isolated events</td>
+        <td><code>txn</code> ID is the same across all hops; every <code>tth</code> binding anchors the proof to the same JWT</td>
+        <td rowspan="4" style="vertical-align:top;padding-top:10px">
+          <strong style="color:var(--orange)">Cons:</strong>
+          <ul style="padding-left:16px;margin-top:6px;line-height:1.8;font-size:11px">
+            <li>New service dependency: TTS must be highly available</li>
+            <li>Token is forwarded at every hop (overhead per request)</li>
+            <li>Spec still at draft-11 — <code>rctx</code> / <code>azd</code> field names may change before RFC</li>
+            <li>Services must be updated to propagate the Txn-Token header</li>
+          </ul>
+          <br>
+          <strong style="color:var(--green)">Pros:</strong>
+          <ul style="padding-left:16px;margin-top:6px;line-height:1.8;font-size:11px">
+            <li>Single source of truth for user context across the chain</li>
+            <li>Authorization budget / rate-limit can be enforced per-transaction</li>
+            <li>Non-repudiable audit trail — <code>txn</code> ID links all log entries</li>
+            <li>No PII duplication in per-hop tokens — only <code>sub</code> + scoped <code>azd</code></li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td>Authorization context (scopes, budget, RAR details) known only at entry point — downstream services cannot verify intent</td>
+        <td><code>azd</code> claim carries Rich Authorization Requests details from the AS; any service can inspect them</td>
+      </tr>
+      <tr>
+        <td>A compromised intermediate agent can forge its own proof and claim it's acting on behalf of the user</td>
+        <td><code>tth</code> in AgentProofToken must match the TTS-issued Txn-Token — the intermediate cannot forge this binding without the Txn-Token private key</td>
+      </tr>
+      <tr>
+        <td>Call-chain scoping: an agent could reuse a proof in a different transaction context</td>
+        <td>The <code>txn</code> ID is unique per transaction; the receiving service checks both <code>tth</code> and <code>jti</code>, ensuring the proof is scoped to exactly one request in one transaction</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Implementation -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">Implementation: <code>pkg/txntoken</code></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px">
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px">Issuer</div>
+        <pre style="font-size:11px;background:var(--bg);padding:10px;border-radius:6px;color:var(--text);line-height:1.7">issuer := txntoken.NewIssuer(
+  <span style="color:var(--green)">"https://tts.example"</span>,
+  ttsKey, time.Minute*5,
+)
+tok, _ := issuer.Issue(txntoken.IssueOptions{
+  Subject:   <span style="color:var(--green)">"alice@corp"</span>,
+  Audiences: []string{<span style="color:var(--green)">"https://api.example"</span>},
+  ReqCtx: &amp;txntoken.RequestContext{
+    ReqIP: <span style="color:var(--green)">"10.0.0.1"</span>,
+    ReqWL: <span style="color:var(--green)">"spiffe://.../orch"</span>,
+  },
+})</pre>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px">Proof with <code>tth</code></div>
+        <pre style="font-size:11px;background:var(--bg);padding:10px;border-radius:6px;color:var(--text);line-height:1.7">proof, _ := identity.GenerateProof(
+  identity.ProofGenerateOptions{
+    TargetURI:   <span style="color:var(--green)">"https://svc-b.example"</span>,
+    Chain:       chain,
+    WorkloadKey: agentKey,
+    <span style="color:var(--orange)">TxnToken:    tok,</span>  <span style="color:var(--muted)">// tth auto-set</span>
+  },
+)
+
+<span style="color:var(--muted)">// Validator: verify tth</span>
+pv.Validate(identity.ProofValidateOptions{
+  ...,
+  <span style="color:var(--orange)">TxnToken: tok,</span>
+})</pre>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-top:12px">
+      10 new tests in <code>pkg/txntoken/txntoken_test.go</code> and 3 in <code>pkg/identity/identity_test.go</code>
+      cover happy path, typ header, txn ID propagation, authorization details round-trip, wrong key, expiry, issuer mismatch, hash determinism, and tth mismatch.
+    </p>
+  </div>
+</div><!-- end scene-txntoken -->
+
+<!-- ════════════════════════════════════════════════════
+KER ════════════════════════════════════════════════════ -->
 <div class="scene" id="scene-broker">
   <div class="card">
     <div class="card-title">CB4A — Credential Broker for Agents</div>
@@ -2016,7 +2206,15 @@ No EC keys accepted</pre>
         <td><span style="color:var(--orange);white-space:nowrap">● Active draft</span></td>
         <td style="text-align:center"><code>-01</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/identity/proof.go</code>, <code>internal/gateway</code></td>
-        <td style="font-size:11px">AgentProofToken (<code>application/agent-proof+jwt</code>) mirrors WPT claims — <code>aud</code>, <code>wth</code>, <code>jti</code></td>
+        <td style="font-size:11px">AgentProofToken (<code>application/agent-proof+jwt</code>) — <code>aud</code>, <code>wth</code>, <code>tth</code>=SHA-256(Txn-Token), <code>jti</code></td>
+      </tr>
+      <tr>
+        <td><a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-transaction-tokens/" target="_blank" style="color:var(--blue)">Txn-Token — OAuth 2.0 Transaction Tokens</a></td>
+        <td style="white-space:nowrap;font-size:11px">IETF OAuth WG</td>
+        <td><span style="color:var(--orange);white-space:nowrap">● Active draft</span></td>
+        <td style="text-align:center"><code>-11</code></td>
+        <td style="font-size:10px;color:var(--muted)"><code>pkg/txntoken</code>, <code>pkg/identity (tth)</code></td>
+        <td style="font-size:11px"><code>typ=txntoken+jwt</code>, propagates user identity + authz context through agent chains; <code>tth</code> binds AgentProofToken to the originating transaction</td>
       </tr>
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-identifier/" target="_blank" style="color:var(--blue)">Identifiers — Workload Identifier</a></td>

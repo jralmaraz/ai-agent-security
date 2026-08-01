@@ -393,3 +393,78 @@ func TestAgentProof_WrongSigningKey(t *testing.T) {
 		t.Error("expected error for wrong signing key")
 	}
 }
+
+func TestAgentProof_TxnTokenBinding_HappyPath(t *testing.T) {
+	chain, wlPriv, wlPub := buildChainAndProof(t)
+	txnToken := "fake.txn.token.for.test"
+
+	proof, err := identity.GenerateProof(identity.ProofGenerateOptions{
+		TargetURI:   "https://svc-b.example/api",
+		Chain:       chain,
+		WorkloadKey: wlPriv,
+		TxnToken:    txnToken,
+	})
+	if err != nil {
+		t.Fatalf("GenerateProof with TxnToken: %v", err)
+	}
+
+	pv := identity.NewProofValidator()
+	claims, err := pv.Validate(identity.ProofValidateOptions{
+		ProofToken:  proof,
+		Chain:       chain,
+		RequestURI:  "https://svc-b.example/api",
+		WorkloadKey: wlPub,
+		TxnToken:    txnToken,
+	})
+	if err != nil {
+		t.Fatalf("Validate with TxnToken: %v", err)
+	}
+	if claims.Tth == "" {
+		t.Error("expected tth claim to be set in proof")
+	}
+}
+
+func TestAgentProof_TxnTokenBinding_Mismatch(t *testing.T) {
+	chain, wlPriv, wlPub := buildChainAndProof(t)
+
+	proof, _ := identity.GenerateProof(identity.ProofGenerateOptions{
+		TargetURI:   "https://svc-b.example/api",
+		Chain:       chain,
+		WorkloadKey: wlPriv,
+		TxnToken:    "original.txn.token",
+	})
+
+	pv := identity.NewProofValidator()
+	_, err := pv.Validate(identity.ProofValidateOptions{
+		ProofToken:  proof,
+		Chain:       chain,
+		RequestURI:  "https://svc-b.example/api",
+		WorkloadKey: wlPub,
+		TxnToken:    "different.txn.token",
+	})
+	if err == nil {
+		t.Error("expected error for tth mismatch")
+	}
+}
+
+func TestAgentProof_TxnTokenBinding_NotRequired(t *testing.T) {
+	// Proof without tth should still validate when no TxnToken is presented.
+	chain, wlPriv, wlPub := buildChainAndProof(t)
+
+	proof, _ := identity.GenerateProof(identity.ProofGenerateOptions{
+		TargetURI:   "https://svc-b.example/api",
+		Chain:       chain,
+		WorkloadKey: wlPriv,
+	})
+
+	pv := identity.NewProofValidator()
+	_, err := pv.Validate(identity.ProofValidateOptions{
+		ProofToken:  proof,
+		Chain:       chain,
+		RequestURI:  "https://svc-b.example/api",
+		WorkloadKey: wlPub,
+	})
+	if err != nil {
+		t.Fatalf("expected validation without tth to succeed: %v", err)
+	}
+}

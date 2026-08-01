@@ -108,12 +108,12 @@
       "short": "Txn-Token",
       "wg": "IETF OAuth WG",
       "last_known_rev": "11",
-      "implemented_rev": null,
+      "implemented_rev": "11",
       "status": "active-draft",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-oauth-transaction-tokens/",
       "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-ietf-oauth-transaction-tokens/",
       "impact": "Txn-Token (txntoken+jwt) propagates user identity + authorization context through agent chains; tth in AgentProofToken links proof to transaction; req_wl carries requesting agent SPIFFE ID",
-      "used_in": ["pkg/txntoken (planned)", "internal/gateway"]
+      "used_in": ["pkg/txntoken", "pkg/identity (tth claim in AgentProofToken)"]
     },
     {
       "id": "rfc9449",

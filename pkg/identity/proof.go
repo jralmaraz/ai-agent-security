@@ -19,10 +19,15 @@ const defaultProofTTL = 5 * time.Minute
 // The proof binds:
 //   - aud: the target URI the request is headed to
 //   - chain_hash: base64url(SHA-256(full delegation chain wire string))
+//   - tth: optional base64url(SHA-256(Txn-Token)) — binds proof to a Transaction Token
 //   - jti: unique ID to enable replay detection
 type AgentProofClaims struct {
 	jwt.RegisteredClaims
 	ChainHash string `json:"chain_hash"`
+	// Tth is the optional Transaction Token Hash (tth claim).
+	// Set when the agent received a Txn-Token and wants to bind this proof
+	// to that specific business transaction (draft-ietf-oauth-transaction-tokens).
+	Tth string `json:"tth,omitempty"`
 }
 
 // ProofGenerateOptions controls AgentProofToken generation.
@@ -36,6 +41,10 @@ type ProofGenerateOptions struct {
 	// TTL overrides the default 5-minute expiry. A zero value uses the default.
 	// A negative value creates an already-expired token (for testing).
 	TTL time.Duration
+	// TxnToken is an optional compact Transaction Token JWT (draft-ietf-oauth-transaction-tokens).
+	// When set, its SHA-256 hash is placed in the tth claim, binding this proof
+	// to the business transaction that initiated the call chain.
+	TxnToken string
 }
 
 // GenerateProof creates a signed AgentProofToken.
@@ -55,6 +64,11 @@ func GenerateProof(opts ProofGenerateOptions) (string, error) {
 		ttl = defaultProofTTL
 	}
 
+	var tth string
+	if opts.TxnToken != "" {
+		tth = hashToken(opts.TxnToken)
+	}
+
 	now := time.Now()
 	claims := AgentProofClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -65,6 +79,7 @@ func GenerateProof(opts ProofGenerateOptions) (string, error) {
 			ID:        generateJTI(),
 		},
 		ChainHash: opts.Chain.Hash(),
+		Tth:       tth,
 	}
 
 	t := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
@@ -113,6 +128,10 @@ type ProofValidateOptions struct {
 	WorkloadKey *ecdsa.PublicKey
 	// CheckReplay enables jti-based replay detection (stateful).
 	CheckReplay bool
+	// TxnToken is the optional compact Transaction Token JWT that should be
+	// bound to this proof via tth. When set, the validator verifies that
+	// claims.Tth == SHA-256(TxnToken). Ignored when empty.
+	TxnToken string
 }
 
 // Validate verifies the AgentProofToken.
@@ -166,6 +185,14 @@ func (v *ProofValidator) Validate(opts ProofValidateOptions) (*AgentProofClaims,
 	wantHash := opts.Chain.Hash()
 	if claims.ChainHash != wantHash {
 		return nil, fmt.Errorf("chain_hash mismatch: want %s got %s", wantHash, claims.ChainHash)
+	}
+
+	// Verify tth binds this proof to the presented Transaction Token (if supplied).
+	if opts.TxnToken != "" {
+		expectedTth := hashToken(opts.TxnToken)
+		if claims.Tth != expectedTth {
+			return nil, errors.New("proof tth does not match Transaction Token hash")
+		}
 	}
 
 	// Replay detection: delegate to the JTIStore.
