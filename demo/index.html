@@ -2701,6 +2701,7 @@ KER ═════════════════════════�
     <p class="spec-ref">
       This PoC implements eleven IETF and OpenID standards — most of them active drafts still evolving toward production readiness.
       A GitHub Actions workflow checks the IETF Datatracker API daily and opens a labelled issue when any revision changes.
+      The <strong>Impl. commit</strong> column links to the exact commit that last implemented or verified compatibility with that draft revision.
     </p>
     <p style="font-size:.8rem;color:var(--muted);margin-bottom:1rem">
       Last checked: <code>2026-08-01</code> &nbsp;·&nbsp;
@@ -2715,6 +2716,7 @@ KER ═════════════════════════�
         <th style="text-align:center">Rev</th>
         <th>Files</th>
         <th>PoC impact</th>
+        <th style="text-align:center;white-space:nowrap">Impl. commit</th>
       </tr>
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-workload-creds/" target="_blank" style="color:var(--blue)">WIT — Workload Identity Credentials</a></td>
@@ -2723,6 +2725,7 @@ KER ═════════════════════════�
         <td style="text-align:center"><code>-02</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/identity/token.go</code>, <code>pkg/identity/chain.go</code></td>
         <td style="font-size:11px">AgentToken (<code>agent+jwt</code>) extends WIT — any <code>cnf.jwk</code> or <code>typ</code> changes affect <code>pkg/identity</code></td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/12a6936" target="_blank" style="color:var(--blue)"><code>12a6936</code></a></td>
       </tr>
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-wpt/" target="_blank" style="color:var(--blue)">WPT — Workload Proof Token</a></td>
@@ -2731,6 +2734,7 @@ KER ═════════════════════════�
         <td style="text-align:center"><code>-01</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/identity/proof.go</code>, <code>internal/gateway</code></td>
         <td style="font-size:11px">AgentProofToken (<code>application/agent-proof+jwt</code>) — <code>aud</code>, <code>wth</code>, <code>tth</code>=SHA-256(Txn-Token), <code>jti</code></td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/ed3bd65" target="_blank" style="color:var(--blue)"><code>ed3bd65</code></a></td>
       </tr>
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-transaction-tokens/" target="_blank" style="color:var(--blue)">Txn-Token — OAuth 2.0 Transaction Tokens</a></td>
@@ -2739,6 +2743,7 @@ KER ═════════════════════════�
         <td style="text-align:center"><code>-11</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/txntoken</code>, <code>pkg/identity (tth)</code></td>
         <td style="font-size:11px"><code>typ=txntoken+jwt</code>, propagates user identity + authz context through agent chains; <code>tth</code> binds AgentProofToken to the originating transaction</td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/ed3bd65" target="_blank" style="color:var(--blue)"><code>ed3bd65</code></a></td>
       </tr>
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-identifier/" target="_blank" style="color:var(--blue)">Identifiers — Workload Identifier</a></td>
@@ -2747,6 +2752,7 @@ KER ═════════════════════════�
         <td style="text-align:center"><code>-03</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/identity/token.go</code>, <code>pkg/keys/mtls.go</code></td>
         <td style="font-size:11px">SPIFFE URI format for agent SVIDs — <code>spiffe://trust-domain/path</code></td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/12a6936" target="_blank" style="color:var(--blue)"><code>12a6936</code></a></td>
       </tr>
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-mutual-tls/" target="_blank" style="color:var(--blue)">mTLS — Mutual TLS Binding</a></td>
@@ -2755,6 +2761,7 @@ KER ═════════════════════════�
         <td style="text-align:center"><code>-02</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/keys/mtls.go</code>, <code>internal/gateway/server.go</code></td>
         <td style="font-size:11px">Token-cert binding in gateway middleware — URI SAN matching against AgentToken <code>sub</code></td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/73f519b" target="_blank" style="color:var(--blue)"><code>73f519b</code></a></td>
       </tr>
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-arch/" target="_blank" style="color:var(--blue)">Arch — WIMSE Architecture</a></td>
@@ -2763,6 +2770,7 @@ KER ═════════════════════════�
         <td style="text-align:center"><code>-08</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/identity/chain.go</code>, <code>internal/gateway</code></td>
         <td style="font-size:11px">Token exchange, trust domain boundaries, delegation chain semantics</td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/018b9d8" target="_blank" style="color:var(--blue)"><code>018b9d8</code></a></td>
       </tr>
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-hartman-credential-broker-4-agents/" target="_blank" style="color:var(--blue)">CB4A — Credential Broker for Agents</a></td>
@@ -2771,6 +2779,7 @@ KER ═════════════════════════�
         <td style="text-align:center"><code>-00</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/cb4a</code></td>
         <td style="font-size:11px">TRE JWT, PDP decision JWT, CB4A token, Tier model, DPoP binding via <code>cnf.jkt</code></td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/77d0232" target="_blank" style="color:var(--blue)"><code>77d0232</code></a></td>
       </tr>
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/rfc9449/" target="_blank" style="color:var(--blue)">DPoP — OAuth 2.0 Demonstrating Proof of Possession</a></td>
@@ -2779,6 +2788,7 @@ KER ═════════════════════════�
         <td style="text-align:center"><code>RFC 9449</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/cb4a/cdp.go</code></td>
         <td style="font-size:11px">DPoP proof JWT (<code>dpop+jwt</code>), <code>cnf.jkt</code> thumbprint, <code>ath</code> binding, <code>jti</code> replay protection in CDP</td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/77d0232" target="_blank" style="color:var(--blue)"><code>77d0232</code></a></td>
       </tr>
       <tr>
         <td><a href="https://openid.net/specs/openid-federation-1_0.html" target="_blank" style="color:var(--blue)">OID-FED — OpenID Federation 1.0</a></td>
@@ -2787,6 +2797,7 @@ KER ═════════════════════════�
         <td style="text-align:center"><code>1.0-41</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/federation</code>, <code>internal/gateway/multivalidator.go</code></td>
         <td style="font-size:11px">Entity Configuration, Subordinate Statement, <code>authority_hints</code>, chain resolution for cross-org AgentToken validation</td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/dd5b164" target="_blank" style="color:var(--blue)"><code>dd5b164</code></a></td>
       </tr>
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-spiffe-client-auth/" target="_blank" style="color:var(--blue)">SPIFFE Client Auth — JWT-bearer OAuth assertion</a></td>
@@ -2795,6 +2806,7 @@ KER ═════════════════════════�
         <td style="text-align:center"><code>-02</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/spiffeclientauth</code></td>
         <td style="font-size:11px">AgentToken as <code>client_assertion</code> (<code>urn:…:jwt-bearer</code>) — eliminates pre-shared OAuth client secrets for agent workloads</td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/018b9d8" target="_blank" style="color:var(--blue)"><code>018b9d8</code></a></td>
       </tr>
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-identity-chaining/" target="_blank" style="color:var(--blue)">Identity Chaining — JWT Authorization Grant</a></td>
@@ -2803,6 +2815,7 @@ KER ═════════════════════════�
         <td style="text-align:center"><code>-17</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/identitychaining</code></td>
         <td style="font-size:11px"><code>typ=jwt-authz-grant</code>, cross-trust-domain propagation of agent SPIFFE IDs; <code>aud</code>=target AS endpoint, <code>jti</code> replay protection</td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/018b9d8" target="_blank" style="color:var(--blue)"><code>018b9d8</code></a></td>
       </tr>
     </table>
   </div>
