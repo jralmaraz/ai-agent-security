@@ -273,6 +273,8 @@ main{max-width:960px;margin:0 auto;padding:2rem}
     <div class="tab" onclick="showTab('paxos',this)">Paxos Consensus</div>
     <div class="tab" onclick="showTab('mtls',this)">mTLS Transport</div>
     <div class="tab" onclick="showTab('txntoken',this)">Txn-Token</div>
+    <div class="tab" onclick="showTab('spiffeclientauth',this)">SPIFFE Client Auth</div>
+    <div class="tab" onclick="showTab('identitychaining',this)">Identity Chaining</div>
     <div class="tab" onclick="showTab('broker',this)">Credential Broker</div>
     <div class="tab" onclick="showTab('landscape',this)">Agent Auth Landscape</div>
   </nav>
@@ -1490,6 +1492,340 @@ pv.Validate(identity.ProofValidateOptions{
   </div>
 </div><!-- end scene-txntoken -->
 
+<!-- ══ SPIFFE CLIENT AUTH ═══════════════════════════════════════════════════ -->
+<div class="scene" id="scene-spiffeclientauth">
+  <div class="card-title" style="font-size:11px;color:var(--muted);letter-spacing:.08em;margin-bottom:4px">SCENARIO</div>
+  <h1 class="scene-title">SPIFFE Client Authentication</h1>
+  <p class="scene-lead">Agents already hold an <strong>AgentToken</strong> (<code>agent+jwt</code>) that proves their SPIFFE identity. Traditional OAuth client authentication requires pre-shared secrets — a rotation burden that breaks in ephemeral agent environments. <strong>SPIFFE Client Auth</strong> (draft-ietf-oauth-spiffe-client-auth-02) lets the agent use its existing token as a <em>client assertion</em> to authenticate to any OAuth 2.0 AS, eliminating secrets entirely.</p>
+
+  <!-- Architecture -->
+  <div class="card">
+    <div class="card-title">OAuth 2.0 client_credentials with JWT bearer assertion</div>
+    <svg viewBox="0 0 780 160" style="width:100%;max-width:780px;display:block;margin:16px auto">
+      <defs><marker id="arSCA" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#7d8590"/></marker>
+      <marker id="arSCAb" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#58a6ff"/></marker>
+      <marker id="arSCAg" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#3fb950"/></marker></defs>
+
+      <!-- IdP -->
+      <rect x="10" y="35" width="130" height="90" rx="8" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+      <text x="75" y="62" text-anchor="middle" fill="#58a6ff" font-size="11" font-weight="700">IdP / SPIRE</text>
+      <text x="75" y="78" text-anchor="middle" fill="#7d8590" font-size="9">idp.agent-mesh.example</text>
+      <text x="75" y="95" text-anchor="middle" fill="#3fb950" font-size="9">issues agent+jwt</text>
+      <text x="75" y="108" text-anchor="middle" fill="#7d8590" font-size="9">signed with IdP key</text>
+
+      <!-- Agent -->
+      <rect x="190" y="50" width="130" height="60" rx="8" fill="#21262d" stroke="#ffa657" stroke-width="1.5"/>
+      <text x="255" y="76" text-anchor="middle" fill="#ffa657" font-size="11" font-weight="700">Agent</text>
+      <text x="255" y="92" text-anchor="middle" fill="#7d8590" font-size="9">spiffe://.../agents/orch</text>
+      <text x="255" y="104" text-anchor="middle" fill="#7d8590" font-size="9">holds: AgentToken</text>
+
+      <!-- OAuth AS -->
+      <rect x="380" y="35" width="150" height="90" rx="8" fill="#161b22" stroke="#bc8cff" stroke-width="1.5"/>
+      <text x="455" y="62" text-anchor="middle" fill="#bc8cff" font-size="11" font-weight="700">OAuth AS</text>
+      <text x="455" y="78" text-anchor="middle" fill="#7d8590" font-size="9">token endpoint</text>
+      <text x="455" y="95" text-anchor="middle" fill="#7d8590" font-size="9">grant_type=client_credentials</text>
+      <text x="455" y="108" text-anchor="middle" fill="#3fb950" font-size="9">validates AgentToken sig</text>
+
+      <!-- Resource API -->
+      <rect x="590" y="50" width="130" height="60" rx="8" fill="#21262d" stroke="#3fb950" stroke-width="1.5"/>
+      <text x="655" y="76" text-anchor="middle" fill="#3fb950" font-size="11" font-weight="700">Resource API</text>
+      <text x="655" y="92" text-anchor="middle" fill="#7d8590" font-size="9">protected endpoint</text>
+      <text x="655" y="104" text-anchor="middle" fill="#7d8590" font-size="9">Bearer token in header</text>
+
+      <!-- Step 1: IdP → Agent -->
+      <line x1="140" y1="80" x2="188" y2="80" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#arSCAb)"/>
+      <text x="164" y="70" fill="#58a6ff" font-size="8" text-anchor="middle">①agent+jwt</text>
+
+      <!-- Step 2: Agent → AS (client_assertion) -->
+      <line x1="320" y1="80" x2="378" y2="80" stroke="#ffa657" stroke-width="1.5" stroke-dasharray="5,2" marker-end="url(#arSCA)"/>
+      <text x="349" y="70" fill="#ffa657" font-size="8" text-anchor="middle">②client_assertion</text>
+      <text x="349" y="97" fill="#7d8590" font-size="7.5" text-anchor="middle">jwt-bearer assertion type</text>
+
+      <!-- Step 3: AS → Agent (Bearer token) -->
+      <line x1="378" y1="95" x2="322" y2="95" stroke="#3fb950" stroke-width="1.5" marker-end="url(#arSCAg)"/>
+      <text x="349" y="114" fill="#3fb950" font-size="8" text-anchor="middle">③Bearer access_token</text>
+
+      <!-- Step 4: Agent → API -->
+      <line x1="530" y1="80" x2="588" y2="80" stroke="#3fb950" stroke-width="1.5" marker-end="url(#arSCAg)"/>
+      <text x="559" y="70" fill="#3fb950" font-size="8" text-anchor="middle">④Authorization: Bearer</text>
+    </svg>
+    <p style="font-size:12px;color:var(--muted);margin-top:8px">No pre-shared client secret anywhere in the flow. The OAuth AS validates the AgentToken's signature against the IdP's public key — the same key it already trusts for workload identity.</p>
+  </div>
+
+  <!-- Token anatomy -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+    <div class="card">
+      <div class="card-title">OAuth request (<code>POST /token</code>)</div>
+      <pre style="font-size:11px;background:var(--bg);padding:12px;border-radius:6px;overflow-x:auto;margin-top:10px;color:var(--text);line-height:1.7"><span style="color:var(--muted)"># application/x-www-form-urlencoded</span>
+grant_type=<span style="color:var(--green)">client_credentials</span>
+client_assertion_type=<span style="color:var(--orange)">urn:ietf:params:oauth:</span>
+  <span style="color:var(--orange)">client-assertion-type:jwt-bearer</span>
+client_assertion=<span style="color:var(--purple)">&lt;compact AgentToken JWT&gt;</span>
+scope=<span style="color:var(--green)">read:tasks write:results</span>
+
+<span style="color:var(--muted)"># Response</span>
+{
+  <span style="color:var(--blue)">"access_token"</span>: <span style="color:var(--green)">"&lt;opaque 32-byte bearer&gt;"</span>,
+  <span style="color:var(--blue)">"token_type"</span>:   <span style="color:var(--green)">"Bearer"</span>,
+  <span style="color:var(--blue)">"expires_in"</span>:   <span style="color:var(--green)">3600</span>,
+  <span style="color:var(--blue)">"sub"</span>:          <span style="color:var(--green)">"spiffe://.../agents/orch"</span>
+}</pre>
+    </div>
+    <div class="card">
+      <div class="card-title">Authenticator — AS-side validation</div>
+      <pre style="font-size:11px;background:var(--bg);padding:12px;border-radius:6px;overflow-x:auto;margin-top:10px;color:var(--text);line-height:1.7"><span style="color:var(--muted)">// pkg/spiffeclientauth</span>
+auth := spiffeclientauth.NewAuthenticator(
+  <span style="color:var(--green)">"https://as.example"</span>,
+  identity.NewAgentValidator(
+    <span style="color:var(--green)">"https://idp.example"</span>,
+    idpPub,
+  ),
+  time.Hour,
+)
+
+tok, err := auth.Authenticate(
+  spiffeclientauth.AuthRequest{
+    <span style="color:var(--orange)">ClientAssertion</span>:     agentToken,
+    <span style="color:var(--orange)">ClientAssertionType</span>: <span style="color:var(--green)">"urn:…:jwt-bearer"</span>,
+    Scope:               <span style="color:var(--green)">"read:tasks"</span>,
+  },
+)
+<span style="color:var(--muted)">// tok.Sub == "spiffe://.../agents/orch"</span></pre>
+    </div>
+  </div>
+
+  <!-- ADR -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">Architecture decision — why implement SPIFFE Client Auth?</div>
+    <table class="compare-table" style="font-size:12px;margin-top:12px">
+      <tr>
+        <th style="width:30%">Problem without it</th>
+        <th style="width:35%">How SPIFFE Client Auth resolves it</th>
+        <th style="width:35%">Tradeoffs</th>
+      </tr>
+      <tr>
+        <td>Agents need OAuth access tokens to call APIs — requires registering a <code>client_id</code> + secret that must be rotated</td>
+        <td>Use the existing AgentToken as a <code>client_assertion</code> — no registration, no secrets, no rotation</td>
+        <td rowspan="3" style="vertical-align:top;padding-top:10px">
+          <strong style="color:var(--orange)">Cons:</strong>
+          <ul style="padding-left:16px;margin-top:6px;line-height:1.8;font-size:11px">
+            <li>AS must be updated to verify SPIFFE JWT assertions (new code path)</li>
+            <li>Spec at draft-02 — assertion type URN and validation rules may still change</li>
+            <li>Returned Bearer token is opaque — AS must remain available to introspect</li>
+          </ul>
+          <br>
+          <strong style="color:var(--green)">Pros:</strong>
+          <ul style="padding-left:16px;margin-top:6px;line-height:1.8;font-size:11px">
+            <li>Zero credential rotation — AgentToken TTL handles revocation</li>
+            <li>Works with any RFC 7523 compatible AS with a plugin</li>
+            <li>SPIFFE ID preserved as <code>sub</code> in Bearer token response</li>
+            <li>Reuses existing IdP trust — no new PKI required</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td>Secret sprawl — each agent deployment needs a unique <code>client_secret</code>, stored in environment or vault</td>
+        <td>The SPIFFE identity of the agent <em>is</em> the credential — no additional secret material needed</td>
+      </tr>
+      <tr>
+        <td>Minted tokens carry no agent identity — API can't tell which agent made the call</td>
+        <td><code>sub</code> claim in the access token response carries the SPIFFE ID, enabling per-agent authorization and audit</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Implementation -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">Implementation: <code>pkg/spiffeclientauth</code></div>
+    <p style="font-size:12px;color:var(--muted);margin-top:8px">
+      8 tests in <code>pkg/spiffeclientauth/spiffeclientauth_test.go</code> cover happy path, token uniqueness per call,
+      wrong assertion type, empty assertion, tampered AgentToken, expired token, issuer mismatch, and empty scope passthrough.
+    </p>
+    <div class="callout ok" style="margin-top:10px">
+      <strong>Backwards compatible:</strong> existing <code>pkg/identity</code> and <code>internal/gateway</code> packages are unchanged.
+      <code>pkg/spiffeclientauth</code> is an independent add-on that any OAuth AS endpoint can integrate.
+    </div>
+  </div>
+</div><!-- end scene-spiffeclientauth -->
+
+<!-- ══ IDENTITY CHAINING ═════════════════════════════════════════════════════ -->
+<div class="scene" id="scene-identitychaining">
+  <div class="card-title" style="font-size:11px;color:var(--muted);letter-spacing:.08em;margin-bottom:4px">SCENARIO</div>
+  <h1 class="scene-title">Identity Chaining</h1>
+  <p class="scene-lead">An agent in <strong>Cloud A</strong> holds a SPIFFE identity token issued by Cloud A's IdP. When it needs to call a service in <strong>Cloud B</strong>, Cloud B's AS won't accept Cloud A's token — different trust domains, different signing keys. <strong>Identity Chaining</strong> (draft-ietf-oauth-identity-chaining-17) bridges this gap with a <em>JWT Authorization Grant</em> that cross-domain services can validate without pre-configuring shared secrets between the two AS instances.</p>
+
+  <!-- Architecture -->
+  <div class="card">
+    <div class="card-title">Cross-trust-domain agent identity propagation</div>
+    <svg viewBox="0 0 780 200" style="width:100%;max-width:780px;display:block;margin:16px auto">
+      <defs><marker id="arIC" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#7d8590"/></marker>
+      <marker id="arICb" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#58a6ff"/></marker>
+      <marker id="arICg" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#3fb950"/></marker>
+      <marker id="arICo" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#ffa657"/></marker></defs>
+
+      <!-- Domain A boundary -->
+      <rect x="5" y="10" width="370" height="180" rx="10" fill="rgba(88,166,255,.04)" stroke="rgba(88,166,255,.3)" stroke-dasharray="6,3"/>
+      <text x="190" y="28" text-anchor="middle" fill="#58a6ff" font-size="10" font-weight="700">CLOUD A (trust domain: cloud-a.example)</text>
+
+      <!-- Domain B boundary -->
+      <rect x="400" y="10" width="370" height="180" rx="10" fill="rgba(63,185,80,.04)" stroke="rgba(63,185,80,.3)" stroke-dasharray="6,3"/>
+      <text x="585" y="28" text-anchor="middle" fill="#3fb950" font-size="10" font-weight="700">CLOUD B (trust domain: cloud-b.example)</text>
+
+      <!-- Agent -->
+      <rect x="20" y="80" width="110" height="60" rx="8" fill="#21262d" stroke="#ffa657" stroke-width="1.5"/>
+      <text x="75" y="106" text-anchor="middle" fill="#ffa657" font-size="11" font-weight="700">Agent</text>
+      <text x="75" y="120" text-anchor="middle" fill="#7d8590" font-size="9">spiffe://cloud-a.example</text>
+      <text x="75" y="132" text-anchor="middle" fill="#7d8590" font-size="9">/agents/orchestrator</text>
+
+      <!-- Domain A AS -->
+      <rect x="165" y="55" width="130" height="110" rx="8" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+      <text x="230" y="80" text-anchor="middle" fill="#58a6ff" font-size="11" font-weight="700">AS — Cloud A</text>
+      <text x="230" y="96" text-anchor="middle" fill="#7d8590" font-size="9">validates agent+jwt</text>
+      <text x="230" y="112" text-anchor="middle" fill="#3fb950" font-size="9">issues jwt-authz-grant</text>
+      <text x="230" y="128" text-anchor="middle" fill="#7d8590" font-size="9">signed with domainA key</text>
+      <text x="230" y="144" text-anchor="middle" fill="#7d8590" font-size="9">aud = Cloud B endpoint</text>
+
+      <!-- Domain B AS -->
+      <rect x="415" y="55" width="130" height="110" rx="8" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
+      <text x="480" y="80" text-anchor="middle" fill="#3fb950" font-size="11" font-weight="700">AS — Cloud B</text>
+      <text x="480" y="96" text-anchor="middle" fill="#7d8590" font-size="9">validates jwt-authz-grant</text>
+      <text x="480" y="112" text-anchor="middle" fill="#7d8590" font-size="9">checks iss, aud, exp, sub</text>
+      <text x="480" y="128" text-anchor="middle" fill="#3fb950" font-size="9">extracts SPIFFE ID</text>
+      <text x="480" y="144" text-anchor="middle" fill="#7d8590" font-size="9">issues Cloud B token</text>
+
+      <!-- Service B -->
+      <rect x="607" y="80" width="130" height="60" rx="8" fill="#21262d" stroke="#3fb950" stroke-width="1.5"/>
+      <text x="672" y="106" text-anchor="middle" fill="#3fb950" font-size="11" font-weight="700">Service B</text>
+      <text x="672" y="120" text-anchor="middle" fill="#7d8590" font-size="9">protected endpoint</text>
+      <text x="672" y="132" text-anchor="middle" fill="#7d8590" font-size="9">cloud-b trust domain</text>
+
+      <!-- ① Agent → AS-A (AgentToken) -->
+      <line x1="130" y1="100" x2="163" y2="100" stroke="#ffa657" stroke-width="1.5" marker-end="url(#arICo)"/>
+      <text x="147" y="92" fill="#ffa657" font-size="8" text-anchor="middle">① agent+jwt</text>
+
+      <!-- ② AS-A → Agent (jwt-authz-grant) -->
+      <line x1="163" y1="120" x2="132" y2="120" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#arICb)"/>
+      <text x="147" y="138" fill="#58a6ff" font-size="8" text-anchor="middle">② jwt-authz-grant</text>
+
+      <!-- ③ Agent → AS-B (present grant) -->
+      <line x1="295" y1="105" x2="413" y2="105" stroke="#58a6ff" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arICb)"/>
+      <text x="354" y="97" fill="#58a6ff" font-size="8" text-anchor="middle">③ jwt-authz-grant</text>
+      <text x="354" y="108" fill="#7d8590" font-size="7.5" text-anchor="middle">cross-domain</text>
+
+      <!-- ④ AS-B → Agent (Cloud B token) -->
+      <line x1="413" y1="125" x2="295" y2="125" stroke="#3fb950" stroke-width="1.5" marker-end="url(#arICg)"/>
+      <text x="354" y="140" fill="#3fb950" font-size="8" text-anchor="middle">④ Cloud B token</text>
+
+      <!-- ⑤ Agent → Service B -->
+      <line x1="545" y1="110" x2="605" y2="110" stroke="#3fb950" stroke-width="1.5" marker-end="url(#arICg)"/>
+      <text x="575" y="102" fill="#3fb950" font-size="8" text-anchor="middle">⑤ API call</text>
+    </svg>
+    <p style="font-size:12px;color:var(--muted);margin-top:8px">Cloud B only needs Cloud A's public signing key — no pre-shared secret between the two AS instances. The agent's SPIFFE ID flows through the grant's <code>sub</code> claim, giving Cloud B full auditability of cross-domain calls.</p>
+  </div>
+
+  <!-- Token anatomy -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+    <div class="card">
+      <div class="card-title">JWT Authorization Grant (<code>jwt-authz-grant</code>)</div>
+      <pre style="font-size:11px;background:var(--bg);padding:12px;border-radius:6px;overflow-x:auto;margin-top:10px;color:var(--text);line-height:1.7"><span style="color:var(--muted)">// Header</span>
+{
+  <span style="color:var(--blue)">"alg"</span>: <span style="color:var(--green)">"ES256"</span>,
+  <span style="color:var(--orange)">"typ"</span>: <span style="color:var(--orange)">"jwt-authz-grant"</span>
+}
+
+<span style="color:var(--muted)">// Payload</span>
+{
+  <span style="color:var(--blue)">"iss"</span>: <span style="color:var(--green)">"https://as.cloud-a.example"</span>,
+  <span style="color:var(--blue)">"sub"</span>: <span style="color:var(--green)">"spiffe://cloud-a.example/agents/orch"</span>,
+  <span style="color:var(--blue)">"aud"</span>: [<span style="color:var(--orange)">"https://as.cloud-b.example/token"</span>],
+  <span style="color:var(--blue)">"iat"</span>: <span style="color:var(--green)">1753649000</span>,
+  <span style="color:var(--blue)">"exp"</span>: <span style="color:var(--green)">1753649300</span>,   <span style="color:var(--muted)">// 5 min TTL</span>
+  <span style="color:var(--blue)">"jti"</span>: <span style="color:var(--green)">"kY2mNpXx…"</span>     <span style="color:var(--muted)">// replay prevention</span>
+}</pre>
+    </div>
+    <div class="card">
+      <div class="card-title">Go implementation — <code>pkg/identitychaining</code></div>
+      <pre style="font-size:11px;background:var(--bg);padding:12px;border-radius:6px;overflow-x:auto;margin-top:10px;color:var(--text);line-height:1.7"><span style="color:var(--muted)">// Domain A: issue grant</span>
+gi := identitychaining.NewGrantIssuer(
+  <span style="color:var(--green)">"https://as.cloud-a.example"</span>,
+  domainAKey, agentValidator,
+  5*time.Minute,
+)
+grant, _ := gi.Issue(
+  agentToken,
+  <span style="color:var(--orange)">"https://as.cloud-b.example/token"</span>,
+)
+
+<span style="color:var(--muted)">// Domain B: validate grant</span>
+gv := identitychaining.NewGrantValidator(
+  <span style="color:var(--green)">"https://as.cloud-a.example"</span>,
+  domainAPub,
+)
+claims, _ := gv.Validate(
+  grant,
+  <span style="color:var(--orange)">"https://as.cloud-b.example/token"</span>,
+)
+<span style="color:var(--muted)">// claims.Subject == "spiffe://cloud-a.../agents/orch"</span></pre>
+    </div>
+  </div>
+
+  <!-- ADR -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">Architecture decision — why implement Identity Chaining?</div>
+    <table class="compare-table" style="font-size:12px;margin-top:12px">
+      <tr>
+        <th style="width:30%">Problem without it</th>
+        <th style="width:35%">How Identity Chaining resolves it</th>
+        <th style="width:35%">Tradeoffs</th>
+      </tr>
+      <tr>
+        <td>Agent in cloud-a.example cannot authenticate to cloud-b.example APIs — their IdPs have different signing keys and different trust domains</td>
+        <td>Domain A's AS issues a <code>jwt-authz-grant</code> that is addressed specifically to domain B's token endpoint — domain B validates it with only domain A's public key</td>
+        <td rowspan="3" style="vertical-align:top;padding-top:10px">
+          <strong style="color:var(--orange)">Cons:</strong>
+          <ul style="padding-left:16px;margin-top:6px;line-height:1.8;font-size:11px">
+            <li>Two round-trips before the first API call (get grant, exchange for B token)</li>
+            <li>Domain B must pre-configure domain A's public key</li>
+            <li>Spec at draft-17 — may still evolve before RFC</li>
+            <li>Short-lived grants (5 min) — agent must refresh for long-running tasks</li>
+          </ul>
+          <br>
+          <strong style="color:var(--green)">Pros:</strong>
+          <ul style="padding-left:16px;margin-top:6px;line-height:1.8;font-size:11px">
+            <li>Zero pre-shared secrets between domains</li>
+            <li>SPIFFE ID preserved across the domain boundary — full audit trail</li>
+            <li><code>jti</code> prevents grant replay attacks</li>
+            <li>Short grant TTL limits blast radius if a grant is intercepted</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td>Token exchange via RFC 8693 requires domain A and B to share infrastructure or a common token exchange service</td>
+        <td>The JWT grant is self-contained and cryptographically verifiable — domain B needs no connection to domain A beyond the initial public key exchange</td>
+      </tr>
+      <tr>
+        <td>Cross-domain calls lose the agent's SPIFFE identity — cloud B sees an opaque service token</td>
+        <td><code>sub</code> in the grant carries the original SPIFFE ID; cloud B can use it for per-agent authorization and audit</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Implementation -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">Implementation: <code>pkg/identitychaining</code></div>
+    <p style="font-size:12px;color:var(--muted);margin-top:8px">
+      10 tests in <code>pkg/identitychaining/identitychaining_test.go</code> cover the happy path,
+      <code>typ</code> header verification, audience mismatch, wrong signing key, expired grant, issuer mismatch,
+      invalid AgentToken, missing subject/audience inputs, and a full end-to-end cross-domain flow.
+    </p>
+    <div class="callout ok" style="margin-top:10px">
+      <strong>Backwards compatible:</strong> <code>pkg/identity</code>, <code>pkg/spiffeclientauth</code>, and
+      <code>internal/gateway</code> are unchanged. <code>pkg/identitychaining</code> is an independent package
+      that layers on top of the existing <code>AgentValidator</code>.
+    </div>
+  </div>
+</div><!-- end scene-identitychaining -->
+
 <!-- ════════════════════════════════════════════════════
 KER ════════════════════════════════════════════════════ -->
 <div class="scene" id="scene-broker">
@@ -2175,7 +2511,7 @@ KER ═════════════════════════�
   <div class="card">
     <div class="card-title">Standards Tracker</div>
     <p class="spec-ref">
-      This PoC implements eight IETF and OpenID standards — most of them active drafts still evolving toward production readiness.
+      This PoC implements eleven IETF and OpenID standards — most of them active drafts still evolving toward production readiness.
       A GitHub Actions workflow checks the IETF Datatracker API daily and opens a labelled issue when any revision changes.
     </p>
     <p style="font-size:.8rem;color:var(--muted);margin-bottom:1rem">
@@ -2263,6 +2599,22 @@ KER ═════════════════════════�
         <td style="text-align:center"><code>1.0-41</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/federation</code>, <code>internal/gateway/multivalidator.go</code></td>
         <td style="font-size:11px">Entity Configuration, Subordinate Statement, <code>authority_hints</code>, chain resolution for cross-org AgentToken validation</td>
+      </tr>
+      <tr>
+        <td><a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-spiffe-client-auth/" target="_blank" style="color:var(--blue)">SPIFFE Client Auth — JWT-bearer OAuth assertion</a></td>
+        <td style="white-space:nowrap;font-size:11px">IETF OAuth WG</td>
+        <td><span style="color:var(--orange);white-space:nowrap">● Active draft</span></td>
+        <td style="text-align:center"><code>-02</code></td>
+        <td style="font-size:10px;color:var(--muted)"><code>pkg/spiffeclientauth</code></td>
+        <td style="font-size:11px">AgentToken as <code>client_assertion</code> (<code>urn:…:jwt-bearer</code>) — eliminates pre-shared OAuth client secrets for agent workloads</td>
+      </tr>
+      <tr>
+        <td><a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-identity-chaining/" target="_blank" style="color:var(--blue)">Identity Chaining — JWT Authorization Grant</a></td>
+        <td style="white-space:nowrap;font-size:11px">IETF OAuth WG</td>
+        <td><span style="color:var(--orange);white-space:nowrap">● Active draft</span></td>
+        <td style="text-align:center"><code>-17</code></td>
+        <td style="font-size:10px;color:var(--muted)"><code>pkg/identitychaining</code></td>
+        <td style="font-size:11px"><code>typ=jwt-authz-grant</code>, cross-trust-domain propagation of agent SPIFFE IDs; <code>aud</code>=target AS endpoint, <code>jti</code> replay protection</td>
       </tr>
     </table>
   </div>

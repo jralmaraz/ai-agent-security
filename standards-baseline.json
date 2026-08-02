@@ -1,17 +1,20 @@
 {
   "_comment": "Tracks IETF/OpenID drafts implemented in this PoC. Updated daily by the standards-tracker GitHub Actions workflow. Set implemented_rev when the PoC code is updated to match a new revision.",
+  "_tracking_policy": "docs/standards-tracking.md",
   "last_checked": "2026-08-02",
   "wg_feeds": [
     {
       "name": "IETF WIMSE WG",
       "feed_url": "https://datatracker.ietf.org/group/wimse/documents/feed/",
       "type": "ietf-wg",
+      "source_org": "https://github.com/ietf-wg-wimse",
       "note": "Discovers new WIMSE WG drafts not yet in our baseline"
     },
     {
       "name": "IETF OAuth WG",
       "feed_url": "https://datatracker.ietf.org/group/oauth/documents/feed/",
       "type": "ietf-wg",
+      "source_org": "https://github.com/oauth-wg",
       "note": "Discovers new OAuth WG drafts (DPoP updates, Transaction Tokens, etc.)"
     },
     {
@@ -34,6 +37,7 @@
       "status": "active-draft",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-wimse-workload-creds/",
       "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-ietf-wimse-workload-creds/",
+      "source_repo": "https://github.com/ietf-wg-wimse/draft-ietf-wimse-s2s-protocol",
       "impact": "AgentToken (agent+jwt) extends WIT structure — any cnf.jwk or typ changes affect pkg/identity",
       "used_in": ["pkg/identity/token.go", "pkg/identity/chain.go"]
     },
@@ -47,6 +51,7 @@
       "status": "active-draft",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-wimse-wpt/",
       "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-ietf-wimse-wpt/",
+      "source_repo": "https://github.com/ietf-wg-wimse/draft-ietf-wimse-s2s-protocol",
       "impact": "AgentProofToken (application/agent-proof+jwt) mirrors WPT claims — aud, wth, tth (Txn-Token hash), jti",
       "used_in": ["pkg/identity/proof.go", "internal/gateway"]
     },
@@ -60,6 +65,7 @@
       "status": "active-draft",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-wimse-identifier/",
       "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-ietf-wimse-identifier/",
+      "source_repo": "https://github.com/ietf-wg-wimse/draft-ietf-wimse-identifier",
       "impact": "SPIFFE URI format for agent SVIDs — spiffe://trust-domain/path",
       "used_in": ["pkg/identity/token.go", "pkg/keys/mtls.go"]
     },
@@ -73,6 +79,7 @@
       "status": "active-draft",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-wimse-mutual-tls/",
       "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-ietf-wimse-mutual-tls/",
+      "source_repo": "https://github.com/ietf-wg-wimse/draft-ietf-wimse-s2s-protocol",
       "impact": "Token-cert binding in gateway middleware — URI SAN matching against AgentToken.sub",
       "used_in": ["pkg/keys/mtls.go", "internal/gateway/server.go"]
     },
@@ -86,6 +93,7 @@
       "status": "active-draft",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-wimse-arch/",
       "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-ietf-wimse-arch/",
+      "source_repo": "https://github.com/ietf-wg-wimse/draft-ietf-wimse-arch",
       "impact": "Token exchange, trust domain boundaries, delegation chain semantics",
       "used_in": ["pkg/identity/chain.go", "internal/gateway"]
     },
@@ -99,6 +107,7 @@
       "status": "individual-draft",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-hartman-credential-broker-4-agents/",
       "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-hartman-credential-broker-4-agents/",
+      "source_repo": null,
       "impact": "TRE JWT (tre+jwt), PDP decision (pdp-decision+jwt), CB4A token (cb4a-token+jwt), Tier model, DPoP binding via cnf.jkt",
       "used_in": ["pkg/cb4a"]
     },
@@ -112,6 +121,7 @@
       "status": "active-draft",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-oauth-transaction-tokens/",
       "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-ietf-oauth-transaction-tokens/",
+      "source_repo": "https://github.com/oauth-wg/oauth-transaction-tokens",
       "impact": "Txn-Token (txntoken+jwt) propagates user identity + authorization context through agent chains; tth in AgentProofToken links proof to transaction; req_wl carries requesting agent SPIFFE ID",
       "used_in": ["pkg/txntoken", "pkg/identity (tth claim in AgentProofToken)"]
     },
@@ -125,6 +135,7 @@
       "status": "rfc",
       "datatracker_url": "https://datatracker.ietf.org/doc/rfc9449/",
       "api_url": null,
+      "source_repo": null,
       "impact": "DPoP proof JWT (dpop+jwt), cnf.jkt thumbprint, ath binding, jti replay protection in CDP",
       "used_in": ["pkg/cb4a/cdp.go"]
     },
@@ -138,11 +149,40 @@
       "status": "final",
       "datatracker_url": "https://openid.net/specs/openid-federation-1_0.html",
       "api_url": null,
+      "source_repo": "https://github.com/openid/federation",
       "rss_url": "https://openid.net/feed/",
       "rss_keywords": ["federation"],
       "last_rss_guid": null,
       "impact": "Entity Configuration, Subordinate Statement, authority_hints, chain resolution for cross-org AgentToken validation",
       "used_in": ["pkg/federation", "internal/gateway/multivalidator.go"]
+    },
+    {
+      "id": "draft-ietf-oauth-spiffe-client-auth",
+      "label": "OAuth 2.0 SPIFFE Client Authentication",
+      "short": "SPIFFE-ClientAuth",
+      "wg": "IETF OAuth WG",
+      "last_known_rev": "02",
+      "implemented_rev": "02",
+      "status": "active-draft",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-oauth-spiffe-client-auth/",
+      "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-ietf-oauth-spiffe-client-auth/",
+      "source_repo": "https://github.com/oauth-wg/oauth-spiffe-client-authentication",
+      "impact": "AgentToken used as JWT bearer client assertion to authenticate to OAuth AS — eliminates shared secrets for agent-to-OAuth-AS authentication; WIT-SVID profile directly uses AgentToken",
+      "used_in": ["pkg/spiffeclientauth"]
+    },
+    {
+      "id": "draft-ietf-oauth-identity-chaining",
+      "label": "OAuth Identity and Authorization Chaining Across Domains",
+      "short": "IdentityChaining",
+      "wg": "IETF OAuth WG",
+      "last_known_rev": "17",
+      "implemented_rev": "17",
+      "status": "active-draft",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-oauth-identity-chaining/",
+      "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-ietf-oauth-identity-chaining/",
+      "source_repo": "https://github.com/oauth-wg/oauth-identity-chaining",
+      "impact": "JWT authorization grant (RFC 7523 profile) for cross-domain token exchange (RFC 8693); AS-A validates AgentToken and issues grant targeting AS-B; AS-B validates grant and issues its own access token; complements Txn-Token for multi-trust-domain agent chains",
+      "used_in": ["pkg/identitychaining", "internal/gateway"]
     }
   ]
 }
