@@ -18,6 +18,7 @@ import (
 	"github.com/jralmaraz/wimse-agent-fabric/pkg/federation"
 	"github.com/jralmaraz/wimse-agent-fabric/pkg/identity"
 	"github.com/jralmaraz/wimse-agent-fabric/pkg/keys"
+	x402pkg "github.com/jralmaraz/wimse-agent-fabric/pkg/x402"
 )
 
 // ── global demo state ─────────────────────────────────────────────────────────
@@ -534,6 +535,316 @@ func cb4aAudit(_ js.Value, _ []js.Value) any {
 	return okObj(map[string]any{"entries": string(b), "count": len(rows)})
 }
 
+// ── x402 payment demo state ───────────────────────────────────────────────────
+
+const (
+	x402IdpIssuer  = "https://idp.x402-demo.example"
+	x402AgentSVID  = "spiffe://x402-demo.example/agent/payment-bot"
+	x402PaymentURI = "https://api.vendor.example/v1/premium-data"
+)
+
+var (
+	x402IDP       *identity.AgentIssuer
+	x402Validator *identity.AgentValidator
+	x402PDP       *cb4a.InMemoryPDP
+	x402CDP       *cb4a.CDP
+	x402CDPPub    *ecdsa.PublicKey
+	x402GW        *x402pkg.PaymentGateway
+	x402AuditLog  *cb4a.AuditLog
+	x402AgentTok  string
+	x402Minted    *cb4a.MintedCredential
+	x402PendReqID string
+	x402DecJWT    string
+)
+
+// x402Init initialises the full x402 demo stack.
+func x402Init(_ js.Value, _ []js.Value) any {
+	// IdP key pair
+	idpKP, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return errObj("generate IdP key: " + err.Error())
+	}
+	// Agent key pair
+	agentKP, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return errObj("generate agent key: " + err.Error())
+	}
+	// PDP key pair
+	pdpKP, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return errObj("generate PDP key: " + err.Error())
+	}
+	// CDP key pair
+	cdpKP, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return errObj("generate CDP key: " + err.Error())
+	}
+
+	x402AuditLog = cb4a.NewAuditLog()
+	x402PDP = cb4a.NewInMemoryPDP(
+		"https://pdp.x402-demo.example",
+		pdpKP,
+		cb4a.DefaultPolicyRules(),
+		15*time.Minute,
+		x402AuditLog,
+	)
+	x402CDP = cb4a.NewCDP(
+		cb4a.NewInMemoryVault(),
+		&pdpKP.PublicKey,
+		cdpKP,
+		"https://cdp.x402-demo.example",
+		15*time.Minute,
+		x402AuditLog,
+	)
+	x402CDPPub = &cdpKP.PublicKey
+
+	x402IDP = identity.NewAgentIssuer(x402IdpIssuer, idpKP, time.Hour)
+	x402Validator = identity.NewAgentValidator(x402IdpIssuer, &idpKP.PublicKey)
+
+	// Issue AgentToken for the demo paying agent
+	tok, err := x402IDP.Issue(identity.IssueOptions{
+		Subject:     x402AgentSVID,
+		Role:        identity.RoleOrchestrator,
+		ChainDepth:  0,
+		WorkloadKey: &agentKP.PublicKey,
+	})
+	if err != nil {
+		return errObj("issue AgentToken: " + err.Error())
+	}
+	x402AgentTok = tok
+	x402Minted = nil
+	x402PendReqID = ""
+	x402DecJWT = ""
+
+	// PaymentGateway — configured for 50 AGENT_CREDIT (auto-approve tier)
+	x402GW = x402pkg.NewPaymentGateway(x402CDP, x402CDPPub, x402Validator, "AGENT_CREDIT", "50")
+
+	return okObj(map[string]any{
+		"message":    "x402 demo initialised. PDP, CDP, PaymentGateway, and AgentToken ready.",
+		"agentSVID":  x402AgentSVID,
+		"agentToken": truncate(tok),
+	})
+}
+
+// x402HitAPI simulates an agent calling an x402-protected endpoint.
+// Returns the 402 PaymentRequired payload that the server would send.
+func x402HitAPI(_ js.Value, args []js.Value) any {
+	if x402GW == nil {
+		return errObj("call x402Init() first")
+	}
+	uri := x402PaymentURI
+	if len(args) > 0 && !args[0].IsNull() && !args[0].IsUndefined() {
+		uri = args[0].String()
+	}
+	pr := x402GW.Require(uri)
+	b, _ := json.Marshal(pr)
+	return okObj(map[string]any{
+		"status":          402,
+		"message":         "HTTP 402 Payment Required",
+		"paymentRequired": string(b),
+		"resource":        uri,
+		"asset":           pr.Accepts[0].Asset,
+		"amount":          pr.Accepts[0].Amount,
+		"scheme":          pr.Accepts[0].Scheme,
+	})
+}
+
+// x402RequestSpending submits a CB4A credential request for a payment scope.
+// args[0] = amount string (e.g. "50" for auto-approve, "100" for HITL)
+func x402RequestSpending(_ js.Value, args []js.Value) any {
+	if x402PDP == nil {
+		return errObj("call x402Init() first")
+	}
+	amount := "50"
+	if len(args) > 0 && !args[0].IsNull() && !args[0].IsUndefined() {
+		amount = args[0].String()
+	}
+	scope := "payment:AGENT_CREDIT:" + amount
+
+	// Update gateway for the requested amount
+	x402GW = x402pkg.NewPaymentGateway(x402CDP, x402CDPPub, x402Validator, "AGENT_CREDIT", amount)
+
+	env := &cb4a.EnvelopeClaims{
+		AgentSVID: x402AgentSVID,
+		Target:    x402PaymentURI,
+		Action:    "GET",
+		Scope:     scope,
+	}
+	decisionJWT, reqID, err := x402PDP.Evaluate(env)
+	if err != nil {
+		return errObj("PDP evaluate: " + err.Error())
+	}
+
+	tierNames := map[cb4a.ApprovalTier]string{
+		cb4a.TierAuto: "Tier 1 — Auto-Approved",
+		cb4a.TierHITL: "Tier 2 — Human-in-the-Loop",
+		cb4a.TierMFA:  "Tier 3 — MFA Required",
+	}
+
+	if decisionJWT != "" {
+		x402DecJWT = decisionJWT
+		x402PendReqID = ""
+		return okObj(map[string]any{
+			"tier":     int(cb4a.TierAuto),
+			"tierName": tierNames[cb4a.TierAuto],
+			"status":   "auto-approved",
+			"scope":    scope,
+		})
+	}
+
+	x402PendReqID = reqID
+	x402DecJWT = ""
+	req := x402PDP.Get(reqID)
+	tier := cb4a.TierHITL
+	if req != nil {
+		tier = req.Tier
+	}
+	return okObj(map[string]any{
+		"tier":      int(tier),
+		"tierName":  tierNames[tier],
+		"status":    "pending",
+		"requestID": reqID,
+		"scope":     scope,
+	})
+}
+
+// x402Approve approves a pending HITL payment request.
+// args[0] = requestID (from x402RequestSpending response)
+func x402Approve(_ js.Value, args []js.Value) any {
+	if x402PDP == nil {
+		return errObj("call x402Init() first")
+	}
+	reqID := x402PendReqID
+	if len(args) > 0 && !args[0].IsNull() && !args[0].IsUndefined() {
+		reqID = args[0].String()
+	}
+	if reqID == "" {
+		return errObj("no pending request to approve")
+	}
+	dec, err := x402PDP.Approve(reqID, "finance-approver")
+	if err != nil {
+		return errObj("approve: " + err.Error())
+	}
+	x402DecJWT = dec
+	x402PendReqID = ""
+	return okObj(map[string]any{
+		"approved":  true,
+		"approver":  "finance-approver",
+		"requestID": reqID,
+	})
+}
+
+// x402MintCred mints a DPoP-bound payment credential from the approved PDP decision.
+func x402MintCred(_ js.Value, _ []js.Value) any {
+	if x402CDP == nil {
+		return errObj("call x402Init() first")
+	}
+	if x402DecJWT == "" {
+		return errObj("no approved decision — call x402RequestSpending or x402Approve first")
+	}
+	mc, err := x402CDP.Mint(x402DecJWT)
+	if err != nil {
+		return errObj("CDP mint: " + err.Error())
+	}
+	x402Minted = mc
+	x402DecJWT = ""
+
+	ephJWK, _ := keys.PublicKeyToJWK(mc.EphemeralPub, "")
+	keyFP := "(key error)"
+	if ephJWK != nil && len(ephJWK.X) >= 8 {
+		keyFP = ephJWK.X[:8] + "…"
+	}
+	return okObj(map[string]any{
+		"scope":             mc.Scope,
+		"expiresAt":         mc.ExpiresAt.Format(time.RFC3339),
+		"tokenPreview":      truncate(mc.Token),
+		"ephKeyFingerprint": keyFP,
+		"dpopBound":         true,
+		"message":           "Payment credential minted. DPoP-bound to ephemeral key — no replay possible.",
+	})
+}
+
+// x402Pay builds a payment payload and verifies it through the PaymentGateway.
+// args[0] = HTTP method (default "GET"), args[1] = URI (default x402PaymentURI)
+func x402Pay(_ js.Value, args []js.Value) any {
+	if x402GW == nil {
+		return errObj("call x402Init() first")
+	}
+	if x402Minted == nil {
+		return errObj("call x402MintCred() first")
+	}
+	if x402AgentTok == "" {
+		return errObj("call x402Init() first (AgentToken missing)")
+	}
+	method := "GET"
+	uri := x402PaymentURI
+	if len(args) > 0 && !args[0].IsNull() && !args[0].IsUndefined() {
+		method = args[0].String()
+	}
+	if len(args) > 1 && !args[1].IsNull() && !args[1].IsUndefined() {
+		uri = args[1].String()
+	}
+
+	agent := x402pkg.NewPayingAgent(x402Minted, x402AgentTok)
+	payload, err := agent.BuildPayload(method, uri)
+	if err != nil {
+		return errObj("build payment payload: " + err.Error())
+	}
+
+	result, err := x402GW.Verify(payload, method, uri)
+	if err != nil {
+		return map[string]any{
+			"ok":     false,
+			"detail": "REJECTED: " + err.Error(),
+		}
+	}
+	return okObj(map[string]any{
+		"agentSVID": result.AgentSVID,
+		"asset":     result.Asset,
+		"amount":    result.Amount,
+		"scope":     result.Scope,
+		"resource":  result.Resource,
+		"status":    "200 OK",
+		"message":   "Payment authorized — access granted. DPoP proof consumed (no replay).",
+	})
+}
+
+// x402GetAudit returns the x402 payment audit trail.
+func x402GetAudit(_ js.Value, _ []js.Value) any {
+	if x402AuditLog == nil {
+		return errObj("call x402Init() first")
+	}
+	entries := x402AuditLog.Entries()
+	type auditRow struct {
+		Event     string `json:"event"`
+		AgentSVID string `json:"agent_svid"`
+		Scope     string `json:"scope"`
+		Tier      int    `json:"tier,omitempty"`
+		RequestID string `json:"request_id,omitempty"`
+		Detail    string `json:"detail,omitempty"`
+		Success   bool   `json:"success"`
+		Timestamp string `json:"timestamp"`
+	}
+	rows := make([]auditRow, len(entries))
+	for i, e := range entries {
+		rows[i] = auditRow{
+			Event:     string(e.Event),
+			AgentSVID: e.AgentSVID,
+			Scope:     e.Scope,
+			Tier:      e.Tier,
+			RequestID: e.RequestID,
+			Detail:    e.Detail,
+			Success:   e.Success,
+			Timestamp: e.Timestamp.Format("15:04:05.000"),
+		}
+	}
+	b, err := json.Marshal(rows)
+	if err != nil {
+		return errObj("marshal audit: " + err.Error())
+	}
+	return okObj(map[string]any{"entries": string(b), "count": len(rows)})
+}
+
 // ── Federation (OID-FED) state ────────────────────────────────────────────────
 
 var (
@@ -893,6 +1204,14 @@ func main() {
 		"cb4aMint":    js.FuncOf(cb4aMint),
 		"cb4aAPICall": js.FuncOf(cb4aAPICall),
 		"cb4aAudit":   js.FuncOf(cb4aAudit),
+		// x402 payment flow
+		"x402Init":            js.FuncOf(x402Init),
+		"x402HitAPI":          js.FuncOf(x402HitAPI),
+		"x402RequestSpending": js.FuncOf(x402RequestSpending),
+		"x402Approve":         js.FuncOf(x402Approve),
+		"x402MintCred":        js.FuncOf(x402MintCred),
+		"x402Pay":             js.FuncOf(x402Pay),
+		"x402GetAudit":        js.FuncOf(x402GetAudit),
 	}))
 	<-make(chan struct{}) // block forever
 }

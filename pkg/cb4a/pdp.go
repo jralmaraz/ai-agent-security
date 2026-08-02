@@ -57,6 +57,10 @@ func DefaultPolicyRules() []PolicyRule {
 		// Financial write operations require human approval.
 		{AgentPattern: "*", ScopePattern: "billing:*:write", Tier: TierHITL},
 		{AgentPattern: "*", ScopePattern: "stripe:*:write", Tier: TierHITL},
+		// x402 micro-payments up to 50 credits are auto-approved.
+		{AgentPattern: "*", ScopePattern: "payment:AGENT_CREDIT:50", Tier: TierAuto},
+		// Larger x402 payments require human approval.
+		{AgentPattern: "*", ScopePattern: "payment:*", Tier: TierHITL},
 		// Read-only scopes are auto-approved.
 		{AgentPattern: "*", ScopePattern: "*:read", Tier: TierAuto},
 		{AgentPattern: "*", ScopePattern: "*:*:read", Tier: TierAuto},

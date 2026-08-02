@@ -240,6 +240,8 @@ main{max-width:960px;margin:0 auto;padding:2rem}
 .scenario-card h4{font-size:.88rem;font-weight:700;margin-bottom:.4rem}
 .scenario-card p{font-size:.8rem;color:var(--muted);line-height:1.6;margin-bottom:.5rem}
 .scenario-card .tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-bottom:8px}
+/* ── x402 output areas ── */
+.output-box{background:var(--surface);border:1px solid var(--green);border-radius:6px;padding:10px;font-family:var(--mono);font-size:11px;white-space:pre-wrap;line-height:1.6;color:var(--text);word-break:break-all}
 </style>
 </head>
 <body>
@@ -276,6 +278,7 @@ main{max-width:960px;margin:0 auto;padding:2rem}
     <div class="tab" onclick="showTab('spiffeclientauth',this)">SPIFFE Client Auth</div>
     <div class="tab" onclick="showTab('identitychaining',this)">Identity Chaining</div>
     <div class="tab" onclick="showTab('broker',this)">Credential Broker</div>
+    <div class="tab" onclick="showTab('x402',this)">x402 Payments</div>
     <div class="tab" onclick="showTab('landscape',this)">Agent Auth Landscape</div>
   </nav>
   <div class="nav-fade" id="nav-fade"></div>
@@ -2162,6 +2165,191 @@ KER ═════════════════════════�
 
 </div>
 
+<!-- ══ x402 PAYMENTS ══════════════════════════════════════════════════════════ -->
+<div class="scene" id="scene-x402">
+  <div class="card">
+    <div class="card-title">x402 + WIMSE: Pay-per-Call APIs for AI Agents</div>
+    <p class="spec-ref">
+      Integrating the <a href="https://x402.org" target="_blank">x402 HTTP payment protocol</a> with WIMSE Agent Fabric + CB4A.
+      Instead of EVM wallet signatures, agents present CB4A-DPoP credentials as payment authorization — fully
+      cryptographically bound to the paying agent's SPIFFE identity.
+    </p>
+    <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">
+      AI agents increasingly need to call pay-per-use APIs (data, compute, external tools). x402 standardises
+      HTTP-level payment — but who is <em>authorising</em> the spend? WIMSE + CB4A answer this: the PDP evaluates
+      spending authority, the CDP mints a short-lived DPoP-bound payment credential, and the WIMSE AgentToken
+      cryptographically proves <em>which agent</em> authorised each payment.
+    </p>
+    <div class="info-grid c3">
+      <div class="info-box blue">
+        <div class="ibt">x402 — HTTP Payment Layer</div>
+        <div class="ibv" style="font-size:11px;line-height:1.7">Server returns <code>402 Payment Required</code> + <code>PaymentRequired</code> JSON. Agent retries with <code>X-Payment</code> header. No blockchain required in this implementation.</div>
+      </div>
+      <div class="info-box purple">
+        <div class="ibt">CB4A — Spending Authority</div>
+        <div class="ibv" style="font-size:11px;line-height:1.7">PDP evaluates every payment request. Tier 1 (auto, ≤50 credits), Tier 2 (HITL, &gt;50). CDP mints a DPoP-bound credential with scope <code>payment:ASSET:AMOUNT</code>. No raw secrets ever leave the vault.</div>
+      </div>
+      <div class="info-box green">
+        <div class="ibt">WIMSE — Payer Identity</div>
+        <div class="ibv" style="font-size:11px;line-height:1.7">AgentToken (<code>agent+jwt</code>) is included in every payment payload. Gateway verifies that the token's <code>sub</code> matches the CB4A <code>agent_svid</code>. Cryptographic proof of payer identity — no impersonation.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Protocol architecture SVG -->
+  <div class="card">
+    <div class="card-title">Protocol Flow</div>
+    <div class="diagram">
+      <svg viewBox="0 0 830 130" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+        <!-- Agent -->
+        <rect x="5" y="35" width="95" height="55" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+        <text x="52" y="56" text-anchor="middle" font-size="10" fill="#58a6ff" font-family="monospace" font-weight="700">Agent</text>
+        <text x="52" y="69" text-anchor="middle" font-size="8" fill="#7d8590" font-family="monospace">SPIFFE SVID</text>
+        <text x="52" y="82" text-anchor="middle" font-size="8" fill="#7d8590" font-family="monospace">AgentToken</text>
+        <!-- API -->
+        <rect x="160" y="35" width="100" height="55" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+        <text x="210" y="56" text-anchor="middle" font-size="10" fill="#ffa657" font-family="monospace" font-weight="700">API Server</text>
+        <text x="210" y="69" text-anchor="middle" font-size="8" fill="#7d8590" font-family="monospace">x402-protected</text>
+        <text x="210" y="82" text-anchor="middle" font-size="8" fill="#ffa657" font-family="monospace">PaymentGateway</text>
+        <!-- PDP -->
+        <rect x="330" y="35" width="100" height="55" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+        <text x="380" y="56" text-anchor="middle" font-size="10" fill="#d2a8ff" font-family="monospace" font-weight="700">PDP</text>
+        <text x="380" y="69" text-anchor="middle" font-size="8" fill="#7d8590" font-family="monospace">policy engine</text>
+        <text x="380" y="82" text-anchor="middle" font-size="8" fill="#d2a8ff" font-family="monospace">T1 auto / T2 HITL</text>
+        <!-- CDP -->
+        <rect x="500" y="35" width="100" height="55" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+        <text x="550" y="56" text-anchor="middle" font-size="10" fill="#3fb950" font-family="monospace" font-weight="700">CDP</text>
+        <text x="550" y="69" text-anchor="middle" font-size="8" fill="#7d8590" font-family="monospace">credential vault</text>
+        <text x="550" y="82" text-anchor="middle" font-size="8" fill="#3fb950" font-family="monospace">DPoP-bound token</text>
+        <!-- Vault -->
+        <rect x="670" y="35" width="100" height="55" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+        <text x="720" y="56" text-anchor="middle" font-size="10" fill="#e3b341" font-family="monospace" font-weight="700">Vault</text>
+        <text x="720" y="69" text-anchor="middle" font-size="8" fill="#7d8590" font-family="monospace">payment tokens</text>
+        <text x="720" y="82" text-anchor="middle" font-size="8" fill="#e3b341" font-family="monospace">never exposed</text>
+        <!-- Arrows -->
+        <line x1="100" y1="58" x2="158" y2="58" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#ah)"/>
+        <text x="129" y="53" text-anchor="middle" font-size="8" fill="#58a6ff" font-family="monospace">① GET</text>
+        <line x1="160" y1="68" x2="102" y2="68" stroke="#ffa657" stroke-width="1.5" marker-end="url(#ah2)"/>
+        <text x="131" y="80" text-anchor="middle" font-size="8" fill="#ffa657" font-family="monospace">402</text>
+        <line x1="100" y1="58" x2="328" y2="58" stroke="#d2a8ff" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#ah3)"/>
+        <text x="214" y="48" text-anchor="middle" font-size="8" fill="#d2a8ff" font-family="monospace">② request auth</text>
+        <line x1="430" y1="62" x2="498" y2="62" stroke="#3fb950" stroke-width="1.5" marker-end="url(#ah4)"/>
+        <text x="464" y="57" text-anchor="middle" font-size="8" fill="#3fb950" font-family="monospace">③ decision</text>
+        <line x1="600" y1="62" x2="668" y2="62" stroke="#e3b341" stroke-width="1.5" marker-end="url(#ah5)"/>
+        <text x="634" y="57" text-anchor="middle" font-size="8" fill="#e3b341" font-family="monospace">④ fetch</text>
+        <line x1="500" y1="75" x2="102" y2="95" stroke="#3fb950" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#ah6)"/>
+        <text x="310" y="115" text-anchor="middle" font-size="8" fill="#3fb950" font-family="monospace">⑤ DPoP-bound payment cred</text>
+        <line x1="100" y1="82" x2="158" y2="82" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#ah7)"/>
+        <text x="129" y="110" text-anchor="middle" font-size="8" fill="#58a6ff" font-family="monospace">⑥ X-Payment → 200</text>
+        <!-- Arrow defs -->
+        <defs>
+          <marker id="ah"  markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#58a6ff"/></marker>
+          <marker id="ah2" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#ffa657"/></marker>
+          <marker id="ah3" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#d2a8ff"/></marker>
+          <marker id="ah4" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#3fb950"/></marker>
+          <marker id="ah5" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#e3b341"/></marker>
+          <marker id="ah6" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#3fb950"/></marker>
+          <marker id="ah7" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#58a6ff"/></marker>
+        </defs>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Live interactive demo -->
+  <div class="card">
+    <div class="card-title">Live Demo — Full Payment Flow</div>
+    <p style="font-size:.875rem;color:var(--muted);margin-bottom:1.2rem">
+      All cryptography runs in your browser via WASM. Real EC P-256 keys, real JWTs, real DPoP proofs.
+    </p>
+
+    <!-- Step 1: Init -->
+    <div style="margin-bottom:1.2rem">
+      <button class="btn btn-primary" id="btn-x402-init" onclick="doX402Init()">① Initialise x402 Demo</button>
+      <div id="out-x402-init" style="display:none;margin-top:.6rem" class="output-box"></div>
+    </div>
+
+    <!-- Step 2: Hit API -->
+    <div style="margin-bottom:1.2rem">
+      <button class="btn" id="btn-x402-hit" onclick="doX402Hit()" disabled>② Call Protected API → 402</button>
+      <div id="out-x402-hit" style="display:none;margin-top:.6rem" class="output-box"></div>
+    </div>
+
+    <!-- Step 3: Request spending authority -->
+    <div style="margin-bottom:1.2rem">
+      <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:.5rem">
+        <button class="btn" id="btn-x402-auth" onclick="doX402RequestAuth()" disabled>③ Request Spending Authority</button>
+        <label style="font-size:.8rem;color:var(--muted)">Amount:
+          <select id="x402-amount" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:2px 6px;margin-left:4px;font-size:.8rem">
+            <option value="50">50 credits (auto-approve)</option>
+            <option value="100">100 credits (HITL required)</option>
+            <option value="500">500 credits (HITL required)</option>
+          </select>
+        </label>
+      </div>
+      <div id="out-x402-auth" style="display:none;margin-top:.6rem" class="output-box"></div>
+    </div>
+
+    <!-- Step 4: Approve (HITL only) -->
+    <div id="x402-approve-row" style="display:none;margin-bottom:1.2rem">
+      <button class="btn" id="btn-x402-approve" onclick="doX402Approve()">④ Approve Payment (HITL — Human Approver)</button>
+      <div id="out-x402-approve" style="display:none;margin-top:.6rem" class="output-box"></div>
+    </div>
+
+    <!-- Step 4/5: Mint credential -->
+    <div style="margin-bottom:1.2rem">
+      <button class="btn" id="btn-x402-mint" onclick="doX402Mint()" disabled>④ Mint Payment Credential (DPoP-Bound)</button>
+      <div id="out-x402-mint" style="display:none;margin-top:.6rem" class="output-box"></div>
+    </div>
+
+    <!-- Step 5/6: Pay -->
+    <div style="margin-bottom:1.2rem">
+      <button class="btn btn-primary" id="btn-x402-pay" onclick="doX402Pay()" disabled>⑤ Pay — Retry with X-Payment</button>
+      <div id="out-x402-pay" style="display:none;margin-top:.6rem" class="output-box"></div>
+    </div>
+
+    <!-- Replay protection test -->
+    <div style="margin-bottom:1.2rem">
+      <button class="btn" id="btn-x402-replay" onclick="doX402Replay()" disabled style="border-color:var(--red);color:var(--red)">⚠ Replay Same Payment (must fail)</button>
+      <div id="out-x402-replay" style="display:none;margin-top:.6rem" class="output-box"></div>
+    </div>
+
+    <!-- Audit trail -->
+    <div style="margin-top:1.5rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem">
+        <span style="font-size:.875rem;font-weight:600">Payment Audit Trail</span>
+        <button class="btn" style="font-size:.75rem;padding:.25rem .6rem" onclick="doX402Audit()">Refresh</button>
+      </div>
+      <div id="x402-audit-wrap" style="overflow-x:auto">
+        <table class="compare-table" id="x402-audit-table">
+          <thead><tr>
+            <th>Time</th><th>Event</th><th>Agent</th><th>Scope</th><th>Tier</th><th>Status</th>
+          </tr></thead>
+          <tbody id="x402-audit-body"><tr><td colspan="6" style="color:var(--muted);text-align:center;font-style:italic">No events yet</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Security properties -->
+  <div class="card">
+    <div class="card-title">Security Properties</div>
+    <div class="info-grid c3">
+      <div class="info-box blue">
+        <div class="ibt">No Double-Spend</div>
+        <div class="ibv" style="font-size:11px;line-height:1.7">DPoP proof includes a unique <code>jti</code>. The PaymentGateway tracks consumed proofs — replaying the same payment payload is detected and rejected immediately.</div>
+      </div>
+      <div class="info-box orange">
+        <div class="ibt">Payer Binding</div>
+        <div class="ibv" style="font-size:11px;line-height:1.7">WIMSE AgentToken <code>sub</code> must match CB4A <code>agent_svid</code>. An agent cannot present another agent's CB4A credential — identity and spending authority are cryptographically linked.</div>
+      </div>
+      <div class="info-box green">
+        <div class="ibt">Scope Enforcement</div>
+        <div class="ibv" style="font-size:11px;line-height:1.7">Payment credentials are scoped to a specific asset and amount (<code>payment:AGENT_CREDIT:50</code>). The PDP enforces spending tiers. Agents cannot self-escalate their payment limits.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ AGENT AUTH LANDSCAPE ══════════════════════════════════════════════════ -->
 <div class="scene" id="scene-landscape">
   <div class="card">
@@ -3671,6 +3859,136 @@ function doFedReset() {
   setup.style.opacity = '';
   const c = document.getElementById('fed-complete');
   if (c) c.style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════════
+// x402 Payment Flow
+// ═══════════════════════════════════════════════════════
+
+let x402LastPayload = null;
+
+function x402Out(id, data, ok) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = 'block';
+  el.style.borderColor = ok ? 'var(--green)' : 'var(--red)';
+  el.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+}
+
+function doX402Init() {
+  const btn = document.getElementById('btn-x402-init');
+  btn.disabled = true; btn.textContent = 'Initialising…';
+  const r = call('x402Init');
+  if (!r.ok) { x402Out('out-x402-init', r.error, false); btn.disabled = false; btn.textContent = '① Initialise x402 Demo'; return; }
+  x402Out('out-x402-init', `✓ ${r.message}\nAgent: ${r.agentSVID}\nToken: ${r.agentToken}`, true);
+  btn.textContent = '✓ Initialised';
+  document.getElementById('btn-x402-hit').disabled = false;
+  document.getElementById('btn-x402-auth').disabled = false;
+  x402LastPayload = null;
+}
+
+function doX402Hit() {
+  const r = call('x402HitAPI');
+  if (!r.ok) { x402Out('out-x402-hit', r.error, false); return; }
+  let pretty = r.paymentRequired;
+  try { pretty = JSON.stringify(JSON.parse(r.paymentRequired), null, 2); } catch(e) {}
+  x402Out('out-x402-hit',
+    `HTTP ${r.status} Payment Required\n\nRequired payment:\n  Asset:  ${r.asset}\n  Amount: ${r.amount} credits\n  Scheme: ${r.scheme}\n\nFull 402 body:\n${pretty}`,
+    false);
+  document.getElementById('out-x402-hit').style.borderColor = 'var(--orange)';
+}
+
+function doX402RequestAuth() {
+  const amount = document.getElementById('x402-amount').value;
+  const r = call('x402RequestSpending', amount);
+  if (!r.ok) { x402Out('out-x402-auth', r.error, false); return; }
+
+  const approveRow = document.getElementById('x402-approve-row');
+  const mintBtn = document.getElementById('btn-x402-mint');
+  const mintLabel = mintBtn.textContent.replace(/^[①-⑨]\s/, '');
+
+  if (r.status === 'auto-approved') {
+    x402Out('out-x402-auth', `✓ ${r.tierName}\nScope: ${r.scope}\nDecision: auto-approved, no human required`, true);
+    approveRow.style.display = 'none';
+    mintBtn.disabled = false;
+    mintBtn.textContent = '④ Mint Payment Credential (DPoP-Bound)';
+  } else {
+    x402Out('out-x402-auth', `⏳ ${r.tierName}\nScope: ${r.scope}\nRequest ID: ${r.requestID}\nWaiting for finance-approver…`, false);
+    document.getElementById('out-x402-auth').style.borderColor = 'var(--orange)';
+    approveRow.style.display = 'block';
+    document.getElementById('btn-x402-approve').dataset.reqId = r.requestID;
+    mintBtn.disabled = true;
+    mintBtn.textContent = '⑤ Mint Payment Credential (DPoP-Bound)';
+  }
+}
+
+function doX402Approve() {
+  const btn = document.getElementById('btn-x402-approve');
+  const reqId = btn.dataset.reqId || '';
+  const r = call('x402Approve', reqId);
+  if (!r.ok) { x402Out('out-x402-approve', r.error, false); return; }
+  x402Out('out-x402-approve', `✓ Approved by ${r.approver}\nRequest: ${r.requestID}`, true);
+  document.getElementById('x402-approve-row').style.display = 'none';
+  document.getElementById('btn-x402-mint').disabled = false;
+}
+
+function doX402Mint() {
+  const r = call('x402MintCred');
+  if (!r.ok) { x402Out('out-x402-mint', r.error, false); return; }
+  x402Out('out-x402-mint',
+    `✓ Payment credential minted\nScope:      ${r.scope}\nExpires:    ${r.expiresAt}\nEph key:    ${r.ephKeyFingerprint}\nDPoP-bound: ${r.dpopBound}\n\n${r.message}`,
+    true);
+  document.getElementById('btn-x402-pay').disabled = false;
+  document.getElementById('btn-x402-mint').textContent = '✓ Credential Minted';
+}
+
+function doX402Pay() {
+  const r = call('x402Pay');
+  x402LastPayload = r;
+  if (!r.ok) { x402Out('out-x402-pay', `✗ REJECTED\n${r.detail}`, false); return; }
+  x402Out('out-x402-pay',
+    `✓ ${r.status}\nAgent:    ${r.agentSVID}\nAsset:    ${r.asset}\nAmount:   ${r.amount} credits\nScope:    ${r.scope}\nResource: ${r.resource}\n\n${r.message}`,
+    true);
+  document.getElementById('btn-x402-replay').disabled = false;
+  doX402Audit();
+}
+
+function doX402Replay() {
+  // Attempt to pay again with the same credential/payload — DPoP replay must fail
+  const r = call('x402Pay');
+  if (!r.ok) {
+    x402Out('out-x402-replay', `✓ Replay BLOCKED (expected)\n${r.detail}`, true);
+    document.getElementById('out-x402-replay').style.borderColor = 'var(--green)';
+  } else {
+    x402Out('out-x402-replay', `✗ BUG: Replay was NOT blocked!\n${JSON.stringify(r)}`, false);
+  }
+  doX402Audit();
+}
+
+function doX402Audit() {
+  if (!agentFabric) return;
+  const r = call('x402GetAudit');
+  if (!r.ok) return;
+  try {
+    const entries = JSON.parse(r.entries);
+    const tbody = document.getElementById('x402-audit-body');
+    if (!entries || entries.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center;font-style:italic">No events yet</td></tr>';
+      return;
+    }
+    tbody.innerHTML = entries.map(e => {
+      const color = e.success ? 'var(--green)' : 'var(--red)';
+      const tier = e.tier ? `T${e.tier}` : '—';
+      return `<tr>
+        <td style="color:var(--muted);font-size:11px">${e.timestamp}</td>
+        <td style="font-size:11px">${e.event}</td>
+        <td style="font-size:10px;color:var(--muted)">${(e.agent_svid||'').split('/').pop()}</td>
+        <td style="font-size:10px;font-family:monospace">${e.scope||'—'}</td>
+        <td style="font-size:11px;text-align:center">${tier}</td>
+        <td style="color:${color};font-size:11px">${e.success ? '✓' : '✗'}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) { /* ignore */ }
 }
 </script>
 </body>

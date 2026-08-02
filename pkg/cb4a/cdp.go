@@ -35,6 +35,10 @@ func NewInMemoryVault() *InMemoryVault {
 			"analytics:events:read":  "sk-analytics-Kj4vLm8",
 			"github:repos:read":      "ghp_demo_N2bXpQ5",
 			"stripe:charges:write":   "sk_live_demo_Wc6yRs1",
+			// x402 payment authorization tokens
+			"payment:AGENT_CREDIT:50":  "pay-auth-50-demo",
+			"payment:AGENT_CREDIT:100": "pay-auth-100-demo",
+			"payment:AGENT_CREDIT:500": "pay-auth-500-demo",
 		},
 	}
 }
