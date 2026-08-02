@@ -35,6 +35,7 @@ func (v *Validator) Validate(tokenString string) (*Claims, error) {
 	parser := jwt.NewParser(
 		jwt.WithIssuer(v.issuerID),
 		jwt.WithExpirationRequired(),
+		jwt.WithIssuedAt(),
 		jwt.WithValidMethods([]string{"ES256"}),
 	)
 

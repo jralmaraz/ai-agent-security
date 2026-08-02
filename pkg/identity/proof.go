@@ -103,7 +103,7 @@ type ProofValidator struct {
 func NewProofValidator() *ProofValidator {
 	return &ProofValidator{
 		store:  NewInMemoryJTIStore(),
-		parser: jwt.NewParser(jwt.WithExpirationRequired(), jwt.WithIssuedAt()),
+		parser: jwt.NewParser(jwt.WithExpirationRequired(), jwt.WithIssuedAt(), jwt.WithValidMethods([]string{"ES256"})),
 	}
 }
 
@@ -112,7 +112,7 @@ func NewProofValidator() *ProofValidator {
 func NewProofValidatorWithStore(s JTIStore) *ProofValidator {
 	return &ProofValidator{
 		store:  s,
-		parser: jwt.NewParser(jwt.WithExpirationRequired(), jwt.WithIssuedAt()),
+		parser: jwt.NewParser(jwt.WithExpirationRequired(), jwt.WithIssuedAt(), jwt.WithValidMethods([]string{"ES256"})),
 	}
 }
 

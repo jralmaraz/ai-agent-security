@@ -511,6 +511,19 @@ The interactive demo (`demo/index.html` → **OpenID Federation** tab) runs the 
 | [OpenFGA](https://openfga.dev/docs/concepts) | Zanzibar-style fine-grained authorization |
 | [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) | Tool-server protocol the gateway is designed to front |
 | [OpenID Federation 1.0](https://openid.net/specs/openid-federation-1_0.html) | Entity Configurations, Subordinate Statements, trust chains for cross-org agent trust |
+| [draft-ietf-oauth-rfc8725bis](https://datatracker.ietf.org/doc/draft-ietf-oauth-rfc8725bis/) | JWT Best Current Practices — compliance audit applied 2026-08-02 across all validators |
+| [draft-ietf-wimse-http-signature](https://datatracker.ietf.org/doc/draft-ietf-wimse-http-signature/) | RFC 9421 HTTP Message Signatures as alternative to AgentProofToken — monitored |
+| [draft-sweeney-wimse-credential-delegation](https://datatracker.ietf.org/doc/draft-sweeney-wimse-credential-delegation/) | Credential delegation protocol for AI agents — compared to CB4A in demo |
+| [draft-reece-wimse-cross-org-delegation](https://datatracker.ietf.org/doc/draft-reece-wimse-cross-org-delegation/) | Cross-org delegation requirements — informs Identity Chaining scenario |
+| [draft-sharma-oauth-identity-propagation-context](https://datatracker.ietf.org/doc/draft-sharma-oauth-identity-propagation-context/) | Multi-hop identity propagation context — future extension of Identity Chaining |
+
+### Standards update process
+
+Any new IETF draft discovered by the automated tracker requires completing the
+[due-diligence checklist](docs/standards-tracking.md#due-diligence-checklist-for-every-standards-tracker-finding)
+before the issue is closed. The checklist covers: triage, breaking-change diff review,
+threat model verification (algorithm confusion, replay, audience escalation, key confusion),
+demo updates, and test coverage.
 
 ---
 

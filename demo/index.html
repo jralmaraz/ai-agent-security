@@ -544,6 +544,9 @@ main{max-width:960px;margin:0 auto;padding:2rem}
       <li><div class="step-num">4</div><div>The Gateway validates every token in the chain: signature, expiry, issuer, and strictly sequential chain depths.</div></li>
       <li><div class="step-num">5</div><div>A per-request <span class="token-badge proof">agent-proof+jwt</span> binds the call to the exact target URI (<code>aud</code>) and the chain hash, preventing reuse or redirection.</div></li>
     </ul>
+    <div class="callout" style="margin-top:12px;font-size:12px">
+      <strong>Emerging alternative:</strong> <a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-http-signature/" target="_blank" style="color:var(--blue)">draft-ietf-wimse-http-signature</a> proposes replacing the JWT-based <code>agent-proof+jwt</code> with <strong>RFC 9421 HTTP Message Signatures</strong> — a transport-layer binding that covers the full HTTP request (method, path, headers, body digest) rather than just the URI. Tracked in <code>standards-baseline.json</code> as a future variant of <code>pkg/identity/proof.go</code>.
+    </div>
   </div>
 </div>
 
@@ -1304,6 +1307,9 @@ No EC keys accepted</pre>
         <td class="check">TLS 1.3 min-version, no downgrade possible</td>
       </tr>
     </table>
+    <div class="callout" style="margin-top:12px;font-size:12px">
+      <strong>Emerging alternative:</strong> <a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-http-signature/" target="_blank" style="color:var(--blue)">draft-ietf-wimse-http-signature</a> would extend the proof mechanism to HTTP Message Signatures (RFC 9421), covering not just the URI but the full request including headers and body digest. This complements mTLS by adding application-layer binding even when TLS terminates at a proxy. Tracked for a future variant of <code>pkg/identity/proof.go</code>.
+    </div>
   </div>
 </div>
 
@@ -1827,6 +1833,24 @@ claims, _ := gv.Validate(
       that layers on top of the existing <code>AgentValidator</code>.
     </div>
   </div>
+
+  <div class="card">
+    <div class="card-title">Related standards — tracked, not yet implemented</div>
+    <div class="info-grid" style="grid-template-columns:1fr 1fr">
+      <div class="info-box blue">
+        <div class="ibt"><a href="https://datatracker.ietf.org/doc/draft-reece-wimse-cross-org-delegation/" target="_blank" style="color:inherit">draft-reece-wimse-cross-org-delegation</a></div>
+        <div class="ibv" style="font-size:11px;line-height:1.6">
+          Formalises the <strong>problem statement and requirements</strong> for cross-organisational delegation of workload and agent identities. As this draft matures it may introduce normative constraints on delegation claim schemas and trust chain validation that will affect <code>pkg/identitychaining</code> and <code>pkg/identity/chain.go</code>.
+        </div>
+      </div>
+      <div class="info-box orange">
+        <div class="ibt"><a href="https://datatracker.ietf.org/doc/draft-sharma-oauth-identity-propagation-context/" target="_blank" style="color:inherit">draft-sharma-oauth-identity-propagation-context</a></div>
+        <div class="ibv" style="font-size:11px;line-height:1.6">
+          Introduces an <strong>identity propagation context</strong> token/claim that travels unchanged through multi-hop OAuth delegation chains. Conceptually extends what <code>pkg/identitychaining</code> carries today: in a future revision, the grant token could embed a propagation-context claim linking every hop back to the originating user intent.
+        </div>
+      </div>
+    </div>
+  </div>
 </div><!-- end scene-identitychaining -->
 
 <!-- ════════════════════════════════════════════════════
@@ -2161,6 +2185,25 @@ KER ═════════════════════════�
       Your stored credentials stay where they are — CB4A's CDP becomes the exclusive caller, adding per-request governance
       on top of your existing investment. The more sensitive the AI agent's scope, the higher the value of CB4A's tiered approval.
     </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Emerging standard — <a href="https://datatracker.ietf.org/doc/draft-sweeney-wimse-credential-delegation/" target="_blank" style="color:var(--blue)">draft-sweeney-wimse-credential-delegation</a></div>
+    <div class="info-grid" style="grid-template-columns:1fr 1fr">
+      <div class="info-box blue">
+        <div class="ibt">What the draft proposes</div>
+        <div class="ibv" style="font-size:11px;line-height:1.6">
+          A <strong>Credential Delegation Protocol for AI Agents</strong> being developed in IETF WIMSE WG. It proposes a typed delegation token model — agents explicitly delegate specific credentials to sub-agents, producing a verifiable delegation chain. The delegating agent signs a delegation token scoped to the sub-agent's SPIFFE identity.
+        </div>
+      </div>
+      <div class="info-box orange">
+        <div class="ibt">CB4A vs. CredDelegation</div>
+        <div class="ibv" style="font-size:11px;line-height:1.6">
+          CB4A takes a <em>broker</em> approach: agents request credentials from a central PDP/CDP, which evaluates policy and mints ephemeral tokens. CredDelegation takes a <em>chain</em> approach: the parent agent creates a signed delegation token on-the-fly. CB4A enforces central governance + human-in-the-loop; CredDelegation is lighter-weight but requires trust in the delegating agent. These may be <strong>complementary layers</strong> — CB4A for acquiring root credentials, CredDelegation for sub-agent propagation.
+        </div>
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-top:10px">Status: monitoring. Tracked in <code>standards-baseline.json</code> as <code>draft-sweeney-wimse-credential-delegation</code>.</p>
   </div>
 
 </div>
@@ -2817,6 +2860,51 @@ KER ═════════════════════════�
         <td style="font-size:11px"><code>typ=jwt-authz-grant</code>, cross-trust-domain propagation of agent SPIFFE IDs; <code>aud</code>=target AS endpoint, <code>jti</code> replay protection</td>
         <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/018b9d8" target="_blank" style="color:var(--blue)"><code>018b9d8</code></a></td>
       </tr>
+      <tr style="background:rgba(255,255,255,0.03)">
+        <td><a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-rfc8725bis/" target="_blank" style="color:var(--blue)">JWT-BCP — JWT Best Current Practices</a></td>
+        <td style="white-space:nowrap;font-size:11px">IETF OAuth WG</td>
+        <td><span style="color:var(--orange);white-space:nowrap">● Active BCP</span></td>
+        <td style="text-align:center"><code>bis</code></td>
+        <td style="font-size:10px;color:var(--muted)">All validator files</td>
+        <td style="font-size:11px">Compliance audit 2026-08-02: all parsers now enforce <code>WithValidMethods(ES256)</code>, <code>WithExpirationRequired</code>, <code>WithIssuedAt</code>, and <code>typ</code> header checks — mitigates algorithm confusion, alg:none, and missing-exp attacks</td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/PLACEHOLDER_BCP" target="_blank" style="color:var(--blue)"><code>pending</code></a></td>
+      </tr>
+      <tr>
+        <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-http-signature/" target="_blank" style="color:var(--blue)">HTTP-Sig — WIMSE HTTP Message Signature Auth</a></td>
+        <td style="white-space:nowrap;font-size:11px">IETF WIMSE WG</td>
+        <td><span style="color:var(--muted);white-space:nowrap">◌ Monitoring</span></td>
+        <td style="text-align:center"><code>—</code></td>
+        <td style="font-size:10px;color:var(--muted)"><code>pkg/identity/proof.go</code> (future)</td>
+        <td style="font-size:11px">Alternative to AgentProofToken using RFC 9421 HTTP Message Signatures — tracked as potential replacement for JWT-based proof if WG adopts as primary mechanism</td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><span style="color:var(--muted)">monitoring</span></td>
+      </tr>
+      <tr style="background:rgba(255,255,255,0.03)">
+        <td><a href="https://datatracker.ietf.org/doc/draft-sweeney-wimse-credential-delegation/" target="_blank" style="color:var(--blue)">CredDelegation — Credential Delegation Protocol for AI Agents</a></td>
+        <td style="white-space:nowrap;font-size:11px">IETF WIMSE WG</td>
+        <td><span style="color:var(--muted);white-space:nowrap">◌ Monitoring</span></td>
+        <td style="text-align:center"><code>—</code></td>
+        <td style="font-size:10px;color:var(--muted)"><code>pkg/cb4a</code> (future)</td>
+        <td style="font-size:11px">Competing/complementary approach to CB4A for AI agent credential delegation — introduces typed delegation tokens; noted in Credential Broker tab</td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><span style="color:var(--muted)">monitoring</span></td>
+      </tr>
+      <tr>
+        <td><a href="https://datatracker.ietf.org/doc/draft-reece-wimse-cross-org-delegation/" target="_blank" style="color:var(--blue)">CrossOrgDelegation — Cross-Org Workload Delegation</a></td>
+        <td style="white-space:nowrap;font-size:11px">IETF WIMSE WG</td>
+        <td><span style="color:var(--muted);white-space:nowrap">◌ Monitoring</span></td>
+        <td style="text-align:center"><code>—</code></td>
+        <td style="font-size:10px;color:var(--muted)"><code>pkg/identitychaining</code>, <code>pkg/identity/chain.go</code></td>
+        <td style="font-size:11px">Formalises cross-org delegation requirements — informs AgentChain semantics and Identity Chaining scenario</td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><span style="color:var(--muted)">monitoring</span></td>
+      </tr>
+      <tr style="background:rgba(255,255,255,0.03)">
+        <td><a href="https://datatracker.ietf.org/doc/draft-sharma-oauth-identity-propagation-context/" target="_blank" style="color:var(--blue)">PropagationContext — Multi-Hop Identity Context</a></td>
+        <td style="white-space:nowrap;font-size:11px">IETF OAuth WG</td>
+        <td><span style="color:var(--muted);white-space:nowrap">◌ Monitoring</span></td>
+        <td style="text-align:center"><code>—</code></td>
+        <td style="font-size:10px;color:var(--muted)"><code>pkg/identitychaining</code>, <code>pkg/txntoken</code></td>
+        <td style="font-size:11px">Multi-hop identity propagation context travelling with delegation chains — future extension of Identity Chaining and Txn-Token scenarios</td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><span style="color:var(--muted)">monitoring</span></td>
+      </tr>
     </table>
   </div>
 
@@ -2838,6 +2926,28 @@ KER ═════════════════════════�
     </div>
     <div class="callout ok" style="margin-top:1rem">
       <strong>RFC and manual-only standards:</strong> DPoP is an RFC (stable, no API polling needed). OpenID Federation 1.0 has no IETF Datatracker API — the tracker skips it and flags it for manual review in any generated issue.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Due-diligence policy — every tracker finding</div>
+    <p class="spec-ref">
+      Each standards-update issue must be triaged, reviewed for breaking changes, and verified against the threat model before it can be closed.
+      See <a href="https://github.com/jralmaraz/wimse-agent-fabric/blob/main/docs/standards-tracking.md#due-diligence-checklist-for-every-standards-tracker-finding" target="_blank" style="color:var(--blue)">docs/standards-tracking.md — checklist</a>.
+    </p>
+    <div class="info-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="info-box blue">
+        <div class="ibt">Threat model review</div>
+        <div class="ibv" style="font-size:11px;line-height:1.6">Every code change from a spec update must be checked against: algorithm confusion, <code>alg:none</code>, missing <code>exp</code>/<code>iat</code>, <code>typ</code> header confusion, replay, audience escalation, key confusion, and DPoP replay (where applicable).</div>
+      </div>
+      <div class="info-box green">
+        <div class="ibt">Animated demo required</div>
+        <div class="ibv" style="font-size:11px;line-height:1.6">Every <em>implemented</em> standard must have an animated flow in this demo — SVG packet animation, step highlights, or live interactive demo. A text description alone is not sufficient. Monitored (not-yet-implemented) drafts get a callout note instead.</div>
+      </div>
+      <div class="info-box orange">
+        <div class="ibt">JWT BCP audit (2026-08-02)</div>
+        <div class="ibv" style="font-size:11px;line-height:1.6">Applied during this issue cycle: all <code>jwt.NewParser</code> calls across the PoC now enforce <code>WithValidMethods(["ES256"])</code>, <code>WithExpirationRequired()</code>, and <code>WithIssuedAt()</code>. Algorithm confusion, <code>alg:none</code>, and far-future token attacks are fully mitigated.</div>
+      </div>
     </div>
   </div>
 </div>

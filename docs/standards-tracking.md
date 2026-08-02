@@ -103,3 +103,67 @@ user), SD-JWT VC becomes relevant at that boundary.
 
 The GitHub Actions workflow `.github/workflows/standards-tracker.yml` runs daily,
 calls `scripts/check_standards.py`, and opens a labelled issue on any change.
+
+---
+
+## Due-Diligence Checklist for Every Standards Tracker Finding
+
+When the automated workflow opens a standards-update issue (new draft discovered or
+revision bump), the following checklist **must** be completed before the issue is closed.
+This ensures threat-model coverage is maintained and the demo stays accurate.
+
+### 1. Triage — relevance assessment
+
+- [ ] **Classify priority**: High (breaking / new scenario) / Medium (monitor / compliance) / Low (not applicable)
+- [ ] **Identify affected packages**: list every `pkg/`, `internal/`, or `cmd/` path that implements this standard
+- [ ] **Identify affected demo tabs**: list every scenario in `demo/index.html` that references or demonstrates this standard
+
+### 2. Diff review — breaking changes
+
+- [ ] **Token type (`typ` header)**: Has the `typ` value changed? If yes, update all `tok.Header["typ"]` assignments and `typ != X` checks
+- [ ] **Required claims**: Have any claims been added (`REQUIRED` in the new revision)? Update `Claims` structs and validators
+- [ ] **Deprecated claims**: Have any claims been removed? Remove from struct and update tests
+- [ ] **Algorithm constraints**: Has the allowed algorithm set changed? Update `WithValidMethods([]string{...})`
+- [ ] **Audience / issuer semantics**: Any changes to `aud`, `iss`, or `sub` validation rules?
+
+### 3. Threat model review
+
+For every code change resulting from this standard update, verify:
+
+- [ ] **Algorithm confusion**: new signing method acceptable? Does `WithValidMethods` still restrict to ES256 (or explicitly chosen set)?
+- [ ] **`alg: none` attack**: Is `WithValidMethods` enforced in every new `jwt.NewParser(...)` call?
+- [ ] **Missing `exp`**: Is `WithExpirationRequired()` present so tokens without `exp` are rejected?
+- [ ] **Missing `iat`**: Is `WithIssuedAt()` present to detect far-future or replayed tokens?
+- [ ] **Typ header confusion**: Is the `typ` header validated inside the key function (before key material is returned)?
+- [ ] **Replay attack**: Does the updated token have a `jti` claim? Is replay protection (JTIStore) wired in?
+- [ ] **Scope / audience escalation**: Can an attacker present a token intended for one resource at a different endpoint? Is `aud` validated?
+- [ ] **Key confusion (public-key-as-symmetric)**: All parsers use `*ecdsa.PublicKey` return type — never `[]byte` for ES256
+- [ ] **DPoP replay (if applicable)**: Is `jti` tracked in the CDP's replay store for any new DPoP-using flow?
+
+### 4. Animated demo — required for every implemented standard
+
+Every standard that is **implemented** (not just monitored) **must** have an animated demo
+in `demo/index.html`. A text description alone is not sufficient.
+
+- [ ] **Animated flow exists?** Check whether the relevant demo tab has an SVG animation, step-by-step flow, or live interactive demo that shows the protocol exchange.
+  - If **yes**: verify the animation still accurately reflects the updated claims / flow after the spec change. Update packet labels, arrow paths, or step descriptions as needed.
+  - If **no**: create one — a minimal SVG with `animPkt()` or `animStep()` calls is acceptable. The animation must show: the token being issued, the proof being generated, the validation step, and the result. Use the same pattern as the Happy Path, mTLS, CB4A, or x402 tabs.
+- [ ] Update the **Standards Tracker table** in `demo/index.html`: add/update the row, set the `Impl. commit` column to the implementing commit SHA
+- [ ] Update the **affected demo tabs**: add or revise the `spec-ref`, `callout`, or info-box that references this standard
+- [ ] Update `docs/standards-tracking.md` **Included / Excluded** table if the decision changes
+- [ ] Update the **README** standards list if a new standard is added
+- [ ] Update **`standards-baseline.json`**: set `implemented_rev` and `last_known_rev` to the new revision
+
+### 5. Test coverage
+
+- [ ] Add or update a test case that specifically validates the changed claim / header / behaviour
+- [ ] Verify the **negative test** (wrong `typ`, wrong `alg`, missing claim) still fails with a clear error
+- [ ] Run `go test ./...` — all 114 tests pass (or update count in this doc)
+
+### 6. Commit and close
+
+- [ ] Commit with message pattern: `fix/feat(standard): align <pkg> with <draft-id>-<rev>`
+- [ ] Update `Impl. commit` SHA in the Standards Tracker demo table to the new commit
+- [ ] Push — verify CI passes (govulncheck + race detector)
+- [ ] Post a summary comment on the issue listing: what changed, what was implemented, which demo tabs were updated
+- [ ] Close the issue

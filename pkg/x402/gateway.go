@@ -77,6 +77,8 @@ func (g *PaymentGateway) Verify(payload PaymentPayload, method, uri string) (Pay
 	// Step 1: parse CB4A access token, verify CDP signature.
 	var claims cb4a.CB4ATokenClaims
 	if _, err := jwt.NewParser(
+		jwt.WithExpirationRequired(),
+		jwt.WithIssuedAt(),
 		jwt.WithValidMethods([]string{"ES256"}),
 	).ParseWithClaims(payload.CB4AToken, &claims, func(_ *jwt.Token) (any, error) {
 		return g.cdpPub, nil

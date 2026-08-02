@@ -48,6 +48,7 @@ func (v *GrantValidator) Validate(grantToken, tokenEndpoint string) (*GrantClaim
 		jwt.WithIssuer(v.issuerID),
 		jwt.WithAudience(tokenEndpoint),
 		jwt.WithExpirationRequired(),
+		jwt.WithIssuedAt(),
 		jwt.WithValidMethods([]string{"ES256"}),
 	)
 
