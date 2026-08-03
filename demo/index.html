@@ -416,6 +416,129 @@ main{max-width:960px;margin:0 auto;padding:2rem}
     </div>
   </div>
 
+  <!-- ── 5 concrete AI-agent challenges ─────────────────────────────────── -->
+  <div class="card" style="margin-top:20px">
+    <div class="card-title">Five concrete AI agent identity challenges — what the industry is debating right now</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">These are not theoretical. Each represents a real class of incident or compliance gap that enterprises encounter when deploying autonomous AI agents at scale.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+
+      <div style="background:var(--bg);border:1px solid var(--border);border-left:3px solid #f85149;border-radius:8px;padding:14px">
+        <div style="font-size:12px;font-weight:700;color:#f85149;margin-bottom:6px">① Over-permissioning</div>
+        <p style="font-size:12px;color:var(--text);line-height:1.7;margin:0">Agents inherit their host workload's IAM role — which was sized for the <em>workload</em>, not the <em>task</em>. A summarisation agent running inside an "admin" workload can read, write, and delete with full admin authority — even if the task only needed read access to one document. No current framework reduces scope automatically at agent spawn time.</p>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px">Real impact: a single compromised agent instance = full workload-level blast radius</div>
+      </div>
+
+      <div style="background:var(--bg);border:1px solid var(--border);border-left:3px solid #f85149;border-radius:8px;padding:14px">
+        <div style="font-size:12px;font-weight:700;color:#f85149;margin-bottom:6px">② Acting on behalf of humans — without attestation</div>
+        <p style="font-size:12px;color:var(--text);line-height:1.7;margin:0">Agents commonly claim "I am acting on behalf of user@example.com" in request headers or metadata — but there is no cryptographic proof of this claim. The downstream API can't verify whether the human actually authorised this action, whether the agent has exceeded the scope the human intended, or whether the delegation has since been revoked.</p>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px">Real impact: unauthorised actions attributed to users who never consented</div>
+      </div>
+
+      <div style="background:var(--bg);border:1px solid var(--border);border-left:3px solid #ffa657;border-radius:8px;padding:14px">
+        <div style="font-size:12px;font-weight:700;color:#ffa657;margin-bottom:6px">③ Scope creep through delegation</div>
+        <p style="font-size:12px;color:var(--text);line-height:1.7;margin:0">When an orchestrator spawns sub-agents, it typically passes its own credentials or tokens. The sub-agent receives the same scope as the orchestrator — delegation doesn't reduce authority, it propagates it unchanged. This creates a privilege escalation path: a compromised sub-agent gains the full authority of every agent above it in the chain.</p>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px">Real impact: confused deputy attacks across agent hierarchies</div>
+      </div>
+
+      <div style="background:var(--bg);border:1px solid var(--border);border-left:3px solid #ffa657;border-radius:8px;padding:14px">
+        <div style="font-size:12px;font-weight:700;color:#ffa657;margin-bottom:6px">④ Non-repudiation failure</div>
+        <p style="font-size:12px;color:var(--text);line-height:1.7;margin:0">After an incident, the audit log shows <code style="font-size:10px">caller=my-app</code> — it does not show which agent instance, which model version, which prompt template, or which human initiated the chain. There is no cryptographic way to prove <em>which reasoning process</em> issued the API call. Attribution of AI-driven actions is currently impossible without agent-level identity.</p>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px">Real impact: regulators and insurers increasingly demand traceable attribution for AI actions</div>
+      </div>
+
+      <div style="background:var(--bg);border:1px solid var(--border);border-left:3px solid #58a6ff;border-radius:8px;padding:14px;grid-column:span 2">
+        <div style="font-size:12px;font-weight:700;color:#58a6ff;margin-bottom:6px">⑤ Multi-tenant isolation failure</div>
+        <p style="font-size:12px;color:var(--text);line-height:1.7;margin:0">In multi-tenant agent platforms, agents serving different customers often run inside the same workload and share the same cloud identity. There is no identity-layer boundary between tenant A's agent and tenant B's agent — isolation relies entirely on application code correctness, not on cryptographic enforcement. A prompt injection or context leak can expose tenant A's tool calls, credentials, or outputs to tenant B's agent if the application layer fails.</p>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px">Real impact: cross-tenant data exfiltration and regulatory violation with zero forensic signal in the identity layer</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── "What's been tried" industry comparison ─────────────────────────── -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">What's already been tried — and where each solution stops short</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">The industry has not been standing still. These are real approaches teams are using today. Each solves part of the problem — none addresses agent-level cryptographic identity.</p>
+    <div style="overflow-x:auto">
+    <table class="compare-table" style="font-size:12px;min-width:760px">
+      <tr>
+        <th style="width:22%">Approach</th>
+        <th style="width:28%">What it solves</th>
+        <th style="width:24%">Where it stops</th>
+        <th style="width:26%;color:var(--orange)">What WIMSE adds</th>
+      </tr>
+      <tr>
+        <td><strong>Tool / function calling frameworks</strong><br><span style="font-size:10px;color:var(--muted)">OpenAI function_call, Anthropic tool_use, LangChain tools</span></td>
+        <td>Structured tool invocation; the model declares which tool it wants to call</td>
+        <td>Tools are defined per session, not per agent identity. Any agent (or attacker with model access) can call any tool in the session — there is no per-agent-instance credential binding</td>
+        <td>AgentToken bound to agent's EC key; tool calls carry per-request <code>agent-proof+jwt</code> — the tool server verifies <em>which specific agent</em> is calling, not just which session</td>
+      </tr>
+      <tr>
+        <td><strong>OAuth 2.0 scopes for agents</strong><br><span style="font-size:10px;color:var(--muted)">access_token with scope=read:documents</span></td>
+        <td>Limits what a token can do; coarse-grained access control at the API level</td>
+        <td>Scopes describe what a token <em>can do</em> — not <em>which agent</em> is using it. All agent instances share one token; scope doesn't encode the delegation chain or reduce with each hop</td>
+        <td>AgentChain JWT encodes the full delegation path with scope reduction at each hop; the downstream API can verify the entire authorisation lineage, not just the final token scope</td>
+      </tr>
+      <tr>
+        <td><strong>Observability / tracing</strong><br><span style="font-size:10px;color:var(--muted)">LangSmith, LangFuse, OpenTelemetry</span></td>
+        <td>Reconstructs what happened; correlates spans across agent calls; useful for debugging</td>
+        <td>Traces are collected, not attested — any log-line can be forged or omitted. Tracing depends on instrumentation completeness; it cannot prove that a logged action <em>actually happened</em> from <em>that agent</em></td>
+        <td>AgentChain and AgentProofToken are cryptographically signed — audit records are tamper-evident by construction, not reconstructed from logs after the fact</td>
+      </tr>
+      <tr>
+        <td><strong>Service mesh (Istio / Linkerd)</strong><br><span style="font-size:10px;color:var(--muted)">mTLS + SPIFFE SVID at the sidecar</span></td>
+        <td>Transport-layer mutual authentication; proves the <em>pod</em> is who it claims to be</td>
+        <td>Identity is at the <em>service</em> level — all agents inside a pod share the same SVID. Mesh identity doesn't survive TLS termination at a load balancer; no delegation semantics at the application layer</td>
+        <td>AgentToken operates at the application layer, above TLS — it survives LB termination and identifies the individual agent within the workload, not just the workload itself</td>
+      </tr>
+      <tr>
+        <td><strong>Cloud IAM conditions</strong><br><span style="font-size:10px;color:var(--muted)">AWS IAM condition keys, GCP IAM conditions</span></td>
+        <td>Fine-grained access control; can restrict which resources a role can access based on request attributes</td>
+        <td>Cloud-scoped — conditions on a GCP IAM policy don't apply to an AWS API call. Conditions apply to the <em>workload role</em>, not to a specific agent instance. No cross-cloud or cross-org delegation</td>
+        <td>SPIFFE Client Auth + Identity Chaining bridges cross-domain calls with preserved agent identity; CB4A adds per-credential governance independent of cloud IAM</td>
+      </tr>
+    </table>
+    </div>
+  </div>
+
+  <!-- ── Regulatory drivers ───────────────────────────────────────────────── -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">Why this is now a regulatory requirement — not just a best practice</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px">
+
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px">
+        <div style="font-size:11px;font-weight:700;color:#58a6ff;margin-bottom:8px;text-transform:uppercase;letter-spacing:.8px">EU AI Act (2025–2027)</div>
+        <ul style="font-size:11px;color:var(--text);line-height:1.8;padding-left:14px;margin:0">
+          <li><strong>Art. 9</strong> — Risk management system must document and monitor AI system behaviour; agent identity records are evidence</li>
+          <li><strong>Art. 13</strong> — Transparency: outputs of high-risk AI must be traceable to the specific AI system and version that produced them</li>
+          <li><strong>Art. 14</strong> — Human oversight: systems must be designed so a human can verify what the AI did and when</li>
+        </ul>
+        <div style="font-size:10px;color:var(--muted);margin-top:8px">Without per-agent identity, Art. 13 compliance is structurally impossible for multi-agent systems</div>
+      </div>
+
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px">
+        <div style="font-size:11px;font-weight:700;color:#3fb950;margin-bottom:8px;text-transform:uppercase;letter-spacing:.8px">NIST AI RMF (2023)</div>
+        <ul style="font-size:11px;color:var(--text);line-height:1.8;padding-left:14px;margin:0">
+          <li><strong>Govern 6.2</strong> — Transparency and accountability: AI actors must be identifiable and accountable for AI system outputs</li>
+          <li><strong>Map 1.6</strong> — Identify AI risks: autonomous delegation without identity is a first-class risk category</li>
+          <li><strong>Measure 2.5</strong> — Monitor AI system behaviour: cryptographic audit trails are the mechanism for trustworthy monitoring</li>
+        </ul>
+        <div style="font-size:10px;color:var(--muted);margin-top:8px">NIST profiles treat agent accountability as a governance requirement, not an engineering choice</div>
+      </div>
+
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px">
+        <div style="font-size:11px;font-weight:700;color:#ffa657;margin-bottom:8px;text-transform:uppercase;letter-spacing:.8px">SOC 2 Type II &amp; GDPR</div>
+        <ul style="font-size:11px;color:var(--text);line-height:1.8;padding-left:14px;margin:0">
+          <li><strong>SOC 2 CC6</strong> (Logical Access) — Agent API calls to external services are in scope; without per-agent identity, auditors cannot verify least-privilege enforcement</li>
+          <li><strong>GDPR Art. 5(2)</strong> — Accountability: data controllers must demonstrate compliance; AI agent actions on personal data require attributable identity</li>
+          <li><strong>GDPR Art. 25</strong> — Data protection by design: per-agent identity and scope reduction are the privacy-by-design mechanism for agent systems</li>
+        </ul>
+        <div style="font-size:10px;color:var(--muted);margin-top:8px">Auditors increasingly flag multi-agent systems without per-agent identity as CC6 gaps</div>
+      </div>
+
+    </div>
+  </div>
+
   <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1rem">
     <button class="btn btn-primary" onclick="goToTab('happy')">Explore the Solution: Happy Path &#8594;</button>
     <button class="btn" onclick="goToTab('threat')">View Threat Model &#8594;</button>
@@ -731,6 +854,40 @@ main{max-width:960px;margin:0 auto;padding:2rem}
         <div class="threat-title">T6 · Audience Confusion</div>
         <div class="threat-desc">A proof token generated for Tool A is forwarded to Tool B, where the attacker hopes it will be accepted for a different operation.</div>
         <div class="mitigation">The <code>aud</code> claim is bound to the exact target URI. The Gateway validates that <code>aud</code> matches the request URI precisely.</div>
+      </div>
+      <div class="threat-card mitigated">
+        <div class="threat-title">T7 · Chain Substitution</div>
+        <div class="threat-desc">An attacker swaps the <code>Agent-Chain-Token</code> header with a chain where they have higher privileges, hoping the proof token will still be accepted.</div>
+        <div class="mitigation">The proof token carries <code>chain_hash = base64url(SHA-256(AT-1~…~AT-N))</code>. The Gateway recomputes the hash of the presented chain — a substituted chain produces a different hash and the request is rejected.</div>
+      </div>
+      <div class="threat-card mitigated">
+        <div class="threat-title">T8 · Token Theft with mTLS Enabled</div>
+        <div class="threat-desc">An attacker steals an <code>agent+jwt</code> (e.g., from a log or compromised proxy) and replays it from a machine with a different TLS certificate.</div>
+        <div class="mitigation">When <code>MTLSClientCA</code> is set, <code>verifyMTLSBinding()</code> checks that the peer certificate's URI SAN equals the token's <code>sub</code> claim. The attacker's cert has a different URI SAN — the check fails. The agent uses the <em>same EC key pair</em> for mTLS cert, <code>cnf.jwk</code>, and proof signing, so compromising the token alone is useless without the private key.</div>
+      </div>
+    </div>
+    <div class="card-title" style="margin-top:16px;padding-top:4px">AI-specific threats — autonomous agents introduce new attack surfaces</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">T9–T12 are attack vectors unique to autonomous AI agents. Traditional workload identity defences were not designed with reasoning processes, prompt injection, or runtime delegation in mind.</p>
+    <div class="threats">
+      <div class="threat-card">
+        <div class="threat-title">T9 · Prompt Injection → Credential Exfiltration</div>
+        <div class="threat-desc">A malicious user crafts an input that instructs the agent to forward its identity token or call a tool with attacker-controlled parameters — effectively hijacking the agent's credentials at the application layer.</div>
+        <div class="mitigation"><strong>Partial mitigation:</strong> AgentProofToken <code>aud</code> is bound to the exact target URI — a redirected call to an attacker-controlled URL won't produce a valid proof for that URL. CB4A Tier 1/2/3 governance limits what APIs can be called without explicit human approval. Full defence requires input sanitisation and prompt-level guardrails at the application layer — WIMSE addresses the credential binding, not the injection vector itself.</div>
+      </div>
+      <div class="threat-card mitigated">
+        <div class="threat-title">T10 · Unattested User Context (Human Impersonation)</div>
+        <div class="threat-desc">An agent claims "I am acting on behalf of user@example.com" in a request header or API parameter. A downstream service accepts the claim and grants elevated access as if the human authorised the action — but there is no cryptographic proof of that authorisation.</div>
+        <div class="mitigation">The Transaction Token (txntoken+jwt) is issued by the gateway and carries the originating user's <code>azp</code> (authorising party) claim, signed by the gateway's key. Every downstream service validates the Txn-Token independently — the attacker cannot forge the user context without the gateway's signing key. The WPT <code>tth</code> claim cryptographically binds every hop to the same originating transaction.</div>
+      </div>
+      <div class="threat-card">
+        <div class="threat-title">T11 · Cross-Tenant Context Leakage</div>
+        <div class="threat-desc">In a multi-tenant agent platform, an agent serving tenant A processes a prompt injection that causes it to include tenant A's credentials, tool output, or intermediate reasoning in a response or tool call that is later read by tenant B's session — breaching tenant isolation without any identity layer signal.</div>
+        <div class="mitigation"><strong>Partial mitigation:</strong> Each agent session has a fresh AgentToken with the tenant's SPIFFE ID in <code>sub</code>; CB4A credentials are minted per-session with session-scoped vault entries; the gateway validates SPIFFE ID against expected tenant on every call — a cross-tenant tool call would present the wrong SPIFFE ID and be rejected. Full defence requires application-layer session isolation and LLM context sandboxing that WIMSE complements but does not replace.</div>
+      </div>
+      <div class="threat-card mitigated">
+        <div class="threat-title">T12 · Delegation Scope Creep (Privilege Amplification)</div>
+        <div class="threat-desc">An orchestrator delegates to a sub-agent and passes its full credential set. The sub-agent acquires the orchestrator's complete authority — not a reduced subset — and uses it to access resources it was never intended to reach. In multi-hop chains, each hop can amplify rather than reduce the scope of the previous hop.</div>
+        <div class="mitigation"><code>chain_depth</code> is validated strictly sequentially (0, 1, 2…) — no gaps or resets. The OpenFGA Authorizer evaluates every request against the <em>sub-agent's own</em> SPIFFE ID, not the chain as a whole. The sub-agent's permitted actions are defined at AgentToken issuance time by the IdP — the orchestrator cannot grant permissions it doesn't have, and cannot expand scope through delegation. Each hop in the chain can only reduce, not extend, authority.</div>
       </div>
     </div>
   </div>
