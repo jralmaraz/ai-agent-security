@@ -2,10 +2,12 @@
 """
 Daily standards tracker for the WIMSE Identity Fabric PoC.
 
-Three check methods:
+Four check methods:
   1. IETF Datatracker API  — per-draft REST API  (api_url set on standard)
   2. OpenID Foundation RSS  — keyword-filtered RSS (rss_url set on standard)
   3. WG / org Atom feeds    — discovery of new drafts  (wg_feeds section)
+  4. Spec page hash         — SHA-256 of normalized published spec HTML
+                              + GitHub commit SHA (check_method: "page-hash")
 
 When updates are found it:
   1. Updates standards-baseline.json (committed by the workflow).
@@ -17,6 +19,8 @@ Usage:
     python3 scripts/check_standards.py          # in GitHub Actions
 """
 
+import hashlib
+import html as html_mod
 import json
 import os
 import re
@@ -183,6 +187,58 @@ def check_wg_atom_feed(feed_url: str, known_ids: set[str]) -> list[dict]:
     return discoveries
 
 
+# ── Check method 4: Spec page content hash ───────────────────────────────────
+
+def _normalize_spec_html(raw: bytes) -> str:
+    """Strip scripts/styles/tags, decode entities, collapse whitespace."""
+    text = raw.decode("utf-8", errors="replace")
+    text = re.sub(r"<script[^>]*>.*?</script>", "", text, flags=re.DOTALL | re.IGNORECASE)
+    text = re.sub(r"<style[^>]*>.*?</style>",   "", text, flags=re.DOTALL | re.IGNORECASE)
+    text = re.sub(r"<!--.*?-->",                 "", text, flags=re.DOTALL)
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = html_mod.unescape(text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def check_page_hash(
+    spec_url: str, stored_hash: str | None
+) -> tuple[bool, str]:
+    """
+    Fetch spec_url, normalize HTML, compute SHA-256.
+    Returns (changed, new_hash).
+    First-run (stored_hash is None): returns (False, new_hash) — silent init.
+    """
+    raw = http_get(spec_url)
+    if raw is None:
+        return False, stored_hash or ""
+    new_hash = hashlib.sha256(_normalize_spec_html(raw).encode()).hexdigest()
+    if stored_hash is None:
+        return False, new_hash
+    return new_hash != stored_hash, new_hash
+
+
+def check_github_commit(
+    api_url: str, stored_sha: str | None
+) -> tuple[bool, str, str]:
+    """
+    Hit the GitHub commits API, return (changed, new_sha, first_line_of_commit_message).
+    First-run (stored_sha is None): returns (False, new_sha, "") — silent init.
+    Uses unauthenticated API (60 req/hr for public repos — sufficient for daily runs).
+    """
+    raw = http_get(api_url, accept="application/json")
+    if raw is None:
+        return False, stored_sha or "", ""
+    try:
+        data = json.loads(raw)
+        new_sha = data["sha"]
+        msg = (data.get("commit", {}).get("message") or "").split("\n")[0][:120]
+    except (json.JSONDecodeError, KeyError):
+        return False, stored_sha or "", ""
+    if stored_sha is None:
+        return False, new_sha, ""
+    return new_sha != stored_sha, new_sha, msg
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main() -> None:
@@ -245,6 +301,41 @@ def main() -> None:
                     pass  # already printed "(first run)" inside check_rss_feed
                 else:
                     print(" OK")
+
+        elif std.get("check_method") == "page-hash":
+            spec_url    = std.get("spec_url", "")
+            stored_hash = std.get("spec_content_hash")
+            gh_api_url  = std.get("source_repo_api")
+            stored_sha  = std.get("github_commit_sha")
+
+            print(f"  PAGE  {name:<58}", end="", flush=True)
+            page_changed, new_hash = check_page_hash(spec_url, stored_hash)
+            std["spec_content_hash"] = new_hash
+
+            gh_changed, new_sha, commit_msg = False, stored_sha or "", ""
+            if gh_api_url:
+                gh_changed, new_sha, commit_msg = check_github_commit(gh_api_url, stored_sha)
+                std["github_commit_sha"] = new_sha
+
+            if page_changed or gh_changed:
+                signals = []
+                if page_changed: signals.append("spec page changed")
+                if gh_changed:   signals.append(f"GitHub {new_sha[:7]}: {commit_msg[:50]}")
+                print(f" UPDATED  {'; '.join(signals)}")
+                updates.append({
+                    **std,
+                    "check_method": "page-hash",
+                    "page_changed": page_changed,
+                    "gh_changed":   gh_changed,
+                    "new_sha":      new_sha,
+                    "commit_msg":   commit_msg,
+                    "last_updated": today,
+                })
+            else:
+                if stored_hash is None:
+                    print(f" INIT     (baseline recorded, hash={new_hash[:12]}…)")
+                else:
+                    print(f" OK       hash={new_hash[:12]}…")
 
         else:
             print(f"  SKIP  {name:<58} (manual tracking)")
@@ -327,8 +418,9 @@ def main() -> None:
         f"(https://github.com/{repo}/blob/main/standards-baseline.json)\n",
     ]
 
-    api_updates = [u for u in updates if u.get("check_method") == "ietf-api"]
-    rss_updates = [u for u in updates if u.get("check_method") == "rss"]
+    api_updates  = [u for u in updates if u.get("check_method") == "ietf-api"]
+    rss_updates  = [u for u in updates if u.get("check_method") == "rss"]
+    page_updates = [u for u in updates if u.get("check_method") == "page-hash"]
 
     # IETF draft revision updates
     if api_updates:
@@ -385,6 +477,37 @@ def main() -> None:
                 "",
             ]
 
+    # Spec page hash updates (e.g. OpenID Federation)
+    if page_updates:
+        body.append(f"\n### {len(page_updates)} Spec Page Update(s)\n")
+        for u in page_updates:
+            body += ["---", f"#### {u['label']}", ""]
+            if u.get("page_changed"):
+                body.append(f"- Published spec page content changed: [{u.get('spec_url','')}]({u.get('spec_url','')})")
+            if u.get("gh_changed"):
+                short = u["new_sha"][:7]
+                repo_url = u.get("source_repo", "")
+                body.append(f"- GitHub source commit `{short}`: {u.get('commit_msg','')}")
+                if repo_url:
+                    body.append(f"  [View on GitHub]({repo_url}/commit/{u['new_sha']})")
+            if u.get("impact"):
+                body += ["", f"**PoC impact:** {u['impact']}"]
+            if u.get("used_in"):
+                body += [
+                    "",
+                    "**Affected packages:** " + ", ".join(f"`{p}`" for p in u["used_in"]),
+                ]
+            body += [
+                "",
+                "**Action checklist:**",
+                f"- [ ] Review the full spec at {u.get('datatracker_url', '')}",
+                "- [ ] Check for new/changed claim names, algorithms, or message formats",
+                "- [ ] Update Go implementation if there are breaking changes",
+                "- [ ] Update the demo HTML if spec version or structure changed",
+                f"- [ ] `spec_content_hash` and `github_commit_sha` in `{BASELINE_FILE}` are auto-updated",
+                "",
+            ]
+
     # WG discovery (new drafts + RSS org posts)
     if discoveries:
         new_drafts = [d for d in discoveries if not d.get("is_rss")]
@@ -423,6 +546,8 @@ def main() -> None:
         parts.append(f"{len(api_updates)} revision(s)")
     if rss_updates:
         parts.append(f"{len(rss_updates)} RSS update(s)")
+    if page_updates:
+        parts.append(f"{len(page_updates)} spec page update(s)")
     if discoveries:
         parts.append(f"{len(discoveries)} new discovery(ies)")
     issue_title = f"[Standards Tracker] {', '.join(parts)}"

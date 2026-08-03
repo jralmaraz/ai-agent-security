@@ -1,7 +1,7 @@
 {
   "_comment": "Tracks IETF/OpenID drafts implemented in this PoC. Updated daily by the standards-tracker GitHub Actions workflow. Set implemented_rev when the PoC code is updated to match a new revision.",
   "_tracking_policy": "docs/standards-tracking.md",
-  "last_checked": "2026-08-02",
+  "last_checked": "2026-08-03",
   "wg_feeds": [
     {
       "name": "IETF WIMSE WG",
@@ -174,12 +174,12 @@
       "status": "final",
       "datatracker_url": "https://openid.net/specs/openid-federation-1_0.html",
       "api_url": null,
+      "check_method": "page-hash",
+      "spec_url": "https://openid.net/specs/openid-federation-1_0.html",
+      "spec_content_hash": "c388fb2e083850f5d0ab88b39d4f55f5576731de4ffcf7a48b1813e11d2796f4",
       "source_repo": "https://github.com/openid/federation",
-      "rss_url": "https://openid.net/feed/",
-      "rss_keywords": [
-        "federation"
-      ],
-      "last_rss_guid": "https://openid.net/?p=69874",
+      "source_repo_api": "https://api.github.com/repos/openid/federation/commits/main",
+      "github_commit_sha": "1f7970b16386da8a927908b54677359fc730174b",
       "impact": "Entity Configuration, Subordinate Statement, authority_hints, chain resolution for cross-org AgentToken validation",
       "used_in": [
         "pkg/federation",
@@ -224,7 +224,7 @@
       "label": "JSON Web Token Best Current Practices",
       "short": "JWT-BCP",
       "wg": "IETF OAuth WG",
-      "last_known_rev": "monitoring",
+      "last_known_rev": "07",
       "implemented_rev": "applied-2026-08-02",
       "status": "active-draft",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-oauth-rfc8725bis/",
@@ -243,13 +243,13 @@
       "label": "WIMSE Workload-to-Workload Authentication with HTTP Signatures",
       "short": "HTTP-Sig",
       "wg": "IETF WIMSE WG",
-      "last_known_rev": "monitoring",
+      "last_known_rev": "05",
       "implemented_rev": null,
       "status": "active-draft",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-wimse-http-signature/",
       "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-ietf-wimse-http-signature/",
       "source_repo": "https://github.com/ietf-wg-wimse",
-      "impact": "Alternative to AgentProofToken (JWT-based) for workload-to-workload proof — uses RFC 9421 HTTP Message Signatures. Tracked for future variant of pkg/identity/proof.go if WG adopts as primary mechanism.",
+      "impact": "Alternative to AgentProofToken (JWT-based) for workload-to-workload proof \u2014 uses RFC 9421 HTTP Message Signatures. Tracked for future variant of pkg/identity/proof.go if WG adopts as primary mechanism.",
       "used_in": []
     },
     {
@@ -257,7 +257,7 @@
       "label": "Credential Delegation Protocol for AI Agents in Multi-System Environments",
       "short": "CredDelegation",
       "wg": "IETF WIMSE WG",
-      "last_known_rev": "monitoring",
+      "last_known_rev": "00",
       "implemented_rev": null,
       "status": "individual-draft",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-sweeney-wimse-credential-delegation/",
@@ -271,13 +271,13 @@
       "label": "Cross-Organizational Delegation for Workload and Agent Identity",
       "short": "CrossOrgDelegation",
       "wg": "IETF WIMSE WG",
-      "last_known_rev": "monitoring",
+      "last_known_rev": "01",
       "implemented_rev": null,
       "status": "individual-draft",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-reece-wimse-cross-org-delegation/",
       "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-reece-wimse-cross-org-delegation/",
       "source_repo": null,
-      "impact": "Formalises cross-org delegation requirements — informs Identity Chaining scenario (pkg/identitychaining) and AgentChain semantics. Noted in Identity Chaining demo tab.",
+      "impact": "Formalises cross-org delegation requirements \u2014 informs Identity Chaining scenario (pkg/identitychaining) and AgentChain semantics. Noted in Identity Chaining demo tab.",
       "used_in": [
         "pkg/identitychaining",
         "pkg/identity/chain.go"
@@ -288,13 +288,13 @@
       "label": "Identity Propagation Context for Multi-Hop Delegation in OAuth 2.0 Environments",
       "short": "PropagationContext",
       "wg": "IETF OAuth WG",
-      "last_known_rev": "monitoring",
+      "last_known_rev": "01",
       "implemented_rev": null,
       "status": "individual-draft",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-sharma-oauth-identity-propagation-context/",
       "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-sharma-oauth-identity-propagation-context/",
       "source_repo": null,
-      "impact": "Multi-hop identity propagation context travelling with delegation chains — augments Identity Chaining and Txn-Token scenarios. Noted in Identity Chaining demo tab.",
+      "impact": "Multi-hop identity propagation context travelling with delegation chains \u2014 augments Identity Chaining and Txn-Token scenarios. Noted in Identity Chaining demo tab.",
       "used_in": [
         "pkg/identitychaining",
         "pkg/txntoken"
