@@ -2746,16 +2746,31 @@ KER ═════════════════════════�
       A GitHub Actions workflow checks the IETF Datatracker API daily and opens a labelled issue when any revision changes.
       The <strong>Impl. commit</strong> column links to the exact commit that last implemented or verified compatibility with that draft revision.
     </p>
-    <p style="font-size:.8rem;color:var(--muted);margin-bottom:1rem">
-      Last checked: <code>2026-08-01</code> &nbsp;·&nbsp;
+    <p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">
+      Last checked: <code>2026-08-02</code> &nbsp;·&nbsp;
       <a href="https://github.com/jralmaraz/wimse-agent-fabric/blob/main/standards-baseline.json" target="_blank" style="color:var(--blue)">standards-baseline.json</a> &nbsp;·&nbsp;
       <a href="https://github.com/jralmaraz/wimse-agent-fabric/blob/main/.github/workflows/standards-tracker.yml" target="_blank" style="color:var(--blue)">standards-tracker.yml</a>
     </p>
-    <table class="compare-table" style="font-size:12px">
+    <div style="display:flex;gap:0;border-radius:6px;overflow:hidden;border:1px solid var(--border);margin-bottom:10px;font-size:10px">
+      <div style="flex:1;padding:7px 6px;text-align:center;background:rgba(107,114,128,.12);color:var(--muted);font-weight:700" title="Not yet adopted by any WG. Highly unstable.">Individual Draft</div>
+      <div style="flex:1;padding:7px 6px;text-align:center;background:rgba(245,166,35,.12);color:var(--orange);font-weight:700" title="WG-adopted (draft-ietf-*). Prototype-ready; breaking changes still possible.">WG Draft</div>
+      <div style="flex:1;padding:7px 6px;text-align:center;background:rgba(79,142,247,.14);color:var(--blue);font-weight:700" title="Community-wide review before IESG. Breaking changes unlikely.">Last Call</div>
+      <div style="flex:1;padding:7px 6px;text-align:center;background:rgba(62,207,142,.14);color:var(--green);font-weight:700;border:2px solid var(--green)" title="Published RFC or final spec — stable, production-ready.">Published / Final</div>
+      <div style="flex:1;padding:7px 6px;text-align:center;background:rgba(224,82,82,.1);color:var(--red);font-weight:700" title="Superseded. Must migrate.">Obsoleted</div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:10px;line-height:2">
+      PoC status: &nbsp;
+      <span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(62,207,142,.15);color:var(--green)">✓ Implemented</span> — Go code + animated demo &nbsp;
+      <span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(107,114,128,.15);color:var(--muted)">◌ Monitoring</span> — tracked, not yet built &nbsp;
+      <span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(224,82,82,.12);color:var(--red)">✗ Excluded</span> — out of scope (reason in docs/standards-tracking.md)
+    </div>
+    <div style="overflow-x:auto">
+    <table class="compare-table" style="font-size:11px;min-width:880px">
       <tr>
         <th>Standard</th>
         <th>Working Group</th>
-        <th>Status</th>
+        <th>IETF Status</th>
+        <th>PoC Status</th>
         <th style="text-align:center">Rev</th>
         <th>Files</th>
         <th>PoC impact</th>
@@ -2764,7 +2779,8 @@ KER ═════════════════════════�
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-workload-creds/" target="_blank" style="color:var(--blue)">WIT — Workload Identity Credentials</a></td>
         <td style="white-space:nowrap;font-size:11px">IETF WIMSE WG</td>
-        <td><span style="color:var(--orange);white-space:nowrap">● Active draft</span></td>
+        <td><span style="color:var(--orange);white-space:nowrap">● WG Draft</span></td>
+        <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(62,207,142,.15);color:var(--green)">✓ Implemented</span></td>
         <td style="text-align:center"><code>-02</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/identity/token.go</code>, <code>pkg/identity/chain.go</code></td>
         <td style="font-size:11px">AgentToken (<code>agent+jwt</code>) extends WIT — any <code>cnf.jwk</code> or <code>typ</code> changes affect <code>pkg/identity</code></td>
@@ -2773,7 +2789,8 @@ KER ═════════════════════════�
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-wpt/" target="_blank" style="color:var(--blue)">WPT — Workload Proof Token</a></td>
         <td style="white-space:nowrap;font-size:11px">IETF WIMSE WG</td>
-        <td><span style="color:var(--orange);white-space:nowrap">● Active draft</span></td>
+        <td><span style="color:var(--orange);white-space:nowrap">● WG Draft</span></td>
+        <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(62,207,142,.15);color:var(--green)">✓ Implemented</span></td>
         <td style="text-align:center"><code>-01</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/identity/proof.go</code>, <code>internal/gateway</code></td>
         <td style="font-size:11px">AgentProofToken (<code>application/agent-proof+jwt</code>) — <code>aud</code>, <code>wth</code>, <code>tth</code>=SHA-256(Txn-Token), <code>jti</code></td>
@@ -2782,7 +2799,8 @@ KER ═════════════════════════�
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-transaction-tokens/" target="_blank" style="color:var(--blue)">Txn-Token — OAuth 2.0 Transaction Tokens</a></td>
         <td style="white-space:nowrap;font-size:11px">IETF OAuth WG</td>
-        <td><span style="color:var(--orange);white-space:nowrap">● Active draft</span></td>
+        <td><span style="color:var(--orange);white-space:nowrap">● WG Draft</span></td>
+        <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(62,207,142,.15);color:var(--green)">✓ Implemented</span></td>
         <td style="text-align:center"><code>-11</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/txntoken</code>, <code>pkg/identity (tth)</code></td>
         <td style="font-size:11px"><code>typ=txntoken+jwt</code>, propagates user identity + authz context through agent chains; <code>tth</code> binds AgentProofToken to the originating transaction</td>
@@ -2791,7 +2809,8 @@ KER ═════════════════════════�
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-identifier/" target="_blank" style="color:var(--blue)">Identifiers — Workload Identifier</a></td>
         <td style="white-space:nowrap;font-size:11px">IETF WIMSE WG</td>
-        <td><span style="color:var(--orange);white-space:nowrap">● Active draft</span></td>
+        <td><span style="color:var(--orange);white-space:nowrap">● WG Draft</span></td>
+        <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(62,207,142,.15);color:var(--green)">✓ Implemented</span></td>
         <td style="text-align:center"><code>-03</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/identity/token.go</code>, <code>pkg/keys/mtls.go</code></td>
         <td style="font-size:11px">SPIFFE URI format for agent SVIDs — <code>spiffe://trust-domain/path</code></td>
@@ -2800,7 +2819,8 @@ KER ═════════════════════════�
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-mutual-tls/" target="_blank" style="color:var(--blue)">mTLS — Mutual TLS Binding</a></td>
         <td style="white-space:nowrap;font-size:11px">IETF WIMSE WG</td>
-        <td><span style="color:var(--orange);white-space:nowrap">● Active draft</span></td>
+        <td><span style="color:var(--orange);white-space:nowrap">● WG Draft</span></td>
+        <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(62,207,142,.15);color:var(--green)">✓ Implemented</span></td>
         <td style="text-align:center"><code>-02</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/keys/mtls.go</code>, <code>internal/gateway/server.go</code></td>
         <td style="font-size:11px">Token-cert binding in gateway middleware — URI SAN matching against AgentToken <code>sub</code></td>
@@ -2809,7 +2829,8 @@ KER ═════════════════════════�
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-arch/" target="_blank" style="color:var(--blue)">Arch — WIMSE Architecture</a></td>
         <td style="white-space:nowrap;font-size:11px">IETF WIMSE WG</td>
-        <td><span style="color:var(--orange);white-space:nowrap">● Active draft</span></td>
+        <td><span style="color:var(--orange);white-space:nowrap">● WG Draft</span></td>
+        <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(62,207,142,.15);color:var(--green)">✓ Implemented</span></td>
         <td style="text-align:center"><code>-08</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/identity/chain.go</code>, <code>internal/gateway</code></td>
         <td style="font-size:11px">Token exchange, trust domain boundaries, delegation chain semantics</td>
@@ -2818,7 +2839,8 @@ KER ═════════════════════════�
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-hartman-credential-broker-4-agents/" target="_blank" style="color:var(--blue)">CB4A — Credential Broker for Agents</a></td>
         <td style="white-space:nowrap;font-size:11px">Individual (S. Hartman)</td>
-        <td><span style="color:var(--purple);white-space:nowrap">● Individual draft</span></td>
+        <td><span style="color:var(--muted);white-space:nowrap">● Individual draft</span></td>
+        <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(62,207,142,.15);color:var(--green)">✓ Implemented</span></td>
         <td style="text-align:center"><code>-00</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/cb4a</code></td>
         <td style="font-size:11px">TRE JWT, PDP decision JWT, CB4A token, Tier model, DPoP binding via <code>cnf.jkt</code></td>
@@ -2827,7 +2849,8 @@ KER ═════════════════════════�
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/rfc9449/" target="_blank" style="color:var(--blue)">DPoP — OAuth 2.0 Demonstrating Proof of Possession</a></td>
         <td style="white-space:nowrap;font-size:11px">IETF OAuth WG</td>
-        <td><span style="color:var(--green);white-space:nowrap">● RFC</span></td>
+        <td><span style="color:var(--green);white-space:nowrap">● Published RFC</span></td>
+        <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(62,207,142,.15);color:var(--green)">✓ Implemented</span></td>
         <td style="text-align:center"><code>RFC 9449</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/cb4a/cdp.go</code></td>
         <td style="font-size:11px">DPoP proof JWT (<code>dpop+jwt</code>), <code>cnf.jkt</code> thumbprint, <code>ath</code> binding, <code>jti</code> replay protection in CDP</td>
@@ -2836,7 +2859,8 @@ KER ═════════════════════════�
       <tr>
         <td><a href="https://openid.net/specs/openid-federation-1_0.html" target="_blank" style="color:var(--blue)">OID-FED — OpenID Federation 1.0</a></td>
         <td style="white-space:nowrap;font-size:11px">OpenID Foundation</td>
-        <td><span style="color:var(--orange);white-space:nowrap">● Active draft</span></td>
+        <td><span style="color:var(--green);white-space:nowrap">● Published (OIDF)</span></td>
+        <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(62,207,142,.15);color:var(--green)">✓ Implemented</span></td>
         <td style="text-align:center"><code>1.0-41</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/federation</code>, <code>internal/gateway/multivalidator.go</code></td>
         <td style="font-size:11px">Entity Configuration, Subordinate Statement, <code>authority_hints</code>, chain resolution for cross-org AgentToken validation</td>
@@ -2845,7 +2869,8 @@ KER ═════════════════════════�
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-spiffe-client-auth/" target="_blank" style="color:var(--blue)">SPIFFE Client Auth — JWT-bearer OAuth assertion</a></td>
         <td style="white-space:nowrap;font-size:11px">IETF OAuth WG</td>
-        <td><span style="color:var(--orange);white-space:nowrap">● Active draft</span></td>
+        <td><span style="color:var(--orange);white-space:nowrap">● WG Draft</span></td>
+        <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(62,207,142,.15);color:var(--green)">✓ Implemented</span></td>
         <td style="text-align:center"><code>-02</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/spiffeclientauth</code></td>
         <td style="font-size:11px">AgentToken as <code>client_assertion</code> (<code>urn:…:jwt-bearer</code>) — eliminates pre-shared OAuth client secrets for agent workloads</td>
@@ -2854,7 +2879,8 @@ KER ═════════════════════════�
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-identity-chaining/" target="_blank" style="color:var(--blue)">Identity Chaining — JWT Authorization Grant</a></td>
         <td style="white-space:nowrap;font-size:11px">IETF OAuth WG</td>
-        <td><span style="color:var(--orange);white-space:nowrap">● Active draft</span></td>
+        <td><span style="color:var(--orange);white-space:nowrap">● WG Draft</span></td>
+        <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(62,207,142,.15);color:var(--green)">✓ Implemented</span></td>
         <td style="text-align:center"><code>-17</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/identitychaining</code></td>
         <td style="font-size:11px"><code>typ=jwt-authz-grant</code>, cross-trust-domain propagation of agent SPIFFE IDs; <code>aud</code>=target AS endpoint, <code>jti</code> replay protection</td>
@@ -2863,7 +2889,8 @@ KER ═════════════════════════�
       <tr style="background:rgba(255,255,255,0.03)">
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-rfc8725bis/" target="_blank" style="color:var(--blue)">JWT-BCP — JWT Best Current Practices</a></td>
         <td style="white-space:nowrap;font-size:11px">IETF OAuth WG</td>
-        <td><span style="color:var(--orange);white-space:nowrap">● Active BCP</span></td>
+        <td><span style="color:var(--green);white-space:nowrap">● Active BCP</span></td>
+        <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(62,207,142,.15);color:var(--green)">✓ Implemented</span></td>
         <td style="text-align:center"><code>bis</code></td>
         <td style="font-size:10px;color:var(--muted)">All validator files</td>
         <td style="font-size:11px">Compliance audit 2026-08-02: all parsers now enforce <code>WithValidMethods(ES256)</code>, <code>WithExpirationRequired</code>, <code>WithIssuedAt</code>, and <code>typ</code> header checks — mitigates algorithm confusion, alg:none, and missing-exp attacks</td>
@@ -2872,7 +2899,8 @@ KER ═════════════════════════�
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-http-signature/" target="_blank" style="color:var(--blue)">HTTP-Sig — WIMSE HTTP Message Signature Auth</a></td>
         <td style="white-space:nowrap;font-size:11px">IETF WIMSE WG</td>
-        <td><span style="color:var(--muted);white-space:nowrap">◌ Monitoring</span></td>
+        <td><span style="color:var(--orange);white-space:nowrap">● WG Draft</span></td>
+        <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(107,114,128,.15);color:var(--muted)">◌ Monitoring</span></td>
         <td style="text-align:center"><code>—</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/identity/proof.go</code> (future)</td>
         <td style="font-size:11px">Alternative to AgentProofToken using RFC 9421 HTTP Message Signatures — tracked as potential replacement for JWT-based proof if WG adopts as primary mechanism</td>
@@ -2881,7 +2909,8 @@ KER ═════════════════════════�
       <tr style="background:rgba(255,255,255,0.03)">
         <td><a href="https://datatracker.ietf.org/doc/draft-sweeney-wimse-credential-delegation/" target="_blank" style="color:var(--blue)">CredDelegation — Credential Delegation Protocol for AI Agents</a></td>
         <td style="white-space:nowrap;font-size:11px">IETF WIMSE WG</td>
-        <td><span style="color:var(--muted);white-space:nowrap">◌ Monitoring</span></td>
+        <td><span style="color:var(--muted);white-space:nowrap">● Individual draft</span></td>
+        <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(107,114,128,.15);color:var(--muted)">◌ Monitoring</span></td>
         <td style="text-align:center"><code>—</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/cb4a</code> (future)</td>
         <td style="font-size:11px">Competing/complementary approach to CB4A for AI agent credential delegation — introduces typed delegation tokens; noted in Credential Broker tab</td>
@@ -2890,7 +2919,8 @@ KER ═════════════════════════�
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-reece-wimse-cross-org-delegation/" target="_blank" style="color:var(--blue)">CrossOrgDelegation — Cross-Org Workload Delegation</a></td>
         <td style="white-space:nowrap;font-size:11px">IETF WIMSE WG</td>
-        <td><span style="color:var(--muted);white-space:nowrap">◌ Monitoring</span></td>
+        <td><span style="color:var(--muted);white-space:nowrap">● Individual draft</span></td>
+        <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(107,114,128,.15);color:var(--muted)">◌ Monitoring</span></td>
         <td style="text-align:center"><code>—</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/identitychaining</code>, <code>pkg/identity/chain.go</code></td>
         <td style="font-size:11px">Formalises cross-org delegation requirements — informs AgentChain semantics and Identity Chaining scenario</td>
@@ -2899,7 +2929,8 @@ KER ═════════════════════════�
       <tr style="background:rgba(255,255,255,0.03)">
         <td><a href="https://datatracker.ietf.org/doc/draft-sharma-oauth-identity-propagation-context/" target="_blank" style="color:var(--blue)">PropagationContext — Multi-Hop Identity Context</a></td>
         <td style="white-space:nowrap;font-size:11px">IETF OAuth WG</td>
-        <td><span style="color:var(--muted);white-space:nowrap">◌ Monitoring</span></td>
+        <td><span style="color:var(--muted);white-space:nowrap">● Individual draft</span></td>
+        <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(107,114,128,.15);color:var(--muted)">◌ Monitoring</span></td>
         <td style="text-align:center"><code>—</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/identitychaining</code>, <code>pkg/txntoken</code></td>
         <td style="font-size:11px">Multi-hop identity propagation context travelling with delegation chains — future extension of Identity Chaining and Txn-Token scenarios</td>
