@@ -1412,6 +1412,62 @@ No EC keys accepted</pre>
     <p style="font-size:12px;color:var(--muted);margin-top:8px">The Txn-Token is issued once at the entry point and forwarded unchanged at every hop. Each agent attaches a fresh <code>agent-proof+jwt</code> with <code>tth = SHA-256(txntoken)</code>, cryptographically binding the per-request proof to the originating transaction.</p>
   </div>
 
+  <!-- Animated flow -->
+  <div class="card" style="margin-top:1rem">
+    <div class="card-title">Live flow — Txn-Token propagation &amp; tth binding</div>
+    <svg id="tt-flow-svg" viewBox="0 0 650 120" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:650px;display:block;margin:12px auto;background:var(--surface2);border:1px solid var(--border);border-radius:8px">
+      <defs><marker id="arTTf" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="rgba(255,255,255,.15)"/></marker></defs>
+      <!-- Nodes -->
+      <circle cx="55"  cy="55" r="24" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
+      <text x="55"  y="51" text-anchor="middle" fill="#e6edf3" font-size="10" font-weight="700" font-family="sans-serif">User</text>
+      <text x="55"  y="65" text-anchor="middle" fill="#7d8590" font-size="8"  font-family="sans-serif">OIDC</text>
+
+      <circle cx="190" cy="55" r="24" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+      <text x="190" y="51" text-anchor="middle" fill="#58a6ff" font-size="10" font-weight="700" font-family="sans-serif">TTS</text>
+      <text x="190" y="65" text-anchor="middle" fill="#7d8590" font-size="8"  font-family="sans-serif">issues txn</text>
+
+      <circle cx="325" cy="55" r="24" fill="#21262d" stroke="#ffa657" stroke-width="1.5"/>
+      <text x="325" y="51" text-anchor="middle" fill="#ffa657" font-size="10" font-weight="700" font-family="sans-serif">Orch</text>
+      <text x="325" y="65" text-anchor="middle" fill="#7d8590" font-size="8"  font-family="sans-serif">proof+tth</text>
+
+      <circle cx="460" cy="55" r="24" fill="#21262d" stroke="#ffa657" stroke-width="1.5"/>
+      <text x="460" y="51" text-anchor="middle" fill="#ffa657" font-size="10" font-weight="700" font-family="sans-serif">Svc B</text>
+      <text x="460" y="65" text-anchor="middle" fill="#7d8590" font-size="8"  font-family="sans-serif">proof+tth</text>
+
+      <circle id="tt-svcC-node" cx="595" cy="55" r="24" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
+      <text x="595" y="51" text-anchor="middle" fill="#e6edf3" font-size="10" font-weight="700" font-family="sans-serif">Svc C</text>
+      <text x="595" y="65" text-anchor="middle" fill="#7d8590" font-size="8"  font-family="sans-serif">validates tth</text>
+
+      <!-- Wires -->
+      <line x1="79"  y1="55" x2="166" y2="55" stroke="rgba(255,255,255,.1)" stroke-width="1" marker-end="url(#arTTf)"/>
+      <line x1="214" y1="55" x2="301" y2="55" stroke="rgba(255,255,255,.1)" stroke-width="1" marker-end="url(#arTTf)"/>
+      <line x1="349" y1="55" x2="436" y2="55" stroke="rgba(255,255,255,.1)" stroke-width="1" marker-end="url(#arTTf)"/>
+      <line x1="484" y1="55" x2="571" y2="55" stroke="rgba(255,255,255,.1)" stroke-width="1" marker-end="url(#arTTf)"/>
+
+      <!-- Verdict label below SvcC -->
+      <text id="tt-result-lbl" x="595" y="100" text-anchor="middle" font-size="9" fill="#30363d" font-family="sans-serif">—</text>
+
+      <!-- Packets (hidden until animated) -->
+      <circle id="tt-pkt1"  cx="55"  cy="55" r="7" fill="#7d8590" style="visibility:hidden"/>
+      <circle id="tt-pkt2"  cx="190" cy="55" r="7" fill="#58a6ff" style="visibility:hidden"/>
+      <circle id="tt-pkt3"  cx="325" cy="55" r="7" fill="#ffa657" style="visibility:hidden"/>
+      <circle id="tt-pkt4"  cx="460" cy="55" r="7" fill="#ffa657" style="visibility:hidden"/>
+      <circle id="tt-pkt-a1" cx="325" cy="55" r="7" fill="#f85149" style="visibility:hidden"/>
+      <circle id="tt-pkt-a2" cx="460" cy="55" r="7" fill="#f85149" style="visibility:hidden"/>
+    </svg>
+    <p id="tt-flow-status" style="font-size:12px;color:var(--muted);text-align:center;min-height:18px;margin-bottom:10px">Click a button to start the flow.</p>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px">
+      <div class="anim-step-sm" id="tt-s1">① User → TTS — OIDC token initiates transaction</div>
+      <div class="anim-step-sm" id="tt-s2">② TTS → Orch — txntoken+jwt issued with txn ID &amp; sub</div>
+      <div class="anim-step-sm" id="tt-s3">③ Orch → Svc B — agent-proof+jwt with tth = SHA-256(txntoken)</div>
+      <div class="anim-step-sm" id="tt-s4">④ Svc B → Svc C — same txntoken + fresh tth-bound proof</div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="playTxnFlow('happy')">&#9654; Happy path</button>
+      <button class="btn" style="border-color:var(--red);color:var(--red)" onclick="playTxnFlow('attack')">&#9654; Missing tth (attack)</button>
+    </div>
+  </div>
+
   <!-- Token anatomy -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
     <div class="card">
@@ -1601,6 +1657,51 @@ pv.Validate(identity.ProofValidateOptions{
       <text x="559" y="70" fill="#3fb950" font-size="8" text-anchor="middle">④Authorization: Bearer</text>
     </svg>
     <p style="font-size:12px;color:var(--muted);margin-top:8px">No pre-shared client secret anywhere in the flow. The OAuth AS validates the AgentToken's signature against the IdP's public key — the same key it already trusts for workload identity.</p>
+  </div>
+
+  <!-- Animated flow -->
+  <div class="card" style="margin-top:1rem">
+    <div class="card-title">Live flow — secret-free client authentication</div>
+    <svg id="sca-flow-svg" viewBox="0 0 600 120" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:600px;display:block;margin:12px auto;background:var(--surface2);border:1px solid var(--border);border-radius:8px">
+      <defs><marker id="arSCAf" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="rgba(255,255,255,.15)"/></marker></defs>
+      <!-- Nodes -->
+      <circle cx="60"  cy="52" r="24" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+      <text x="60"  y="48" text-anchor="middle" fill="#58a6ff" font-size="10" font-weight="700" font-family="sans-serif">IdP</text>
+      <text x="60"  y="62" text-anchor="middle" fill="#7d8590" font-size="7.5" font-family="sans-serif">SPIRE</text>
+
+      <circle cx="210" cy="52" r="24" fill="#21262d" stroke="#ffa657" stroke-width="1.5"/>
+      <text x="210" y="48" text-anchor="middle" fill="#ffa657" font-size="10" font-weight="700" font-family="sans-serif">Agent</text>
+      <text x="210" y="62" text-anchor="middle" fill="#7d8590" font-size="7.5" font-family="sans-serif">spiffe://..</text>
+
+      <circle id="sca-as-node" cx="375" cy="52" r="24" fill="#161b22" stroke="#bc8cff" stroke-width="1.5"/>
+      <text x="375" y="48" text-anchor="middle" fill="#bc8cff" font-size="9.5" font-weight="700" font-family="sans-serif">OAuth AS</text>
+      <text id="sca-as-lbl" x="375" y="62" text-anchor="middle" fill="#7d8590" font-size="7.5" font-family="sans-serif">—</text>
+
+      <circle cx="530" cy="52" r="24" fill="#21262d" stroke="#3fb950" stroke-width="1.5"/>
+      <text x="530" y="48" text-anchor="middle" fill="#3fb950" font-size="10" font-weight="700" font-family="sans-serif">API</text>
+      <text x="530" y="62" text-anchor="middle" fill="#7d8590" font-size="7.5" font-family="sans-serif">resource</text>
+
+      <!-- Forward wires (y=43) -->
+      <line x1="84"  y1="43" x2="186" y2="43" stroke="rgba(255,255,255,.1)" stroke-width="1" marker-end="url(#arSCAf)"/>
+      <line x1="234" y1="43" x2="351" y2="43" stroke="rgba(255,255,255,.1)" stroke-width="1" marker-end="url(#arSCAf)"/>
+      <line x1="234" y1="43" x2="506" y2="43" stroke="rgba(255,255,255,.1)" stroke-width="1" marker-end="url(#arSCAf)"/>
+      <!-- Return wire (y=68, AS → Agent) -->
+      <line x1="351" y1="68" x2="234" y2="68" stroke="rgba(255,255,255,.1)" stroke-width="1" marker-end="url(#arSCAf)"/>
+
+      <!-- Packets (hidden until animated) -->
+      <circle id="sca-pkt1" cx="60"  cy="43" r="7" fill="#58a6ff" style="visibility:hidden"/>
+      <circle id="sca-pkt2" cx="210" cy="43" r="7" fill="#ffa657" style="visibility:hidden"/>
+      <circle id="sca-pkt3" cx="375" cy="68" r="7" fill="#3fb950" style="visibility:hidden"/>
+      <circle id="sca-pkt4" cx="210" cy="43" r="7" fill="#3fb950" style="visibility:hidden"/>
+    </svg>
+    <p id="sca-flow-status" style="font-size:12px;color:var(--muted);text-align:center;min-height:18px;margin-bottom:10px">Click Play to start.</p>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px">
+      <div class="anim-step-sm" id="sca-s1">① IdP issues agent+jwt — SPIFFE identity, signed with IdP key, no secret</div>
+      <div class="anim-step-sm" id="sca-s2">② Agent → OAuth AS — client_assertion = agent+jwt, grant_type = client_credentials</div>
+      <div class="anim-step-sm" id="sca-s3">③ AS validates AgentToken sig via IdP JWKS — issues Bearer access_token</div>
+      <div class="anim-step-sm" id="sca-s4">④ Agent calls Resource API — Authorization: Bearer &lt;access_token&gt;</div>
+    </div>
+    <button class="btn btn-primary" onclick="playSCAFlow()">&#9654; Play flow</button>
   </div>
 
   <!-- Token anatomy -->
@@ -4185,6 +4286,142 @@ function doX402Audit() {
       </tr>`;
     }).join('');
   } catch(e) { /* ignore */ }
+}
+
+// ── Txn-Token flow animation ──────────────────────────────────────────────────
+let ttFlowRunning = false;
+
+function ttFlowStatus(msg) {
+  const el = document.getElementById('tt-flow-status');
+  if (el) el.textContent = msg;
+}
+function ttResultLabel(msg, col) {
+  const lbl  = document.getElementById('tt-result-lbl');
+  const node = document.getElementById('tt-svcC-node');
+  if (lbl)  { lbl.textContent = msg; lbl.setAttribute('fill', col); }
+  if (node) node.setAttribute('stroke', col);
+}
+function ttFlowReset() {
+  ttFlowStatus('Click a button to start the flow.');
+  ttResultLabel('—', '#30363d');
+  document.getElementById('tt-svcC-node').setAttribute('stroke', '#30363d');
+  ['tt-pkt1','tt-pkt2','tt-pkt3','tt-pkt4','tt-pkt-a1','tt-pkt-a2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.visibility = 'hidden';
+  });
+  ['tt-s1','tt-s2','tt-s3','tt-s4'].forEach(id => afSetStep(id, ''));
+}
+async function playTxnFlow(mode) {
+  if (ttFlowRunning) return;
+  ttFlowRunning = true;
+  ttFlowReset();
+
+  if (mode === 'happy') {
+    afSetStep('tt-s1', 'active');
+    ttFlowStatus('① User sends OIDC token to Transaction Token Service…');
+    await animPkt('tt-pkt1', 55, 190, 600);
+    afSetStep('tt-s1', 'done'); afSetStep('tt-s2', 'active');
+    await delay(200);
+
+    ttFlowStatus('② TTS issues txntoken+jwt (txn ID + user context, sub=alice) → Orchestrator');
+    await animPkt('tt-pkt2', 190, 325, 650);
+    afSetStep('tt-s2', 'done'); afSetStep('tt-s3', 'active');
+    await delay(200);
+
+    ttFlowStatus('③ Orchestrator attaches agent-proof+jwt with tth = SHA-256(txntoken) → Svc B');
+    await animPkt('tt-pkt3', 325, 460, 650);
+    afSetStep('tt-s3', 'done'); afSetStep('tt-s4', 'active');
+    await delay(150);
+
+    ttFlowStatus('④ Svc B propagates same txntoken + fresh proof (tth bound) → Svc C');
+    await animPkt('tt-pkt4', 460, 595, 650);
+    afSetStep('tt-s4', 'done');
+    await delay(300);
+
+    ttFlowStatus('⑤ Svc C verifies: SHA-256(txntoken) === proof.tth ✓  Full chain authenticated.');
+    ttResultLabel('✓ tth valid', '#3fb950');
+    document.getElementById('tt-svcC-node').setAttribute('stroke', '#3fb950');
+  } else {
+    ttFlowStatus('Attack: Orchestrator calls Svc B without Txn-Token — no tth claim in proof…');
+    afSetStep('tt-s3', 'active');
+    await animPkt('tt-pkt-a1', 325, 460, 600);
+    afSetStep('tt-s3', 'done'); afSetStep('tt-s4', 'active');
+    await delay(150);
+
+    ttFlowStatus('Svc B forwards to Svc C — still no tth in proof…');
+    await animPkt('tt-pkt-a2', 460, 595, 600);
+    afSetStep('tt-s4', 'done');
+    await delay(300);
+
+    ttFlowStatus('Svc C: proof.tth is absent — cannot bind request to originating transaction ✗');
+    ttResultLabel('✗ tth missing', '#f85149');
+    document.getElementById('tt-svcC-node').setAttribute('stroke', '#f85149');
+  }
+  ttFlowRunning = false;
+}
+
+// ── SPIFFE Client Auth flow animation ─────────────────────────────────────────
+let scaFlowRunning = false;
+
+function scaFlowStatus(msg) {
+  const el = document.getElementById('sca-flow-status');
+  if (el) el.textContent = msg;
+}
+function scaASLabel(msg, col) {
+  const el = document.getElementById('sca-as-lbl');
+  if (el) { el.textContent = msg; el.setAttribute('fill', col); }
+}
+function scaFlowReset() {
+  scaFlowStatus('Click Play to start.');
+  scaASLabel('—', '#7d8590');
+  document.getElementById('sca-as-node').setAttribute('stroke', '#bc8cff');
+  ['sca-pkt1','sca-pkt2','sca-pkt3','sca-pkt4'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.visibility = 'hidden';
+  });
+  ['sca-s1','sca-s2','sca-s3','sca-s4'].forEach(id => afSetStep(id, ''));
+}
+async function playSCAFlow() {
+  if (scaFlowRunning) return;
+  scaFlowRunning = true;
+  scaFlowReset();
+
+  // Step 1: IdP → Agent (agent+jwt)
+  afSetStep('sca-s1', 'active');
+  scaFlowStatus('① IdP issues agent+jwt (SPIFFE identity token, signed with IdP key) → Agent');
+  await animPkt('sca-pkt1', 60, 210, 650);
+  afSetStep('sca-s1', 'done'); afSetStep('sca-s2', 'active');
+  await delay(250);
+
+  // Step 2: Agent → AS (client_assertion — no secret)
+  scaFlowStatus('② Agent sends client_credentials grant — client_assertion = agent+jwt (no pre-shared secret)');
+  await animPkt('sca-pkt2', 210, 375, 650);
+  afSetStep('sca-s2', 'done');
+  await delay(200);
+
+  // AS validates silently
+  scaASLabel('validating…', '#ffa657');
+  scaFlowStatus('OAuth AS fetches IdP JWKS and validates AgentToken signature — no client secret lookup needed…');
+  await delay(900);
+  scaASLabel('sig ✓', '#3fb950');
+  document.getElementById('sca-as-node').setAttribute('stroke', '#3fb950');
+  await delay(300);
+
+  // Step 3: AS → Agent (access_token, return wire at cy=68)
+  afSetStep('sca-s3', 'active');
+  scaFlowStatus('③ AS issues Bearer access_token → Agent (zero pre-shared secrets exchanged so far)');
+  await animPkt('sca-pkt3', 375, 210, 650);
+  afSetStep('sca-s3', 'done'); afSetStep('sca-s4', 'active');
+  await delay(250);
+
+  // Step 4: Agent → Resource API
+  scaFlowStatus('④ Agent calls Resource API — Authorization: Bearer <access_token>');
+  await animPkt('sca-pkt4', 210, 530, 700);
+  afSetStep('sca-s4', 'done');
+  await delay(200);
+
+  scaFlowStatus('✓ Full OAuth client_credentials flow — zero pre-shared secrets in the entire chain.');
+  scaFlowRunning = false;
 }
 </script>
 </body>
