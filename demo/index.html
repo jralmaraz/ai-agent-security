@@ -374,7 +374,49 @@ main{max-width:960px;margin:0 auto;padding:2rem}
     <strong>The core gap:</strong> IETF WIMSE (Workload Identity in Multi-System Environments) was created specifically to address this. It provides a standard, portable workload identity primitive — <span class="pill pill-b">agent+jwt</span> — that works across clouds, carries cryptographic proof of the delegation chain, and binds each request to a non-replayable proof token.
   </div>
 
-  <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+  <div class="card" style="margin-top:20px">
+    <div class="card-title">Why not just use what's already there?</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Every team asks this first. Here's what each existing approach provides — and the specific gap it leaves for AI agents.</p>
+    <div style="overflow-x:auto">
+    <table class="compare-table" style="font-size:12px;min-width:700px">
+      <tr>
+        <th style="width:22%">Existing approach</th>
+        <th style="width:28%">What it gives you</th>
+        <th style="width:50%;color:#f85149">What it doesn't solve for agents</th>
+      </tr>
+      <tr>
+        <td><strong>OAuth Bearer token</strong><br><span style="color:var(--muted);font-family:monospace;font-size:10px">Authorization: Bearer &lt;token&gt;</span></td>
+        <td>Authorization for an action or scope on one AS</td>
+        <td>Ambient authority — stolen token = full access until expiry. No per-request proof. No delegation chain: the API sees the token but can't tell if an agent or a human used it, or which sub-agent in a chain called it.</td>
+      </tr>
+      <tr>
+        <td><strong>mTLS alone</strong><br><span style="color:var(--muted);font-family:monospace;font-size:10px">X.509 client cert</span></td>
+        <td>Transport-layer identity; proves the caller holds a private key</td>
+        <td>Cert identity is service-level (e.g. "my-app"), not agent-level. All agent instances share the same cert. No delegation trail — the sub-agent cert says nothing about which orchestrator spawned it.</td>
+      </tr>
+      <tr>
+        <td><strong>API keys / secrets</strong><br><span style="color:var(--muted);font-family:monospace;font-size:10px">sk-abc123 / HMAC</span></td>
+        <td>Service-to-service authentication; simple to implement</td>
+        <td>Static, long-lived, broadly scoped. Shared across all agent instances — a compromised key is service-level blast radius. No per-request binding, no chain, no revocation without rotating every caller.</td>
+      </tr>
+      <tr>
+        <td><strong>Cloud IAM roles</strong><br><span style="color:var(--muted);font-family:monospace;font-size:10px">AWS IAM / GCP SA / Azure MI</span></td>
+        <td>Cloud-native identity; short-lived creds auto-rotated by the platform</td>
+        <td>Cloud-scoped — a GCP service account cannot natively authenticate to AWS. Agent process inherits the workload IAM role; no way to distinguish orchestrator from sub-agent or carry delegation context across clouds.</td>
+      </tr>
+      <tr>
+        <td><strong>K8s Service Accounts / SPIFFE SVID</strong><br><span style="color:var(--muted);font-family:monospace;font-size:10px">spiffe://cluster/ns/sa</span></td>
+        <td>Platform identity; cryptographic attestation of the running workload</td>
+        <td>SPIFFE identifies the <em>workload</em>, not the individual agent. No delegation semantics — SPIRE has no concept of "agent A authorised agent B to act on behalf of user C". Stops at service boundary, no application-layer chain.</td>
+      </tr>
+    </table>
+    </div>
+    <div class="callout" style="margin-top:14px;font-size:13px">
+      <strong>WIMSE Agent Fabric adds the missing layer:</strong> each agent gets a short-lived <span class="pill pill-b">agent+jwt</span> bound to its EC key pair, a cryptographic <span class="pill pill-g">AgentChain</span> recording every delegation hop, and a per-request <span class="pill pill-b">agent-proof+jwt</span> tied to the exact target URI — preventing replay and proving <em>exactly which agent, in which chain, on whose behalf</em>.
+    </div>
+  </div>
+
+  <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1rem">
     <button class="btn btn-primary" onclick="goToTab('happy')">Explore the Solution: Happy Path &#8594;</button>
     <button class="btn" onclick="goToTab('threat')">View Threat Model &#8594;</button>
     <button class="btn" onclick="goToTab('broker')">External API Credentials (CB4A) &#8594;</button>
