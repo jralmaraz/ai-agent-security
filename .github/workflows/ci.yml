@@ -80,7 +80,7 @@ jobs:
           output-file: grype.sarif
 
       - name: Upload Grype SARIF to Security tab
-        uses: github/codeql-action/upload-sarif@v4.37.3
+        uses: github/codeql-action/upload-sarif@v4.37.4
         continue-on-error: true  # SARIF from binary SBOM scans may lack artifact locations
         with:
           sarif_file: grype.sarif
