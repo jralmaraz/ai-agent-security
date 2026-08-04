@@ -10,9 +10,12 @@
 *.out
 coverage.html
 
-# WASM build artifacts
-demo/wimse-agent.wasm
-demo/wasm_exec.js
+# WASM build artifacts — pre-built binaries are committed for Cloudflare Pages
+# (Pages has no Go build step; rebuild locally with:
+#   GOOS=js GOARCH=wasm go build -o demo/wimse-agent.wasm ./cmd/demo-wasm/
+#   cp $(go env GOROOT)/lib/wasm/wasm_exec.js demo/ )
+# demo/wimse-agent.wasm  ← tracked (intentional)
+# demo/wasm_exec.js      ← tracked (intentional)
 
 # Go workspace
 /vendor/
