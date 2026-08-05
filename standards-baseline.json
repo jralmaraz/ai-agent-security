@@ -1,7 +1,7 @@
 {
   "_comment": "Tracks IETF/OpenID drafts implemented in this PoC. Updated daily by the standards-tracker GitHub Actions workflow. Set implemented_rev when the PoC code is updated to match a new revision.",
   "_tracking_policy": "docs/standards-tracking.md",
-  "last_checked": "2026-08-04",
+  "last_checked": "2026-08-05",
   "wg_feeds": [
     {
       "name": "IETF WIMSE WG",
@@ -449,6 +449,21 @@
       "impact": "Refresh token scope response for human OAuth clients. Not applicable \u2014 agent identity uses short-lived token re-issuance, not refresh token flows.",
       "used_in": [],
       "_triage": "2026-08-04: assessed in issue #10. Dismissed \u2014 not relevant to M2M agent identity."
+    },
+    {
+      "id": "draft-mcguinness-oauth-id-continuation-assertion",
+      "label": "Identity Continuation Assertion for OAuth 2.0 Token Exchange",
+      "short": "IDContinuation",
+      "wg": "IETF OAuth WG",
+      "last_known_rev": "00",
+      "implemented_rev": null,
+      "status": "individual-draft",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-mcguinness-oauth-id-continuation-assertion/",
+      "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-mcguinness-oauth-id-continuation-assertion/",
+      "source_repo": null,
+      "impact": "Defines an Identity Continuation Assertion (typ: oauth-identity-continuation+jwt, claims: identity_continuation_handle, act, cnf.jkt, jti, exp \u2264300s) for preserving user identity context across service boundaries using RFC 8693 Token Exchange. Focuses on pairwise user subject identifiers propagated across IdP trust boundaries \u2014 different problem space from agent/workload identity (SPIFFE). Adjacent to pkg/identitychaining (jwt-authz-grant) and AgentChain delegation patterns; monitor for convergence.",
+      "used_in": [],
+      "_triage": "2026-08-05: assessed in issue #13. Agent-fabric uses SPIFFE workload identity (not pairwise user subjects), so the continuation handle mechanism does not apply directly. Monitor for convergence with identity chaining patterns."
     }
   ]
 }
