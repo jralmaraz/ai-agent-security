@@ -243,7 +243,7 @@
       "label": "WIMSE Workload-to-Workload Authentication with HTTP Signatures",
       "short": "HTTP-Sig",
       "wg": "IETF WIMSE WG",
-      "last_known_rev": "05",
+      "last_known_rev": "06",
       "implemented_rev": null,
       "status": "active-draft",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-wimse-http-signature/",
