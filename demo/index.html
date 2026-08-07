@@ -1638,9 +1638,12 @@ No EC keys accepted</pre>
 <span style="color:var(--muted)">// Payload</span>
 {
   <span style="color:var(--blue)">"iss"</span>: <span style="color:var(--green)">"https://tts.example"</span>,
-  <span style="color:var(--blue)">"sub"</span>: <span style="color:var(--green)">"alice@corp"</span>,
+  <span style="color:var(--blue)">"sub"</span>: <span style="color:var(--green)">"alice@corp"</span>,           <span style="color:var(--muted)">// user identity</span>
   <span style="color:var(--blue)">"aud"</span>: [<span style="color:var(--green)">"https://api.example"</span>],
-  <span style="color:var(--blue)">"txn"</span>: <span style="color:var(--green)">"a3f8-b12c-…"</span>,    <span style="color:var(--muted)">// unique txn ID</span>
+  <span style="color:var(--blue)">"txn"</span>: <span style="color:var(--green)">"a3f8-b12c-…"</span>,              <span style="color:var(--muted)">// unique txn ID</span>
+  <span style="color:var(--orange)">"act"</span>: {                              <span style="color:var(--muted)">// RFC 8693 §4.1 — acting agent</span>
+    <span style="color:var(--orange)">"sub"</span>: <span style="color:var(--orange)">"spiffe://mesh.example/agents/orch"</span>
+  },
   <span style="color:var(--blue)">"rctx"</span>: {
     <span style="color:var(--blue)">"req_ip"</span>: <span style="color:var(--green)">"10.0.0.1"</span>,
     <span style="color:var(--blue)">"req_wl"</span>: <span style="color:var(--green)">"spiffe://.../orch"</span>
@@ -2045,8 +2048,11 @@ tok, err := auth.Authenticate(
 <span style="color:var(--muted)">// Payload</span>
 {
   <span style="color:var(--blue)">"iss"</span>: <span style="color:var(--green)">"https://as.cloud-a.example"</span>,
-  <span style="color:var(--blue)">"sub"</span>: <span style="color:var(--green)">"spiffe://cloud-a.example/agents/orch"</span>,
+  <span style="color:var(--blue)">"sub"</span>: <span style="color:var(--green)">"spiffe://cloud-a.example/agents/orch"</span>,  <span style="color:var(--muted)">// propagated identity</span>
   <span style="color:var(--blue)">"aud"</span>: [<span style="color:var(--orange)">"https://as.cloud-b.example/token"</span>],
+  <span style="color:var(--orange)">"act"</span>: {                                                    <span style="color:var(--muted)">// RFC 8693 §4.1 — calling agent</span>
+    <span style="color:var(--orange)">"sub"</span>: <span style="color:var(--orange)">"spiffe://cloud-a.example/agents/sub-agent"</span>
+  },
   <span style="color:var(--blue)">"iat"</span>: <span style="color:var(--green)">1753649000</span>,
   <span style="color:var(--blue)">"exp"</span>: <span style="color:var(--green)">1753649300</span>,   <span style="color:var(--muted)">// 5 min TTL</span>
   <span style="color:var(--blue)">"jti"</span>: <span style="color:var(--green)">"kY2mNpXx…"</span>     <span style="color:var(--muted)">// replay prevention</span>
@@ -2063,6 +2069,8 @@ gi := identitychaining.NewGrantIssuer(
 grant, _ := gi.Issue(
   agentToken,
   <span style="color:var(--orange)">"https://as.cloud-b.example/token"</span>,
+  <span style="color:var(--muted)">// optional RFC 8693 §4.1 actor — set when delegating agent differs from sub</span>
+  &amp;identitychaining.ActorClaims{Sub: <span style="color:var(--green)">"spiffe://cloud-a.example/agents/sub-agent"</span>},
 )
 
 <span style="color:var(--muted)">// Domain B: validate grant</span>
