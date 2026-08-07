@@ -877,7 +877,7 @@ main{max-width:960px;margin:0 auto;padding:2rem}
       <div class="threat-card mitigated">
         <div class="threat-title">T10 · Unattested User Context (Human Impersonation)</div>
         <div class="threat-desc">An agent claims "I am acting on behalf of user@example.com" in a request header or API parameter. A downstream service accepts the claim and grants elevated access as if the human authorised the action — but there is no cryptographic proof of that authorisation.</div>
-        <div class="mitigation">The Transaction Token (txntoken+jwt) is issued by the gateway and carries the originating user's <code>azp</code> (authorising party) claim, signed by the gateway's key. Every downstream service validates the Txn-Token independently — the attacker cannot forge the user context without the gateway's signing key. The WPT <code>tth</code> claim cryptographically binds every hop to the same originating transaction.</div>
+        <div class="mitigation">The Transaction Token (txntoken+jwt) is issued by the gateway and carries the user's identity in <code>sub</code> and the entry-point agent's SPIFFE ID in <code>act.sub</code> (RFC 8693 §4.1 actor claim), both signed by the gateway's key. Every downstream service validates the Txn-Token independently — the attacker cannot forge the user context without the gateway's signing key. The WPT <code>tth</code> claim cryptographically binds every hop to the same originating transaction.</div>
       </div>
       <div class="threat-card">
         <div class="threat-title">T11 · Cross-Tenant Context Leakage</div>
@@ -3042,7 +3042,7 @@ KER ═════════════════════════�
   <div class="card">
     <div class="card-title">Standards Tracker</div>
     <p class="spec-ref">
-      This PoC implements eleven IETF and OpenID standards — most of them active drafts still evolving toward production readiness.
+      This PoC implements twelve IETF and OpenID standards — most of them active drafts still evolving toward production readiness.
       A GitHub Actions workflow checks the IETF Datatracker API daily and opens a labelled issue when any revision changes.
       The <strong>Impl. commit</strong> column links to the exact commit that last implemented or verified compatibility with that draft revision.
     </p>
@@ -3105,6 +3105,16 @@ KER ═════════════════════════�
         <td style="font-size:10px;color:var(--muted)"><code>pkg/txntoken</code>, <code>pkg/identity (tth)</code></td>
         <td style="font-size:11px"><code>typ=txntoken+jwt</code>, propagates user identity + authz context through agent chains; <code>tth</code> binds AgentProofToken to the originating transaction</td>
         <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/ed3bd65" target="_blank" style="color:var(--blue)"><code>ed3bd65</code></a></td>
+      </tr>
+      <tr>
+        <td><a href="https://datatracker.ietf.org/doc/rfc8693/" target="_blank" style="color:var(--blue)">Token Exchange — OAuth 2.0 Token Exchange</a></td>
+        <td style="white-space:nowrap;font-size:11px">IETF OAuth WG</td>
+        <td><span style="color:var(--green);white-space:nowrap">● Published RFC</span></td>
+        <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(62,207,142,.15);color:var(--green)">✓ Implemented</span></td>
+        <td style="text-align:center"><code>RFC 8693</code></td>
+        <td style="font-size:10px;color:var(--muted)"><code>pkg/txntoken</code>, <code>pkg/identitychaining</code></td>
+        <td style="font-size:11px"><code>act.sub</code> (actor claim §4.1) in Txn-Token and JWT Authorization Grant — identifies the entry-point agent acting on behalf of the user (<code>sub</code>); nested <code>act</code> represents prior actors in multi-hop chains (informational only per §4.1)</td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><span style="color:var(--muted)">this PR</span></td>
       </tr>
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-identifier/" target="_blank" style="color:var(--blue)">Identifiers — Workload Identifier</a></td>

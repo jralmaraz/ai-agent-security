@@ -180,3 +180,63 @@ func TestTxnToken_EmptyString(t *testing.T) {
 		t.Fatal("expected error for empty token string")
 	}
 }
+
+func TestTxnToken_ActClaim(t *testing.T) {
+	// RFC 8693 §4.1: sub = user, act.sub = entry-point agent SPIFFE ID.
+	issuer, kp := newIssuer(t)
+	opts := defaultOpts()
+	opts.Actor = &txntoken.ActorClaims{
+		Sub: "spiffe://agent-mesh.example/agents/orchestrator",
+	}
+	tok, err := issuer.Issue(opts)
+	if err != nil {
+		t.Fatalf("Issue: %v", err)
+	}
+
+	v := txntoken.NewValidator(ttsIssuer, kp.Public)
+	claims, err := v.Validate(tok)
+	if err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+	if claims.Act == nil {
+		t.Fatal("expected act claim to be present")
+	}
+	if claims.Act.Sub != opts.Actor.Sub {
+		t.Errorf("act.sub: want %q got %q", opts.Actor.Sub, claims.Act.Sub)
+	}
+	if claims.Act.Act != nil {
+		t.Error("expected no nested act for single-hop chain")
+	}
+}
+
+func TestTxnToken_ActChain(t *testing.T) {
+	// RFC 8693 §4.1: nested act represents prior actors in a multi-hop chain.
+	// Outermost act = current actor; deepest act = original actor (informational only).
+	issuer, kp := newIssuer(t)
+	opts := defaultOpts()
+	opts.Actor = &txntoken.ActorClaims{
+		Sub: "spiffe://agent-mesh.example/agents/orchestrator",
+		Act: &txntoken.ActorClaims{
+			Sub: "spiffe://agent-mesh.example/gateway",
+		},
+	}
+	tok, err := issuer.Issue(opts)
+	if err != nil {
+		t.Fatalf("Issue: %v", err)
+	}
+
+	v := txntoken.NewValidator(ttsIssuer, kp.Public)
+	claims, err := v.Validate(tok)
+	if err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+	if claims.Act == nil || claims.Act.Act == nil {
+		t.Fatal("expected nested act claim for multi-hop chain")
+	}
+	if claims.Act.Sub != "spiffe://agent-mesh.example/agents/orchestrator" {
+		t.Errorf("current actor sub: got %q", claims.Act.Sub)
+	}
+	if claims.Act.Act.Sub != "spiffe://agent-mesh.example/gateway" {
+		t.Errorf("prior actor sub: got %q", claims.Act.Act.Sub)
+	}
+}

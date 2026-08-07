@@ -6,6 +6,27 @@ import "github.com/golang-jwt/jwt/v5"
 // Reference: draft-ietf-oauth-transaction-tokens-11 §5
 const TokenType = "txntoken+jwt"
 
+// ActorClaims represents an RFC 8693 §4.1 actor claim.
+//
+// It identifies the party acting on behalf of the token subject (typically a
+// SPIFFE ID for an agent workload). For multi-hop delegation chains, ActorClaims
+// may be nested — the outermost Act is the current actor; nested Acts are prior
+// actors in chronological order, with the least-recent actor most deeply nested.
+//
+// Per RFC 8693 §4.1, consumers MUST apply access control policy based only on
+// the current actor (outermost Act). Prior actors are informational only.
+//
+// Example — orchestrator acting on behalf of a user, itself delegated by a gateway:
+//
+//	act.sub  = "spiffe://mesh.example/agents/orchestrator"  // current actor
+//	act.act.sub = "spiffe://mesh.example/gateway"           // prior actor (informational)
+type ActorClaims struct {
+	// Sub is the SPIFFE URI or other identity of the acting party (RFC 8693 §4.1).
+	Sub string `json:"sub"`
+	// Act optionally chains to a prior actor (nested delegation, RFC 8693 §4.1).
+	Act *ActorClaims `json:"act,omitempty"`
+}
+
 // Claims represents the payload of an OAuth 2.0 Transaction Token (Txn-Token).
 //
 // Txn-Tokens propagate a user's identity and the authorization context
@@ -22,6 +43,9 @@ type Claims struct {
 	jwt.RegisteredClaims
 	// Txn uniquely identifies the business transaction across its entire call chain.
 	Txn string `json:"txn"`
+	// Act identifies the entry-point agent acting on behalf of the subject (RFC 8693 §4.1).
+	// sub carries the user identity; act.sub carries the agent's SPIFFE ID.
+	Act *ActorClaims `json:"act,omitempty"`
 	// ReqCtx carries the request context recorded at the entry-point agent.
 	ReqCtx *RequestContext `json:"rctx,omitempty"`
 	// AzDetails carries authorization details granted by the Authorization Server.
