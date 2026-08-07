@@ -1615,7 +1615,7 @@ No EC keys accepted</pre>
     <p id="tt-flow-status" style="font-size:12px;color:var(--muted);text-align:center;min-height:18px;margin-bottom:10px">Click a button to start the flow.</p>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px">
       <div class="anim-step-sm" id="tt-s1">① User → TTS — OIDC token initiates transaction</div>
-      <div class="anim-step-sm" id="tt-s2">② TTS → Orch — txntoken+jwt issued with txn ID &amp; sub</div>
+      <div class="anim-step-sm" id="tt-s2">② TTS → Orch — txntoken+jwt: <code>sub</code>=user, <code>act.sub</code>=agent SPIFFE ID (RFC 8693), <code>txn</code> ID</div>
       <div class="anim-step-sm" id="tt-s3">③ Orch → Svc B — agent-proof+jwt with tth = SHA-256(txntoken)</div>
       <div class="anim-step-sm" id="tt-s4">④ Svc B → Svc C — same txntoken + fresh tth-bound proof</div>
     </div>
@@ -1667,6 +1667,84 @@ No EC keys accepted</pre>
   <span style="color:var(--blue)">"jti"</span>: <span style="color:var(--green)">"unique-per-request"</span>,
   <span style="color:var(--blue)">"exp"</span>: <span style="color:var(--green)">1753649999</span>
 }</pre>
+    </div>
+  </div>
+
+  <!-- RFC 8693 act claim — identity tracing -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">RFC 8693 §4.1 — Identity tracing across agent hops</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">
+      The <code>act</code> claim solves the AI agent forensics problem: when a Txn-Token propagates through a multi-hop chain,
+      downstream services need to verify not just <em>who authorised</em> the transaction (<code>sub</code>)
+      but <em>which agent is actually executing</em> (<code>act.sub</code>).
+      Without it, a rogue agent that forwards a stolen Txn-Token is indistinguishable from the legitimate orchestrator.
+    </p>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+      <div style="flex:1;min-width:260px">
+        <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:8px">What each downstream service can verify</div>
+        <table class="compare-table" style="font-size:11px">
+          <tr><th>Claim</th><th>Example value</th><th>Meaning</th></tr>
+          <tr>
+            <td><code style="color:var(--blue)">sub</code></td>
+            <td><code style="font-size:10px">alice@corp</code></td>
+            <td>User who <strong>authorised</strong> the transaction — identical at every hop</td>
+          </tr>
+          <tr>
+            <td><code style="color:var(--orange)">act.sub</code></td>
+            <td><code style="font-size:10px">spiffe://mesh/agents/orch</code></td>
+            <td>Agent <strong>executing</strong> this hop — signed by TTS, cryptographically unforgeable</td>
+          </tr>
+          <tr>
+            <td><code style="color:var(--green)">txn</code></td>
+            <td><code style="font-size:10px">a3f8-b12c-…</code></td>
+            <td>Transaction ID linking every hop into a single, correlated audit trail</td>
+          </tr>
+        </table>
+      </div>
+      <div style="flex:1;min-width:260px">
+        <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:8px">Impact on security and auditability</div>
+        <table class="compare-table" style="font-size:11px">
+          <tr><th>Without <code>act</code></th><th>With <code>act.sub</code></th></tr>
+          <tr>
+            <td>Svc B knows <em>alice</em> authorised something — but which agent made this specific call?</td>
+            <td>Svc B cryptographically proves <em>spiffe://mesh/agents/orch</em> called on alice's behalf</td>
+          </tr>
+          <tr>
+            <td>A rogue agent forwarding a stolen Txn-Token is indistinguishable from the orchestrator</td>
+            <td>Rogue agent's SPIFFE ID won't match the expected <code>act.sub</code> → rejected by policy</td>
+          </tr>
+          <tr>
+            <td>Audit log: <em>"alice accessed /orders"</em> — agent unknown</td>
+            <td>Audit log: <em>"spiffe://orch acted as alice on txn a3f8"</em> — full attribution</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:6px">Multi-hop chain — how nested <code>act</code> builds the full delegation trace</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px">As the call chain deepens, each new actor wraps the previous in a nested <code>act</code>. The outermost <code>act.sub</code> is always the <em>current</em> actor — services apply access control only to it. Prior actors are preserved for audit (RFC 8693 §4.1).</div>
+      <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+        <div style="border:1.5px solid var(--orange);border-radius:7px;padding:12px 16px;font-size:11px;background:rgba(245,166,35,.06)">
+          <div style="font-size:9px;color:var(--orange);font-weight:700;letter-spacing:.04em;margin-bottom:6px">CURRENT ACTOR — enforce access control here</div>
+          <code style="color:var(--orange)">act.sub = spiffe://mesh/agents/executor</code>
+          <div style="margin-top:10px;border:1.5px solid var(--blue);border-radius:5px;padding:10px 14px;background:rgba(79,142,247,.06)">
+            <div style="font-size:9px;color:var(--blue);font-weight:700;letter-spacing:.04em;margin-bottom:6px">PRIOR ACTOR — audit trail only</div>
+            <code style="color:var(--blue)">act.act.sub = spiffe://mesh/agents/orch</code>
+            <div style="margin-top:10px;border:1.5px solid var(--green);border-radius:4px;padding:8px 12px;background:rgba(62,207,142,.06)">
+              <div style="font-size:9px;color:var(--green);font-weight:700;letter-spacing:.04em;margin-bottom:4px">AUTHORISING USER — constant across all hops</div>
+              <code style="color:var(--green)">sub = alice@corp</code>
+            </div>
+          </div>
+        </div>
+        <div style="flex:1;min-width:180px;font-size:11px;color:var(--muted);padding-top:4px;line-height:1.8">
+          <div><span style="color:var(--orange);font-weight:700">executor</span> — current agent making the API call</div>
+          <div><span style="color:var(--blue);font-weight:700">orch</span> — orchestrator that delegated to executor</div>
+          <div><span style="color:var(--green);font-weight:700">alice@corp</span> — user who authorised the entire chain</div>
+          <div style="margin-top:10px;padding:8px 10px;background:rgba(255,255,255,.04);border-radius:4px;border-left:2px solid var(--orange);font-size:10px">
+            <strong>Policy rule (RFC 8693 §4.1):</strong> access control must use only the outermost <code>act.sub</code>. Prior actors are informational — do not grant them elevated permissions based on chain depth.
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2083,6 +2161,65 @@ claims, _ := gv.Validate(
   <span style="color:var(--orange)">"https://as.cloud-b.example/token"</span>,
 )
 <span style="color:var(--muted)">// claims.Subject == "spiffe://cloud-a.../agents/orch"</span></pre>
+    </div>
+  </div>
+
+  <!-- RFC 8693 act claim — delegation attribution -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">RFC 8693 §4.1 — Delegation attribution across trust domains</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">
+      When an orchestrator delegates a cross-domain call to a sub-agent, the JWT Authorization Grant
+      carries both identities: the original SPIFFE ID in <code>sub</code> (the propagated identity that Cloud B
+      authorises against) and the actual calling agent in <code>act.sub</code>. Cloud B can then answer two
+      distinct questions: <em>who is this agent claiming to represent?</em> and <em>which agent is actually
+      making the call right now?</em>
+    </p>
+    <div style="display:flex;gap:16px;flex-wrap:wrap">
+      <div style="flex:1;min-width:240px">
+        <table class="compare-table" style="font-size:11px">
+          <tr><th>Grant claim</th><th>In this scenario</th><th>Cloud B can verify</th></tr>
+          <tr>
+            <td><code style="color:var(--blue)">sub</code></td>
+            <td><code style="font-size:10px">spiffe://cloud-a/agents/orch</code></td>
+            <td>Orchestrator's identity — Cloud B applies authz policy to this SPIFFE ID</td>
+          </tr>
+          <tr>
+            <td><code style="color:var(--orange)">act.sub</code></td>
+            <td><code style="font-size:10px">spiffe://cloud-a/agents/sub-agent</code></td>
+            <td>Sub-agent <em>physically making</em> the call — different from the authorising identity</td>
+          </tr>
+          <tr>
+            <td><code style="color:var(--green)">iss</code></td>
+            <td><code style="font-size:10px">https://as.cloud-a.example</code></td>
+            <td>Both <code>sub</code> and <code>act.sub</code> attested by Cloud A's AS — no direct trust needed</td>
+          </tr>
+        </table>
+      </div>
+      <div style="flex:0 0 auto;min-width:210px;max-width:300px">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:6px">Without delegation (<code>act</code> omitted)</div>
+        <pre style="font-size:10px;background:var(--bg);padding:8px 10px;border-radius:4px;border:1px solid var(--border);margin:0 0 12px">{
+  "sub": "spiffe://cloud-a/orch",
+  "aud": ["https://as.cloud-b/token"]
+  <span style="color:var(--muted)">// sub IS the caller — single-agent</span>
+}</pre>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:6px">With delegation (<code>act</code> present)</div>
+        <pre style="font-size:10px;background:var(--bg);padding:8px 10px;border-radius:4px;border:1px solid var(--orange);margin:0">{
+  "sub": "spiffe://cloud-a/orch",
+  <span style="color:var(--orange)">"act": {</span>
+  <span style="color:var(--orange)">  "sub": "spiffe://cloud-a/sub-agent"</span>
+  <span style="color:var(--orange)">},</span>  <span style="color:var(--muted)">// RFC 8693 §4.1</span>
+  "aud": ["https://as.cloud-b/token"]
+  <span style="color:var(--muted)">// act.sub IS the caller; sub authorised it</span>
+}</pre>
+      </div>
+    </div>
+    <div style="margin-top:14px;padding:10px 14px;background:rgba(245,166,35,.07);border-radius:6px;border-left:3px solid var(--orange);font-size:11px">
+      <strong>Why this matters for AI agent identity tracing:</strong>
+      in agentic systems an orchestrator routinely fans out work to specialist sub-agents across trust domains.
+      Without <code>act.sub</code>, Cloud B's audit log shows only the orchestrator's SPIFFE ID — it cannot tell
+      which sub-agent executed the action. With <code>act.sub</code>, the full delegation chain is cryptographically
+      attested: Cloud A's AS signed both identities, so Cloud B can log
+      <em>"sub-agent X acted on behalf of orchestrator Y, both from Cloud A"</em> with no additional infrastructure.
     </div>
   </div>
 
