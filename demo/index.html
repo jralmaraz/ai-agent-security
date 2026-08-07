@@ -275,6 +275,7 @@ main{max-width:960px;margin:0 auto;padding:2rem}
     <div class="tab" onclick="showTab('paxos',this)">Paxos Consensus</div>
     <div class="tab" onclick="showTab('mtls',this)">mTLS Transport</div>
     <div class="tab" onclick="showTab('txntoken',this)">Txn-Token</div>
+    <div class="tab" onclick="showTab('rfc8693',this)">Agent Delegation</div>
     <div class="tab" onclick="showTab('spiffeclientauth',this)">SPIFFE Client Auth</div>
     <div class="tab" onclick="showTab('identitychaining',this)">Identity Chaining</div>
     <div class="tab" onclick="showTab('broker',this)">Credential Broker</div>
@@ -1836,6 +1837,216 @@ pv.Validate(identity.ProofValidateOptions{
     </p>
   </div>
 </div><!-- end scene-txntoken -->
+
+<!-- ══ RFC 8693 — AGENT DELEGATION ═══════════════════════════════════════ -->
+<div class="scene" id="scene-rfc8693">
+  <div class="card-title" style="font-size:11px;color:var(--muted);letter-spacing:.08em;margin-bottom:4px">SCENARIO</div>
+  <h1 class="scene-title">RFC 8693 — Application-to-Agent Task Delegation</h1>
+  <p class="scene-lead">When an application hands off a task to an AI agent, the agent must carry <em>two</em> provable identities into every downstream call: the <strong>user</strong> whose authority is being exercised (<code>sub</code>) and the <strong>application</strong> that authorised the delegation (<code>act.sub</code>). RFC 8693 Token Exchange is the standard mechanism — the app exchanges the user's OIDC token for a <code>txntoken+jwt</code> containing both, signed by a trusted Token Token Service (TTS). Without this, any agent holding a user token can act for that user without restriction.</p>
+
+  <!-- animated flow -->
+  <div class="card">
+    <div class="card-title">Live flow — application delegates task to AI agent via RFC 8693</div>
+    <svg viewBox="0 0 740 215" style="width:100%;max-width:740px;display:block;margin:0 auto;font-family:sans-serif">
+      <defs>
+        <marker id="rfc-arr"   markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#7d8590"/></marker>
+        <marker id="rfc-arr-o" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#f5a623"/></marker>
+        <marker id="rfc-arr-g" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#3fb950"/></marker>
+      </defs>
+
+      <!-- horizontal arrows -->
+      <line x1="88"  y1="79" x2="107" y2="79" stroke="#7d8590" stroke-width="1.5" marker-end="url(#rfc-arr)"/>
+      <line x1="227" y1="79" x2="352" y2="79" stroke="#7d8590" stroke-width="1.5" marker-end="url(#rfc-arr)"/>
+      <line x1="470" y1="79" x2="543" y2="79" stroke="#7d8590" stroke-width="1.5" marker-end="url(#rfc-arr)"/>
+
+      <!-- T-junction: App ↓ TTS (solid orange = exchange request) -->
+      <line x1="158" y1="100" x2="158" y2="156" stroke="#f5a623" stroke-width="1.5" marker-end="url(#rfc-arr-o)"/>
+      <!-- T-junction: TTS ↑ App (dashed green = txntoken response) -->
+      <line x1="176" y1="156" x2="176" y2="100" stroke="#3fb950" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#rfc-arr-g)"/>
+
+      <!-- arrow labels -->
+      <text x="97"  y="72" text-anchor="middle" fill="#58a6ff" font-size="7">OIDC token</text>
+      <text x="148" y="118" text-anchor="end"   fill="#f5a623" font-size="7">exchange</text>
+      <text x="148" y="127" text-anchor="end"   fill="#f5a623" font-size="7">request</text>
+      <text x="186" y="115" text-anchor="start" fill="#3fb950" font-size="7">txntoken+jwt</text>
+      <text x="186" y="124" text-anchor="start" fill="#3fb950" font-size="6.5">(sub + act.sub)</text>
+      <text x="290" y="72" text-anchor="middle" fill="#3fb950"  font-size="7.5">delegate task + txntoken+jwt</text>
+      <text x="507" y="72" text-anchor="middle" fill="#bc8cff" font-size="7.5">API call + txntoken+jwt</text>
+
+      <!-- User node -->
+      <circle cx="58" cy="79" r="28" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+      <text x="58" y="75" text-anchor="middle" fill="#58a6ff"  font-size="8.5" font-weight="700">USER</text>
+      <text x="58" y="86" text-anchor="middle" fill="#7d8590"  font-size="7">alice@corp</text>
+
+      <!-- App node -->
+      <rect x="108" y="60" width="118" height="38" rx="5" fill="#161b22" stroke="#bc8cff" stroke-width="1.5"/>
+      <text x="167" y="76" text-anchor="middle" fill="#bc8cff" font-size="9" font-weight="700">Application API</text>
+      <text x="167" y="87" text-anchor="middle" fill="#7d8590" font-size="7">spiffe://.../support-api</text>
+
+      <!-- TTS node -->
+      <rect id="rfc-tts-node" x="108" y="158" width="118" height="38" rx="5" fill="#161b22" stroke="#f5a623" stroke-width="1.5"/>
+      <text x="167" y="174" text-anchor="middle" fill="#f5a623" font-size="9" font-weight="700">TTS</text>
+      <text x="167" y="185" text-anchor="middle" fill="#7d8590" font-size="7">Token Exchange Service</text>
+
+      <!-- Agent node -->
+      <rect x="354" y="60" width="115" height="38" rx="5" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
+      <text x="412" y="76" text-anchor="middle" fill="#3fb950" font-size="9" font-weight="700">AI Agent</text>
+      <text x="412" y="87" text-anchor="middle" fill="#7d8590" font-size="7">spiffe://.../agent</text>
+
+      <!-- Service node -->
+      <rect id="rfc-svc-node" x="545" y="60" width="165" height="38" rx="5" fill="#161b22" stroke="#7d8590" stroke-width="1.5"/>
+      <text x="628" y="74" text-anchor="middle" fill="#c9d1d9" font-size="9" font-weight="700">Backend Service</text>
+      <text x="628" y="84" text-anchor="middle" fill="#7d8590" font-size="7">validates sub + act.sub</text>
+      <text id="rfc-svc-lbl" x="628" y="94" text-anchor="middle" fill="#7d8590" font-size="7">—</text>
+
+      <!-- packets -->
+      <circle id="rfc-pkt1" cx="88"  cy="79"  r="5" fill="#58a6ff" style="visibility:hidden"/>
+      <circle id="rfc-pkt2" cx="158" cy="100" r="5" fill="#f5a623" style="visibility:hidden"/>
+      <circle id="rfc-pkt3" cx="176" cy="156" r="5" fill="#3fb950" style="visibility:hidden"/>
+      <circle id="rfc-pkt4" cx="227" cy="79"  r="5" fill="#3fb950" style="visibility:hidden"/>
+      <circle id="rfc-pkt5" cx="470" cy="79"  r="5" fill="#bc8cff" style="visibility:hidden"/>
+    </svg>
+
+    <p id="rfc-flow-status" style="font-size:12px;color:var(--muted);text-align:center;min-height:18px;margin:10px 0">Click Play to start the token delegation flow.</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px">
+      <div class="anim-step-sm" id="rfc-s1">① User → App — OIDC token (sub=alice@corp)</div>
+      <div class="anim-step-sm" id="rfc-s2">② App → TTS — RFC 8693 exchange: subject_token (OIDC) + actor_token (App SPIFFE)</div>
+      <div class="anim-step-sm" id="rfc-s3">③ TTS → App — txntoken+jwt issued: <code>sub</code>=user, <code>act.sub</code>=spiffe://.../support-api</div>
+      <div class="anim-step-sm" id="rfc-s4">④ App → Agent — task delegated + txntoken forwarded (identity context intact)</div>
+      <div class="anim-step-sm" id="rfc-s5">⑤ Agent → Service — API call with txntoken: both user and app identity proven</div>
+      <div class="anim-step-sm" id="rfc-s6">⑥ Service validates: <code>sub</code>=user authorized ✓ &amp; <code>act.sub</code>=app trusted ✓ → request approved</div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="btn btn-primary" onclick="playRFC8693Flow(this)">&#9654; Play delegation flow</button>
+      <button class="btn" onclick="rfcFlowReset()">↺ Reset</button>
+    </div>
+  </div>
+
+  <!-- token structure cards -->
+  <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:16px">
+    <div class="card" style="flex:1;min-width:280px">
+      <div class="card-title">RFC 8693 Token Exchange Request (step ②)</div>
+      <pre style="font-size:11px;background:var(--bg);padding:12px;border-radius:6px;overflow-x:auto;margin-top:10px;color:var(--text);line-height:1.9"><span style="color:var(--muted)">POST /token HTTP/1.1
+Host: tts.example
+Content-Type: application/x-www-form-urlencoded</span>
+
+<span style="color:var(--blue)">grant_type</span>=<span style="color:var(--green)">urn:ietf:params:oauth:grant-type:token-exchange</span>
+
+<span style="color:var(--muted)">// user's identity — becomes sub in the output token</span>
+<span style="color:var(--blue)">subject_token</span>=<span style="color:var(--green)">&lt;OIDC JWT: sub=alice@corp&gt;</span>
+<span style="color:var(--blue)">subject_token_type</span>=<span style="color:var(--green)">urn:…:token-type:id_token</span>
+
+<span style="color:var(--muted)">// app's SPIFFE identity — becomes act.sub in the output token</span>
+<span style="color:var(--orange)">actor_token</span>=<span style="color:var(--orange)">&lt;App SPIFFE JWT: sub=spiffe://.../support-api&gt;</span>
+<span style="color:var(--orange)">actor_token_type</span>=<span style="color:var(--orange)">urn:…:token-type:jwt</span></pre>
+    </div>
+    <div class="card" style="flex:1;min-width:280px">
+      <div class="card-title">Resulting txntoken+jwt (step ③)</div>
+      <pre style="font-size:11px;background:var(--bg);padding:12px;border-radius:6px;overflow-x:auto;margin-top:10px;color:var(--text);line-height:1.9"><span style="color:var(--muted)">// Header</span>
+{ <span style="color:var(--blue)">"alg"</span>: <span style="color:var(--green)">"ES256"</span>, <span style="color:var(--blue)">"typ"</span>: <span style="color:var(--green)">"txntoken+jwt"</span> }
+
+<span style="color:var(--muted)">// Payload</span>
+{
+  <span style="color:var(--blue)">"iss"</span>: <span style="color:var(--green)">"https://tts.example"</span>,
+  <span style="color:var(--blue)">"sub"</span>: <span style="color:var(--green)">"alice@corp"</span>,             <span style="color:var(--muted)">// USER who authorised</span>
+  <span style="color:var(--orange)">"act"</span>: {                             <span style="color:var(--muted)">// RFC 8693 §4.1</span>
+    <span style="color:var(--orange)">"sub"</span>: <span style="color:var(--orange)">"spiffe://.../support-api"</span>  <span style="color:var(--muted)">// APP acting</span>
+  },
+  <span style="color:var(--blue)">"aud"</span>: [<span style="color:var(--green)">"https://api.example"</span>],
+  <span style="color:var(--blue)">"txn"</span>: <span style="color:var(--green)">"a3f8-b12c-…"</span>,
+  <span style="color:var(--blue)">"exp"</span>: <span style="color:var(--green)">1753649999</span>
+}</pre>
+    </div>
+  </div>
+
+  <!-- Why it matters -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">Why this matters — two real-world scenarios</div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:12px">
+
+      <div style="flex:1;min-width:280px;border:1px solid var(--border);border-radius:8px;padding:16px">
+        <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:10px">Customer-Facing: Refund Request</div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.8;margin-bottom:10px">A customer asks a support chatbot to <em>"process my refund for order #1234."</em> The support portal delegates the refund task to an AI agent that calls the billing API.</div>
+        <table class="compare-table" style="font-size:11px">
+          <tr><th>Claim</th><th>Value</th><th>What the Billing API enforces</th></tr>
+          <tr>
+            <td><code style="color:var(--blue)">sub</code></td>
+            <td><code style="font-size:10px">alice@customer.com</code></td>
+            <td>Only process refunds for orders belonging to this customer</td>
+          </tr>
+          <tr>
+            <td><code style="color:var(--orange)">act.sub</code></td>
+            <td><code style="font-size:10px">spiffe://.../support-portal</code></td>
+            <td>Only accept refund requests delegated by the official support portal — no other agent can initiate refunds, even with a valid user token</td>
+          </tr>
+        </table>
+        <div style="margin-top:10px;font-size:11px;padding:8px 10px;background:rgba(224,82,82,.08);border-radius:4px;border-left:2px solid var(--red)">
+          <strong>Without act.sub:</strong> any agent that obtains alice's token can trigger refunds — including a compromised third-party plugin or a prompt-injected agent.
+        </div>
+        <div style="margin-top:8px;font-size:11px;padding:8px 10px;background:rgba(62,207,142,.08);border-radius:4px;border-left:2px solid var(--green)">
+          <strong>With act.sub:</strong> the billing API rejects any token where <code>act.sub</code> ≠ <code>spiffe://.../support-portal</code>. The SPIFFE identity is signed by the TTS — it cannot be forged by the agent.
+        </div>
+      </div>
+
+      <div style="flex:1;min-width:280px;border:1px solid var(--border);border-radius:8px;padding:16px">
+        <div style="font-size:12px;font-weight:700;color:var(--orange);margin-bottom:10px">Enterprise: Purchase Order Approval</div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.8;margin-bottom:10px">An employee submits a purchase order via the HR portal. The portal delegates approval routing to an AI agent that calls the Finance system.</div>
+        <table class="compare-table" style="font-size:11px">
+          <tr><th>Claim</th><th>Value</th><th>What the Finance system enforces</th></tr>
+          <tr>
+            <td><code style="color:var(--blue)">sub</code></td>
+            <td><code style="font-size:10px">bob@corp.internal</code></td>
+            <td>Apply Bob's spending limits and department budget</td>
+          </tr>
+          <tr>
+            <td><code style="color:var(--orange)">act.sub</code></td>
+            <td><code style="font-size:10px">spiffe://internal/hr-portal</code></td>
+            <td>Only the official HR portal may submit purchase orders — rogue agents or direct API calls are rejected</td>
+          </tr>
+        </table>
+        <div style="margin-top:10px;font-size:11px;padding:8px 10px;background:rgba(62,207,142,.08);border-radius:4px;border-left:2px solid var(--green)">
+          <strong>Audit trail:</strong> <em>"AI agent approved PO-5521 for Bob (bob@corp.internal), delegated by HR Portal (spiffe://internal/hr-portal), txn a3f8."</em> Full attribution from a single token — no custom log correlation.
+        </div>
+        <div style="margin-top:8px;font-size:11px;padding:8px 10px;background:rgba(79,142,247,.08);border-radius:4px;border-left:2px solid var(--blue)">
+          <strong>Compliance:</strong> SOX and SOC 2 audits require knowing which system initiated an action on which employee's behalf. <code>act.sub</code> provides this without additional instrumentation.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- key properties -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">Key properties of the RFC 8693 delegation pattern</div>
+    <table class="compare-table" style="font-size:11px;margin-top:12px">
+      <tr><th>Property</th><th>How RFC 8693 provides it</th><th>Why it matters for AI agents</th></tr>
+      <tr>
+        <td><strong>Dual identity</strong></td>
+        <td><code>sub</code> (user) + <code>act.sub</code> (app) in one TTS-signed token</td>
+        <td>Backend services enforce policy on both principals simultaneously — no second round-trip</td>
+      </tr>
+      <tr>
+        <td><strong>Unforgeable binding</strong></td>
+        <td>TTS signs the token — neither app nor agent can self-assert <code>act.sub</code></td>
+        <td>A compromised agent cannot elevate its own <code>act.sub</code> to impersonate a more trusted application</td>
+      </tr>
+      <tr>
+        <td><strong>Least privilege</strong></td>
+        <td>TTS restricts <code>scope</code> and <code>aud</code> independently of the original OIDC token</td>
+        <td>Agent only receives the minimum audience and scope needed for its specific delegated task</td>
+      </tr>
+      <tr>
+        <td><strong>Standard protocol</strong></td>
+        <td>Published RFC — any OAuth 2.0-compliant library handles the exchange endpoint</td>
+        <td>No vendor lock-in; works with existing enterprise IdPs, API gateways, and SIEM tooling</td>
+      </tr>
+      <tr>
+        <td><strong>Audit correlation</strong></td>
+        <td><code>txn</code> claim links every downstream service call to one originating request</td>
+        <td>Compliance teams see: user → app → agent → service — from a single token, no scattered log joins</td>
+      </tr>
+    </table>
+  </div>
+</div><!-- end scene-rfc8693 -->
 
 <!-- ══ SPIFFE CLIENT AUTH ═══════════════════════════════════════════════════ -->
 <div class="scene" id="scene-spiffeclientauth">
@@ -4670,6 +4881,100 @@ async function playTxnFlow(mode) {
     document.getElementById('tt-svcC-node').setAttribute('stroke', '#f85149');
   }
   ttFlowRunning = false;
+}
+
+// ── RFC 8693 Agent Delegation flow ────────────────────────────────────────────
+// Vertical SVG circle animation (analogous to animPkt for cy instead of cx)
+function rfcAnimPktV(id, y1, y2, dur = 650) {
+  const c = document.getElementById(id);
+  if (!c) return Promise.resolve();
+  c.setAttribute('cy', y1);
+  c.style.visibility = 'visible';
+  const t0 = performance.now();
+  return new Promise(res => {
+    function f(t) {
+      const p = Math.min((t - t0) / dur, 1);
+      const e = p < 0.5 ? 2*p*p : 1 - (-2*p+2)**2/2;
+      c.setAttribute('cy', y1 + (y2 - y1) * e);
+      if (p < 1) requestAnimationFrame(f);
+      else { c.style.visibility = 'hidden'; res(); }
+    }
+    requestAnimationFrame(f);
+  });
+}
+
+let rfcFlowRunning = false;
+
+function rfcFlowStatus(msg) {
+  const el = document.getElementById('rfc-flow-status');
+  if (el) el.textContent = msg;
+}
+
+function rfcFlowReset() {
+  rfcFlowRunning = false;
+  rfcFlowStatus('Click Play to start the token delegation flow.');
+  const svcNode = document.getElementById('rfc-svc-node');
+  const svcLbl  = document.getElementById('rfc-svc-lbl');
+  const ttsNode = document.getElementById('rfc-tts-node');
+  if (svcNode) svcNode.setAttribute('stroke', '#7d8590');
+  if (svcLbl)  { svcLbl.textContent = '—'; svcLbl.setAttribute('fill', '#7d8590'); }
+  if (ttsNode) ttsNode.setAttribute('stroke', '#f5a623');
+  ['rfc-pkt1','rfc-pkt2','rfc-pkt3','rfc-pkt4','rfc-pkt5'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.visibility = 'hidden';
+  });
+  ['rfc-s1','rfc-s2','rfc-s3','rfc-s4','rfc-s5','rfc-s6'].forEach(id => afSetStep(id, ''));
+}
+
+async function playRFC8693Flow(btn) {
+  if (rfcFlowRunning) return;
+  rfcFlowRunning = true;
+  rfcFlowReset();
+  rfcFlowRunning = true;
+  if (btn) btn.disabled = true;
+
+  // ① User → App: OIDC token
+  afSetStep('rfc-s1', 'active');
+  rfcFlowStatus('① User authenticates — App receives OIDC token (sub=alice@corp, signed by IdP)');
+  await animPkt('rfc-pkt1', 88, 107, 500);
+  afSetStep('rfc-s1', 'done'); afSetStep('rfc-s2', 'active');
+  await delay(200);
+
+  // ② App ↓ TTS: token exchange request
+  rfcFlowStatus('② App calls TTS — RFC 8693 token exchange: subject_token=OIDC + actor_token=App SPIFFE identity');
+  await rfcAnimPktV('rfc-pkt2', 100, 156, 600);
+  afSetStep('rfc-s2', 'done'); afSetStep('rfc-s3', 'active');
+  await delay(200);
+
+  // ③ TTS ↑ App: txntoken+jwt with sub + act.sub
+  rfcFlowStatus('③ TTS issues txntoken+jwt — sub=alice@corp (user who authorised), act.sub=spiffe://.../support-api (app acting)');
+  document.getElementById('rfc-tts-node').setAttribute('stroke', '#3fb950');
+  await rfcAnimPktV('rfc-pkt3', 156, 100, 600);
+  afSetStep('rfc-s3', 'done'); afSetStep('rfc-s4', 'active');
+  await delay(200);
+
+  // ④ App → Agent: delegate task + txntoken
+  rfcFlowStatus('④ App delegates task to AI Agent — passes txntoken+jwt (full dual-identity context preserved)');
+  await animPkt('rfc-pkt4', 227, 352, 650);
+  afSetStep('rfc-s4', 'done'); afSetStep('rfc-s5', 'active');
+  await delay(200);
+
+  // ⑤ Agent → Service: API call + txntoken
+  rfcFlowStatus('⑤ Agent calls Backend Service — presents txntoken+jwt proving: who authorised (sub) + who is acting (act.sub)');
+  await animPkt('rfc-pkt5', 470, 543, 600);
+  afSetStep('rfc-s5', 'done'); afSetStep('rfc-s6', 'active');
+  await delay(350);
+
+  // ⑥ Service validates both claims
+  rfcFlowStatus('⑥ Service validates: sub=alice (user authorized ✓) + act.sub=spiffe://.../support-api (trusted app ✓) → approved');
+  const svcNode = document.getElementById('rfc-svc-node');
+  const svcLbl  = document.getElementById('rfc-svc-lbl');
+  if (svcNode) svcNode.setAttribute('stroke', '#3fb950');
+  if (svcLbl)  { svcLbl.textContent = '✓ sub + act.sub valid'; svcLbl.setAttribute('fill', '#3fb950'); }
+  afSetStep('rfc-s6', 'done');
+
+  rfcFlowRunning = false;
+  if (btn) btn.disabled = false;
 }
 
 // ── SPIFFE Client Auth flow animation ─────────────────────────────────────────
