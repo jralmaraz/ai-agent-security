@@ -165,6 +165,23 @@
       ]
     },
     {
+      "id": "rfc8693",
+      "label": "OAuth 2.0 Token Exchange (RFC 8693)",
+      "short": "TokenExchange",
+      "wg": "IETF OAuth WG",
+      "last_known_rev": "rfc",
+      "implemented_rev": "rfc",
+      "status": "rfc",
+      "datatracker_url": "https://datatracker.ietf.org/doc/rfc8693/",
+      "api_url": null,
+      "source_repo": null,
+      "impact": "act claim (\u00a74.1) in Txn-Token and JWT Authorization Grant \u2014 act.sub carries the entry-point agent SPIFFE ID acting on behalf of the user (sub); nested act represents prior actors in multi-hop chains. may_act (\u00a74.4) reserved for future explicit delegation grants.",
+      "used_in": [
+        "pkg/txntoken/claims.go",
+        "pkg/identitychaining/grant.go"
+      ]
+    },
+    {
       "id": "openid-federation-1_0",
       "label": "OpenID Federation 1.0",
       "short": "OID-FED",

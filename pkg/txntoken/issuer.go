@@ -37,6 +37,10 @@ type IssueOptions struct {
 	Audiences []string
 	// TxnID uniquely identifies the business transaction. Generated if empty.
 	TxnID string
+	// Actor identifies the entry-point agent acting on behalf of Subject (RFC 8693 §4.1).
+	// Typically set to the SPIFFE ID of the agent that acquired the Txn-Token at the
+	// trust domain boundary. Nil omits the act claim from the issued token.
+	Actor *ActorClaims
 	// ReqCtx carries the entry-point request context (IP, requesting agent SPIFFE ID).
 	ReqCtx *RequestContext
 	// AzDetails carries authorization details granted by the Authorization Server.
@@ -79,6 +83,7 @@ func (s *Issuer) Issue(opts IssueOptions) (string, error) {
 			ExpiresAt: jwt.NewNumericDate(now.Add(ttl)),
 		},
 		Txn:       txnID,
+		Act:       opts.Actor,
 		ReqCtx:    opts.ReqCtx,
 		AzDetails: opts.AzDetails,
 	}

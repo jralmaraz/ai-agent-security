@@ -22,7 +22,23 @@ import "github.com/golang-jwt/jwt/v5"
 // per draft-ietf-oauth-identity-chaining-17 §5.
 const GrantTokenType = "jwt-authz-grant"
 
+// ActorClaims represents an RFC 8693 §4.1 actor claim embedded in the grant.
+//
+// In a delegation scenario, sub carries the original agent's SPIFFE ID while
+// act.sub identifies the agent actually making the cross-domain call. In
+// single-agent flows these may be the same. Nested act chains represent prior
+// actors — the current actor is always the outermost act.
+type ActorClaims struct {
+	// Sub is the SPIFFE URI or other identity of the acting party.
+	Sub string `json:"sub"`
+	// Act optionally chains to a prior actor (nested delegation).
+	Act *ActorClaims `json:"act,omitempty"`
+}
+
 // GrantClaims is the JWT payload for a JWT Authorization Grant.
 type GrantClaims struct {
 	jwt.RegisteredClaims
+	// Act identifies the agent making the cross-domain call on behalf of the subject
+	// (RFC 8693 §4.1). Optional — nil when the subject and actor are the same party.
+	Act *ActorClaims `json:"act,omitempty"`
 }

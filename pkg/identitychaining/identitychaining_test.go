@@ -157,6 +157,36 @@ func TestIdentityChaining_MissingTargetAudience(t *testing.T) {
 	}
 }
 
+func TestIdentityChaining_ActClaim(t *testing.T) {
+	// RFC 8693 §4.1: when the delegating agent (sub) and the calling agent (act.sub)
+	// differ — e.g. orchestrator delegates to sub-agent for a cross-domain call.
+	agentToken, grantIssuer, domainAKP := setup(t)
+
+	actor := &identitychaining.ActorClaims{
+		Sub: "spiffe://cloud-a.example/agents/sub-agent",
+	}
+	grant, err := grantIssuer.Issue(agentToken, domainBEndpoint, actor)
+	if err != nil {
+		t.Fatalf("Issue grant with actor: %v", err)
+	}
+
+	validator := identitychaining.NewGrantValidator(domainAIssuer, domainAKP.Public)
+	claims, err := validator.Validate(grant, domainBEndpoint)
+	if err != nil {
+		t.Fatalf("Validate grant: %v", err)
+	}
+	if claims.Act == nil {
+		t.Fatal("expected act claim in grant")
+	}
+	if claims.Act.Sub != actor.Sub {
+		t.Errorf("act.sub: want %q got %q", actor.Sub, claims.Act.Sub)
+	}
+	// sub must remain the original orchestrator SPIFFE ID
+	if claims.Subject != agentSPIFFEID {
+		t.Errorf("sub must be original agent SPIFFE ID, got %q", claims.Subject)
+	}
+}
+
 func TestIdentityChaining_EndToEnd(t *testing.T) {
 	// Full cross-domain flow:
 	// 1. Domain A issues AgentToken to agent

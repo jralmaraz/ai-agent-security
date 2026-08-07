@@ -46,7 +46,9 @@ func NewGrantIssuer(issuerID string, key *ecdsa.PrivateKey, agentValidator *iden
 //   - iat/exp: issuance and expiry timestamps
 //   - jti: unique grant ID (prevents replay)
 //   - typ: "jwt-authz-grant"
-func (g *GrantIssuer) Issue(subjectToken, targetAudience string) (string, error) {
+//   - act: optional RFC 8693 §4.1 actor claim; pass to distinguish the delegating
+//     agent (sub) from the agent actually making the cross-domain call (act.sub).
+func (g *GrantIssuer) Issue(subjectToken, targetAudience string, actor ...*ActorClaims) (string, error) {
 	if subjectToken == "" {
 		return "", errors.New("subject token is required")
 	}
@@ -64,6 +66,11 @@ func (g *GrantIssuer) Issue(subjectToken, targetAudience string) (string, error)
 		return "", fmt.Errorf("generate jti: %w", err)
 	}
 
+	var act *ActorClaims
+	if len(actor) > 0 {
+		act = actor[0]
+	}
+
 	now := time.Now()
 	claims := GrantClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -74,6 +81,7 @@ func (g *GrantIssuer) Issue(subjectToken, targetAudience string) (string, error)
 			ExpiresAt: jwt.NewNumericDate(now.Add(g.ttl)),
 			ID:        base64.RawURLEncoding.EncodeToString(jtiRaw),
 		},
+		Act: act,
 	}
 
 	t := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
