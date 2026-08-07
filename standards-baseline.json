@@ -260,7 +260,7 @@
       "label": "WIMSE Workload-to-Workload Authentication with HTTP Signatures",
       "short": "HTTP-Sig",
       "wg": "IETF WIMSE WG",
-      "last_known_rev": "05",
+      "last_known_rev": "06",
       "implemented_rev": null,
       "status": "active-draft",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-wimse-http-signature/",
@@ -268,6 +268,57 @@
       "source_repo": "https://github.com/ietf-wg-wimse",
       "impact": "Alternative to AgentProofToken (JWT-based) for workload-to-workload proof \u2014 uses RFC 9421 HTTP Message Signatures. Tracked for future variant of pkg/identity/proof.go if WG adopts as primary mechanism.",
       "used_in": []
+    },
+    {
+      "id": "draft-ietf-wimse-workload-identity-practices",
+      "label": "WIMSE Workload Identity Practices",
+      "short": "WI-Practices",
+      "wg": "IETF WIMSE WG",
+      "last_known_rev": "05",
+      "implemented_rev": null,
+      "status": "active-draft",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-wimse-workload-identity-practices/",
+      "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-ietf-wimse-workload-identity-practices/",
+      "source_repo": null,
+      "impact": "Best practices for securing AI agent workload credentials: short-lived creds, no long-lived agent secrets, cert rotation. Mirrors AgentToken short-TTL design and CB4A vault-backed no-secret-at-rest model. Note: draft explicitly excludes WIMSE architecture specs \u2014 monitor for any AI-agent-specific guidance added.",
+      "used_in": [],
+      "_triage": "2026-08-07: monitored. Best practices doc, not a protocol spec. Primary home is wimse-identity-fabric (general workload identity patterns). Here: relevant insofar as CB4A and AgentToken implement the 'no long-lived secrets' best practice."
+    },
+    {
+      "id": "draft-gazitt-oauth-authzen-token-exchange",
+      "label": "AuthZEN Binding for OAuth 2.0 Token Exchange",
+      "short": "AuthZEN-TE",
+      "wg": "IETF OAuth WG",
+      "last_known_rev": "00",
+      "implemented_rev": null,
+      "status": "individual-draft",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-gazitt-oauth-authzen-token-exchange/",
+      "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-gazitt-oauth-authzen-token-exchange/",
+      "source_repo": null,
+      "impact": "HIGH \u2014 directly covers the agent token exchange flows this PoC implements: identity chaining, ID-JAG grants, and Txn-Token issuance. Externalises the AS policy decision (which agent may exchange which token for which audience) to an AuthZEN PDP API. Our InMemoryPDP in internal/authz is a simplified stand-in for the AuthZEN five-tuple evaluation model. Rev 00 \u2014 monitor for when the WG adopts; implementation would connect CB4A PDP to a standard AuthZEN API.",
+      "used_in": [
+        "pkg/txntoken",
+        "pkg/identitychaining",
+        "internal/authz"
+      ],
+      "_triage": "2026-08-07: monitored. Rev 00, very early. High relevance to AI agent identity chaining and Txn-Token issuance flows. Callout added in CB4A demo tab."
+    },
+    {
+      "id": "draft-gazitt-oauth-authzen-issuance",
+      "label": "AuthZEN Profile for OAuth 2.0 Token Issuance",
+      "short": "AuthZEN-Issuance",
+      "wg": "IETF OAuth WG",
+      "last_known_rev": "00",
+      "implemented_rev": null,
+      "status": "individual-draft",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-gazitt-oauth-authzen-issuance/",
+      "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-gazitt-oauth-authzen-issuance/",
+      "source_repo": null,
+      "impact": "Parent spec for AuthZEN-TE. Defines the five-tuple (subject, resource, action, context, environment) for externalising OAuth token issuance decisions to a PDP via the AuthZEN Authorization API. Companion to draft-gazitt-oauth-authzen-token-exchange. Rev 00 \u2014 monitor.",
+      "used_in": [
+        "internal/authz"
+      ],
+      "_triage": "2026-08-07: monitored. Companion to authzen-token-exchange. Defines the canonical PDP evaluation API that our InMemoryPDP loosely follows."
     },
     {
       "id": "draft-sweeney-wimse-credential-delegation",
