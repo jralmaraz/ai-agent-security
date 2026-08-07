@@ -532,6 +532,22 @@
       "impact": "Defines an Identity Continuation Assertion (typ: oauth-identity-continuation+jwt, claims: identity_continuation_handle, act, cnf.jkt, jti, exp \u2264300s) for preserving user identity context across service boundaries using RFC 8693 Token Exchange. Focuses on pairwise user subject identifiers propagated across IdP trust boundaries \u2014 different problem space from agent/workload identity (SPIFFE). Adjacent to pkg/identitychaining (jwt-authz-grant) and AgentChain delegation patterns; monitor for convergence.",
       "used_in": [],
       "_triage": "2026-08-05: assessed in issue #13. Agent-fabric uses SPIFFE workload identity (not pairwise user subjects), so the continuation handle mechanism does not apply directly. Monitor for convergence with identity chaining patterns."
+    },
+    {
+      "id": "draft-hardt-oauth-aauth-protocol",
+      "label": "AAuth Protocol (Agentic Authorization)",
+      "short": "AAuth",
+      "wg": "IETF OAuth WG",
+      "last_known_rev": null,
+      "implemented_rev": null,
+      "status": "individual-draft",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-hardt-oauth-aauth-protocol/",
+      "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-hardt-oauth-aauth-protocol/",
+      "source_repo": null,
+      "impact": "AI-agent-specific authorization protocol \u2014 defines how agents request delegated permissions (scopes) for sub-tasks, with explicit user/operator approval flows. Directly addresses the gap in scene-landscape: OAuth+RFC 8693 does not define how an agent communicates the scope of what it needs to do, or how a user approves fine-grained agent actions. AAuth fills this with an agent-to-AS authorization request flow. When adopted, adds an AAuth request type alongside AgentToken and CB4A in the Auth Landscape tab.",
+      "used_in": [
+        "demo/index.html (scene-landscape)"
+      ]
     }
   ]
 }
