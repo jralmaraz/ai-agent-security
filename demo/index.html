@@ -2862,6 +2862,44 @@ KER ═════════════════════════�
     <p style="font-size:11px;color:var(--muted);margin-top:10px">Status: monitoring. Tracked in <code>standards-baseline.json</code> as <code>draft-sweeney-wimse-credential-delegation</code>.</p>
   </div>
 
+  <!-- AuthZEN callout -->
+  <div class="card">
+    <div class="card-title">Emerging Standard: AuthZEN — Externalising the PDP Decision</div>
+    <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">
+      CB4A's Policy Decision Point (PDP) is a central component — it decides whether an AI agent may obtain a credential for a given scope and API.
+      Two new IETF OAuth WG drafts (rev 00, early stage) directly formalise this pattern:
+      <a href="https://datatracker.ietf.org/doc/draft-gazitt-oauth-authzen-token-exchange/" target="_blank" style="color:var(--blue)">draft-gazitt-oauth-authzen-token-exchange</a> and
+      <a href="https://datatracker.ietf.org/doc/draft-gazitt-oauth-authzen-issuance/" target="_blank" style="color:var(--blue)">draft-gazitt-oauth-authzen-issuance</a>.
+    </p>
+    <div class="info-grid c3">
+      <div class="info-box blue">
+        <div class="ibt">The gap AuthZEN fills</div>
+        <div class="ibv" style="font-size:11px;line-height:1.7">
+          RFC 8693 Token Exchange says the AS decision is "governed by local policy" — but doesn't define how that policy is evaluated or what inputs it receives.
+          The same gap exists in Txn-Token issuance and identity chaining grants.
+          AuthZEN closes it by defining a standard API for externalising that decision to a PDP.
+        </div>
+      </div>
+      <div class="info-box green">
+        <div class="ibt">How our InMemoryPDP relates</div>
+        <div class="ibv" style="font-size:11px;line-height:1.7">
+          CB4A's <code>InMemoryPDP</code> already implements the logical equivalent: it receives a subject (SPIFFE ID), resource (scope + API path), action, and context (tier/budget), and returns an approved/denied decision with a signed JWT.
+          The AuthZEN five-tuple maps exactly onto these inputs — our PDP is a simplified AuthZEN-shaped component.
+        </div>
+      </div>
+      <div class="info-box orange">
+        <div class="ibt">Agent-fabric impact (if WG adopts)</div>
+        <div class="ibv" style="font-size:11px;line-height:1.7">
+          Implementing the AuthZEN API would allow CB4A's PDP to be swapped for any standards-compliant external policy engine (OPA, OpenFGA, Cerbos).
+          This is the <strong>AI-agent-specific gap</strong>: agents make autonomous decisions across many APIs per second — a standardised, externalisable PDP API is essential for centralised governance at scale.
+        </div>
+      </div>
+    </div>
+    <div class="callout ok">
+      <strong>Status:</strong> Both drafts are rev 00 (individual drafts, very early). Tracked in <code>standards-baseline.json</code> as <code>draft-gazitt-oauth-authzen-token-exchange</code> and <code>draft-gazitt-oauth-authzen-issuance</code>. No implementation changes yet — monitoring for WG adoption.
+    </div>
+  </div>
+
 </div>
 
 <!-- ══ x402 PAYMENTS ══════════════════════════════════════════════════════════ -->
@@ -3476,7 +3514,7 @@ KER ═════════════════════════�
       The <strong>Impl. commit</strong> column links to the exact commit that last implemented or verified compatibility with that draft revision.
     </p>
     <p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">
-      Last checked: <code>2026-08-02</code> &nbsp;·&nbsp;
+      Last checked: <code>2026-08-07</code> &nbsp;·&nbsp;
       <a href="https://github.com/jralmaraz/wimse-agent-fabric/blob/main/standards-baseline.json" target="_blank" style="color:var(--blue)">standards-baseline.json</a> &nbsp;·&nbsp;
       <a href="https://github.com/jralmaraz/wimse-agent-fabric/blob/main/.github/workflows/standards-tracker.yml" target="_blank" style="color:var(--blue)">standards-tracker.yml</a>
     </p>
@@ -3640,9 +3678,39 @@ KER ═════════════════════════�
         <td style="white-space:nowrap;font-size:11px">IETF WIMSE WG</td>
         <td><span style="color:var(--orange);white-space:nowrap">● WG Draft</span></td>
         <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(107,114,128,.15);color:var(--muted)">◌ Monitoring</span></td>
-        <td style="text-align:center"><code>—</code></td>
+        <td style="text-align:center"><code>-06</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/identity/proof.go</code> (future)</td>
-        <td style="font-size:11px">Alternative to AgentProofToken using RFC 9421 HTTP Message Signatures — tracked as potential replacement for JWT-based proof if WG adopts as primary mechanism</td>
+        <td style="font-size:11px">Alternative to AgentProofToken using RFC 9421 HTTP Message Signatures — tracked as potential replacement for JWT-based agent proof if WG adopts as primary mechanism. Bumped -05 → -06 on 2026-08-04.</td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><span style="color:var(--muted)">monitoring</span></td>
+      </tr>
+      <tr style="background:rgba(255,255,255,0.03)">
+        <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-workload-identity-practices/" target="_blank" style="color:var(--blue)">WI-Practices — WIMSE Workload Identity Practices</a></td>
+        <td style="white-space:nowrap;font-size:11px">IETF WIMSE WG</td>
+        <td><span style="color:var(--orange);white-space:nowrap">● WG Draft</span></td>
+        <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(107,114,128,.15);color:var(--muted)">◌ Monitoring</span></td>
+        <td style="text-align:center"><code>-05</code></td>
+        <td style="font-size:10px;color:var(--muted)"><code>pkg/cb4a</code>, <code>pkg/identity</code></td>
+        <td style="font-size:11px">Best practices for workload credential management: short-lived creds, no long-lived agent secrets, cert rotation. Validates AgentToken short-TTL design and CB4A vault-backed no-secret-at-rest model. Note: draft is intentionally independent of WIMSE architecture specs — complements rather than duplicates them. Primary coverage in wimse-identity-fabric.</td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><span style="color:var(--muted)">monitoring</span></td>
+      </tr>
+      <tr>
+        <td><a href="https://datatracker.ietf.org/doc/draft-gazitt-oauth-authzen-token-exchange/" target="_blank" style="color:var(--blue)">AuthZEN-TE — AuthZEN Binding for OAuth 2.0 Token Exchange</a></td>
+        <td style="white-space:nowrap;font-size:11px">IETF OAuth WG</td>
+        <td><span style="color:var(--muted);white-space:nowrap">◌ Individual draft</span></td>
+        <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(107,114,128,.15);color:var(--muted)">◌ Monitoring</span></td>
+        <td style="text-align:center"><code>-00</code></td>
+        <td style="font-size:10px;color:var(--muted)"><code>pkg/txntoken</code>, <code>pkg/identitychaining</code>, <code>internal/authz</code></td>
+        <td style="font-size:11px">Externalises the AS policy decision inside RFC 8693 Token Exchange (identity chaining, Txn-Token issuance) to an AuthZEN PDP API. Directly covers agent-to-agent token exchange flows. Our <code>InMemoryPDP</code> in <code>internal/authz</code> is a simplified stand-in for the AuthZEN five-tuple evaluation model — if WG adopts, implementation connects CB4A PDP to a standard AuthZEN API.</td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><span style="color:var(--muted)">monitoring</span></td>
+      </tr>
+      <tr style="background:rgba(255,255,255,0.03)">
+        <td><a href="https://datatracker.ietf.org/doc/draft-gazitt-oauth-authzen-issuance/" target="_blank" style="color:var(--blue)">AuthZEN-Issuance — AuthZEN Profile for OAuth 2.0 Token Issuance</a></td>
+        <td style="white-space:nowrap;font-size:11px">IETF OAuth WG</td>
+        <td><span style="color:var(--muted);white-space:nowrap">◌ Individual draft</span></td>
+        <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(107,114,128,.15);color:var(--muted)">◌ Monitoring</span></td>
+        <td style="text-align:center"><code>-00</code></td>
+        <td style="font-size:10px;color:var(--muted)"><code>internal/authz</code></td>
+        <td style="font-size:11px">Parent spec: defines the AuthZEN five-tuple (subject, resource, action, context, environment) for externalising any OAuth token issuance decision to a PDP. Companion to AuthZEN-TE. The five-tuple model mirrors the decision inputs our <code>InMemoryPDP</code> evaluates per agent request.</td>
         <td style="text-align:center;font-size:10px;white-space:nowrap"><span style="color:var(--muted)">monitoring</span></td>
       </tr>
       <tr style="background:rgba(255,255,255,0.03)">
