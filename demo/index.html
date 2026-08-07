@@ -264,23 +264,23 @@ main{max-width:960px;margin:0 auto;padding:2rem}
 <div class="nav-wrapper">
   <button class="nav-arrow nav-arrow-left" id="nav-prev" onclick="navScroll(-1)" aria-label="Scroll tabs left">&#8249;</button>
   <nav id="main-nav">
-    <div class="tab active" onclick="showTab('standards',this)" style="border-bottom-color:var(--blue);color:var(--blue)">📋 Standards</div>
-    <div class="tab" onclick="showTab('problem',this)">The Problem</div>
+    <div class="tab active" onclick="showTab('problem',this)" style="border-bottom-color:var(--blue);color:var(--blue)">The Problem</div>
+    <div class="tab" onclick="showTab('landscape',this)">Auth Landscape</div>
     <div class="tab" onclick="showTab('happy',this)">Happy Path</div>
-    <div class="tab" onclick="showTab('replay',this)">Replay Attack</div>
-    <div class="tab" onclick="showTab('tamper',this)">Token Tampering</div>
-    <div class="tab" onclick="showTab('threat',this)">Threat Model</div>
-    <div class="tab" onclick="showTab('federation',this)">OpenID Federation</div>
-    <div class="tab" onclick="showTab('postquantum',this)">Post-Quantum Safety</div>
-    <div class="tab" onclick="showTab('paxos',this)">Paxos Consensus</div>
-    <div class="tab" onclick="showTab('mtls',this)">mTLS Transport</div>
     <div class="tab" onclick="showTab('txntoken',this)">Txn-Token</div>
     <div class="tab" onclick="showTab('rfc8693',this)">Agent Delegation</div>
     <div class="tab" onclick="showTab('spiffeclientauth',this)">SPIFFE Client Auth</div>
     <div class="tab" onclick="showTab('identitychaining',this)">Identity Chaining</div>
+    <div class="tab" onclick="showTab('federation',this)">OpenID Federation</div>
+    <div class="tab" onclick="showTab('mtls',this)">mTLS Transport</div>
     <div class="tab" onclick="showTab('broker',this)">Credential Broker</div>
     <div class="tab" onclick="showTab('x402',this)">x402 Payments</div>
-    <div class="tab" onclick="showTab('landscape',this)">Agent Auth Landscape</div>
+    <div class="tab" onclick="showTab('threat',this)">Threat Model</div>
+    <div class="tab" onclick="showTab('replay',this)">Replay Attack</div>
+    <div class="tab" onclick="showTab('tamper',this)">Token Tampering</div>
+    <div class="tab" onclick="showTab('standards',this)">📋 Standards</div>
+    <div class="tab" onclick="showTab('postquantum',this)">Post-Quantum Safety</div>
+    <div class="tab" onclick="showTab('paxos',this)">Paxos Consensus</div>
   </nav>
   <div class="nav-fade" id="nav-fade"></div>
   <button class="nav-arrow nav-arrow-right" id="nav-next" onclick="navScroll(1)" aria-label="Scroll tabs right">&#8250;</button>
@@ -290,7 +290,7 @@ main{max-width:960px;margin:0 auto;padding:2rem}
 <main>
 
 <!-- ══ THE PROBLEM ════════════════════════════════════════════════════════ -->
-<div class="scene" id="scene-problem">
+<div class="scene active" id="scene-problem">
   <h2 style="font-size:1.5rem;font-weight:700;margin-bottom:.5rem">Why Agent Identity Matters</h2>
   <p style="color:var(--muted);margin-bottom:1.5rem;font-size:.95rem;line-height:1.7">
     As AI agents proliferate — spawning sub-agents, calling external APIs, acting on behalf of humans —
@@ -3054,14 +3054,14 @@ KER ═════════════════════════�
   <div class="card">
     <div class="card-title">Agent Auth Standards Landscape</div>
     <p class="spec-ref">
-      Comparing four emerging approaches to AI agent authentication and authorization:
-      <a href="https://xaa.dev/" target="_blank">XAA</a> (Cross App Access),
+      OAuth 2.0 and OpenID Connect are the foundation. The standards below address the specific gaps that emerge when the client is an autonomous AI agent.
+      Four approaches: <a href="https://xaa.dev/" target="_blank">XAA</a> (Cross App Access),
       <a href="https://www.aauth.dev/" target="_blank">AAuth</a> (Agent Authorization),
       <a href="https://datatracker.ietf.org/doc/html/draft-hartman-credential-broker-4-agents-00" target="_blank">CB4A</a> (Credential Broker for Agents),
       and <a href="https://datatracker.ietf.org/doc/html/draft-ietf-wimse-arch-08" target="_blank">WIMSE</a> (Workload Identity in Multi-System Environments).
     </p>
     <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">
-      These are <strong style="color:var(--text)">complementary, not competing</strong> — each solves a different layer of the agent auth problem.
+      These are <strong style="color:var(--text)">complementary, not competing</strong> — each fills a different gap that OAuth + RFC 8693 alone cannot address.
       An enterprise agent deployment may use all four simultaneously.
     </p>
     <div class="info-grid" style="grid-template-columns:repeat(4,1fr)">
@@ -3085,6 +3085,79 @@ KER ═════════════════════════�
         <div class="ibv" style="font-size:11px;line-height:1.6"><strong>App-to-app delegation</strong><br>OAuth extension, ID-JAG token. Eliminates consent prompts for enterprise agent flows.</div>
         <div style="font-size:10px;color:var(--muted);margin-top:4px">xaa.dev · RFC 8693 / RFC 7523</div>
       </div>
+    </div>
+  </div>
+
+  <!-- OAuth / OIDC + RFC 8693 gap analysis -->
+  <div class="card">
+    <div class="card-title">Starting Point: OAuth 2.0 + OIDC + RFC 8693 — What They Cover, What They Can't</div>
+    <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">
+      OAuth 2.0, OpenID Connect, and <a href="https://datatracker.ietf.org/doc/html/rfc8693" target="_blank">RFC 8693 Token Exchange</a> are the bedrock.
+      They solve user authentication, consent, delegation (<code>sub</code> + <code>act.sub</code>), and scoped access.
+      The newer protocols — WIMSE, XAA, AAuth, CB4A — are <strong style="color:var(--text)">not replacements</strong>.
+      They fill the specific gaps that emerge when the client is an autonomous AI agent rather than a human-operated browser or mobile app.
+    </p>
+    <table class="compare-table" style="margin-bottom:1rem">
+      <tr>
+        <th>Capability</th>
+        <th style="color:var(--green)">OAuth 2.0 + OIDC + RFC 8693</th>
+        <th style="color:var(--orange)">The Gap — AI agents expose this</th>
+        <th style="color:var(--blue)">Filled by</th>
+      </tr>
+      <tr>
+        <td><strong>User authentication</strong></td>
+        <td class="check">Auth Code + PKCE, OIDC ID Token</td>
+        <td>—</td>
+        <td style="color:var(--muted)">Fully covered</td>
+      </tr>
+      <tr>
+        <td><strong>Delegation identity</strong></td>
+        <td class="check">RFC 8693 <code>sub</code> + <code>act.sub</code> — who delegated to whom</td>
+        <td>—</td>
+        <td style="color:var(--muted)">Fully covered</td>
+      </tr>
+      <tr>
+        <td><strong>Scoped access</strong></td>
+        <td class="check">OAuth scopes, Rich Auth Requests (RFC 9396)</td>
+        <td>Scopes are static at request time. An agent assembles tool chains <em>at runtime</em> — intent can't be pre-declared.</td>
+        <td style="color:var(--purple)">AAuth: per-call intent embedded in every signed request</td>
+      </tr>
+      <tr>
+        <td><strong>Agent cryptographic identity</strong></td>
+        <td class="cross">No. The agent holds a Bearer token it received — it can't prove it <em>owns</em> a private key.</td>
+        <td>A stolen Bearer token gives full access. No way to bind a token to the agent that should hold it.</td>
+        <td style="color:var(--blue)">WIMSE <code>cnf.jwk</code> / DPoP (RFC 9449) / AAuth HTTPSig</td>
+      </tr>
+      <tr>
+        <td><strong>Call chain proof</strong></td>
+        <td style="color:var(--yellow)">⚠ RFC 8693 records who delegated, but not the cryptographic call path</td>
+        <td>Agents invoke agents invoke agents — the delegation tree can be spoofed without signed chain proofs.</td>
+        <td style="color:var(--blue)">WIMSE AgentChain (<code>agent+jwt</code> chaining), Txn-Token</td>
+      </tr>
+      <tr>
+        <td><strong>Mid-task authorization states</strong></td>
+        <td class="cross">No. Authorization failure is an error — caller must retry from scratch.</td>
+        <td>An autonomous agent mid-task cannot interrupt to show a consent UI. It needs native <em>pending/approved/denied</em> states.</td>
+        <td style="color:var(--purple)">AAuth: pending is a first-class state, not an error</td>
+      </tr>
+      <tr>
+        <td><strong>External API credential isolation</strong></td>
+        <td class="cross">No. Token Exchange gives the agent a Bearer token it holds long-term.</td>
+        <td>If the agent process is compromised, all external secrets (Stripe, AWS, Salesforce) are exposed.</td>
+        <td style="color:var(--green)">CB4A: vault-backed, DPoP-bound, per-request governed</td>
+      </tr>
+      <tr>
+        <td><strong>Enterprise consent-free delegation</strong></td>
+        <td style="color:var(--yellow)">⚠ RFC 8693 exchange requires per-user consent or pre-agreed trust — no enterprise-wide policy model</td>
+        <td>Autonomous agents trigger consent prompts every time they call an OAuth-protected SaaS API — unusable at scale.</td>
+        <td style="color:var(--orange)">XAA ID-JAG: enterprise admin pre-authorizes, zero per-call prompts</td>
+      </tr>
+    </table>
+    <div class="callout ok">
+      <strong>Bottom line:</strong>
+      RFC 8693 tells you <em>who is acting on behalf of whom</em> — that's delegation identity.
+      It doesn't give the agent its own key, doesn't bind credentials to prevent theft, doesn't handle mid-task consent states, and doesn't protect external API secrets.
+      WIMSE, AAuth, CB4A, and XAA each fill one of those gaps — and they all sit <em>on top of</em> OAuth 2.0, not beside it.
     </div>
   </div>
 
@@ -3394,7 +3467,7 @@ KER ═════════════════════════�
   </div>
 </div>
 
-<div class="scene active" id="scene-standards">
+<div class="scene" id="scene-standards">
   <div class="card">
     <div class="card-title">Standards Tracker</div>
     <p class="spec-ref">
