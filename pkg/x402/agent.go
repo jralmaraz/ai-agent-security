@@ -3,7 +3,7 @@ package x402
 import (
 	"fmt"
 
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/cb4a"
+	"github.com/jralmaraz/ai-agent-security/pkg/cb4a"
 )
 
 // PayingAgent holds a CB4A minted credential and a WIMSE AgentToken,

@@ -14,11 +14,11 @@ import (
 	"syscall/js"
 	"time"
 
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/cb4a"
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/federation"
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/identity"
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/keys"
-	x402pkg "github.com/jralmaraz/wimse-agent-fabric/pkg/x402"
+	"github.com/jralmaraz/ai-agent-security/pkg/cb4a"
+	"github.com/jralmaraz/ai-agent-security/pkg/federation"
+	"github.com/jralmaraz/ai-agent-security/pkg/identity"
+	"github.com/jralmaraz/ai-agent-security/pkg/keys"
+	x402pkg "github.com/jralmaraz/ai-agent-security/pkg/x402"
 )
 
 // ── global demo state ─────────────────────────────────────────────────────────

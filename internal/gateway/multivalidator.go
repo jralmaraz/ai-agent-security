@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/identity"
+	"github.com/jralmaraz/ai-agent-security/pkg/identity"
 )
 
 // validateWithAny tries every validator and returns the first success.

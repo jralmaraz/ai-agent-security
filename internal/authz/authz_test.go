@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/jralmaraz/wimse-agent-fabric/internal/authz"
+	"github.com/jralmaraz/ai-agent-security/internal/authz"
 )
 
 const (

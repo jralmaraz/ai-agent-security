@@ -26,7 +26,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/identity"
+	"github.com/jralmaraz/ai-agent-security/pkg/identity"
 )
 
 // ClientAssertionType is the OAuth 2.0 JWT bearer assertion type per RFC 7523.

@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/cb4a"
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/keys"
+	"github.com/jralmaraz/ai-agent-security/pkg/cb4a"
+	"github.com/jralmaraz/ai-agent-security/pkg/keys"
 )
 
 // helpers

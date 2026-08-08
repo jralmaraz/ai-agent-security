@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/federation"
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/keys"
+	"github.com/jralmaraz/ai-agent-security/pkg/federation"
+	"github.com/jralmaraz/ai-agent-security/pkg/keys"
 )
 
 const (

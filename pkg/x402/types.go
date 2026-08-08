@@ -20,8 +20,8 @@ const X402Version = 1
 // An x402 server that accepts CB4A-DPoP payments advertises this scheme.
 const SchemeCB4ADPOP = "cb4a-dpop"
 
-// NetworkWIMSE is the network identifier for the WIMSE Agent Fabric.
-const NetworkWIMSE = "wimse-agent-fabric"
+// NetworkAgentSecurity is the network identifier for the AI Agent Security PoC.
+const NetworkWIMSE = "ai-agent-security"
 
 // PaymentRequired is the body of an HTTP 402 Payment Required response.
 // It describes the payment methods the server accepts.

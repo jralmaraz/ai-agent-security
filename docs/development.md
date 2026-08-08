@@ -15,8 +15,8 @@
 ## First-time setup
 
 ```bash
-git clone https://github.com/jralmaraz/wimse-agent-fabric
-cd wimse-agent-fabric
+git clone https://github.com/jralmaraz/ai-agent-security
+cd ai-agent-security
 
 # Install the pre-push quality gate (runs the same checks as CI)
 make hooks
@@ -54,7 +54,7 @@ cd demo && python3 -m http.server 8000
 ### Module path
 
 ```
-github.com/jralmaraz/wimse-agent-fabric
+github.com/jralmaraz/ai-agent-security
 ```
 
 All internal imports must use this full module path.
@@ -89,7 +89,7 @@ Tests live alongside source files in `_test.go` files using the `_test` package 
 // pkg/identity/identity_test.go
 package identity_test
 
-import "github.com/jralmaraz/wimse-agent-fabric/pkg/identity"
+import "github.com/jralmaraz/ai-agent-security/pkg/identity"
 ```
 
 ### Test naming

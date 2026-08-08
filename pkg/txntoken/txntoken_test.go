@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/keys"
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/txntoken"
+	"github.com/jralmaraz/ai-agent-security/pkg/keys"
+	"github.com/jralmaraz/ai-agent-security/pkg/txntoken"
 )
 
 const (

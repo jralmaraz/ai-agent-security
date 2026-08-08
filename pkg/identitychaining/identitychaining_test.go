@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/identitychaining"
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/identity"
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/keys"
+	"github.com/jralmaraz/ai-agent-security/pkg/identitychaining"
+	"github.com/jralmaraz/ai-agent-security/pkg/identity"
+	"github.com/jralmaraz/ai-agent-security/pkg/keys"
 	"github.com/golang-jwt/jwt/v5"
 )
 

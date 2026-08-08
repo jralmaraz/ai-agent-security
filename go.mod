@@ -1,4 +1,4 @@
-module github.com/jralmaraz/wimse-agent-fabric
+module github.com/jralmaraz/ai-agent-security
 
 go 1.26.5
 

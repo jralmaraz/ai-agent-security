@@ -12,9 +12,9 @@ import (
 	"net/url"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jralmaraz/wimse-agent-fabric/internal/authz"
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/federation"
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/identity"
+	"github.com/jralmaraz/ai-agent-security/internal/authz"
+	"github.com/jralmaraz/ai-agent-security/pkg/federation"
+	"github.com/jralmaraz/ai-agent-security/pkg/identity"
 )
 
 // Config holds gateway configuration.

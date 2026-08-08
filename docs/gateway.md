@@ -172,8 +172,8 @@ If your tool server is also a Gin application, you can use the `AgentAuth` middl
 
 ```go
 import (
-    "github.com/jralmaraz/wimse-agent-fabric/internal/authz"
-    "github.com/jralmaraz/wimse-agent-fabric/pkg/identity"
+    "github.com/jralmaraz/ai-agent-security/internal/authz"
+    "github.com/jralmaraz/ai-agent-security/pkg/identity"
 )
 
 r.GET("/api/weather", authz.AgentAuth(validator, validators, pv, authz, "tool:weather-api", authz.ActionCall), func(c *gin.Context) {
