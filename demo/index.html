@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>WIMSE Agent Fabric — Identity Chain Demo</title>
+<title>AI Agent Security Lab — Identity &amp; Authorization Demo</title>
 <style>
 :root{
   --bg:#0d1117;--surface:#161b22;--surface2:#21262d;
@@ -254,8 +254,8 @@ main{max-width:960px;margin:0 auto;padding:2rem}
 <div id="sticky-shell">
 <header class="site-header">
   <div>
-    <div class="site-logo">WIMSE Agent Fabric</div>
-    <div class="site-subtitle">AI Agent Identity Chain — Interactive Demo</div>
+    <div class="site-logo">AI Agent Security Lab</div>
+    <div class="site-subtitle">Standards-based AI Agent Identity &amp; Authorization — Interactive Demo</div>
   </div>
   <div class="header-links">
     <div class="wasm-badge loading" id="wasm-badge"><div class="spin"></div> Loading WASM…</div>
@@ -265,22 +265,20 @@ main{max-width:960px;margin:0 auto;padding:2rem}
   <button class="nav-arrow nav-arrow-left" id="nav-prev" onclick="navScroll(-1)" aria-label="Scroll tabs left">&#8249;</button>
   <nav id="main-nav">
     <div class="tab active" onclick="showTab('problem',this)" style="border-bottom-color:var(--blue);color:var(--blue)">The Problem</div>
-    <div class="tab" onclick="showTab('landscape',this)">Auth Landscape</div>
-    <div class="tab" onclick="showTab('happy',this)">Happy Path</div>
+    <div class="tab" onclick="showTab('obo',this)">On-Behalf-Of ⭐</div>
+    <div class="tab" onclick="showTab('happy',this)">Agent Identity</div>
+    <div class="tab" onclick="showTab('rfc8693',this)">Token Delegation</div>
     <div class="tab" onclick="showTab('txntoken',this)">Txn-Token</div>
-    <div class="tab" onclick="showTab('rfc8693',this)">Agent Delegation</div>
     <div class="tab" onclick="showTab('spiffeclientauth',this)">SPIFFE Client Auth</div>
     <div class="tab" onclick="showTab('identitychaining',this)">Identity Chaining</div>
-    <div class="tab" onclick="showTab('federation',this)">OpenID Federation</div>
     <div class="tab" onclick="showTab('mtls',this)">mTLS Transport</div>
     <div class="tab" onclick="showTab('broker',this)">Credential Broker</div>
     <div class="tab" onclick="showTab('x402',this)">x402 Payments</div>
     <div class="tab" onclick="showTab('threat',this)">Threat Model</div>
     <div class="tab" onclick="showTab('replay',this)">Replay Attack</div>
     <div class="tab" onclick="showTab('tamper',this)">Token Tampering</div>
+    <div class="tab" onclick="showTab('landscape',this)">Auth Landscape</div>
     <div class="tab" onclick="showTab('standards',this)">📋 Standards</div>
-    <div class="tab" onclick="showTab('postquantum',this)">Post-Quantum Safety</div>
-    <div class="tab" onclick="showTab('paxos',this)">Paxos Consensus</div>
   </nav>
   <div class="nav-fade" id="nav-fade"></div>
   <button class="nav-arrow nav-arrow-right" id="nav-next" onclick="navScroll(1)" aria-label="Scroll tabs right">&#8250;</button>
@@ -372,7 +370,7 @@ main{max-width:960px;margin:0 auto;padding:2rem}
   </div>
 
   <div class="callout danger" style="margin-bottom:1.25rem">
-    <strong>The core gap:</strong> IETF WIMSE (Workload Identity in Multi-System Environments) was created specifically to address this. It provides a standard, portable workload identity primitive — <span class="pill pill-b">agent+jwt</span> — that works across clouds, carries cryptographic proof of the delegation chain, and binds each request to a non-replayable proof token.
+    <strong>The three gaps:</strong> No cryptographic agent identity, no proof of user delegation, no key-bound credentials. Each is a distinct, solvable problem. This lab shows how a layered set of IETF standards — each addressing one gap — compose into a complete AI agent security model.
   </div>
 
   <div class="card" style="margin-top:20px">
@@ -413,7 +411,7 @@ main{max-width:960px;margin:0 auto;padding:2rem}
     </table>
     </div>
     <div class="callout" style="margin-top:14px;font-size:13px">
-      <strong>WIMSE Agent Fabric adds the missing layer:</strong> each agent gets a short-lived <span class="pill pill-b">agent+jwt</span> bound to its EC key pair, a cryptographic <span class="pill pill-g">AgentChain</span> recording every delegation hop, and a per-request <span class="pill pill-b">agent-proof+jwt</span> tied to the exact target URI — preventing replay and proving <em>exactly which agent, in which chain, on whose behalf</em>.
+      <strong>This lab adds the missing layer:</strong> each agent gets a short-lived <span class="pill pill-b">agent+jwt</span> bound to its EC key pair, an OBO delegated token (<span class="pill pill-b">obo+jwt</span>) tying agent identity to user consent, a cryptographic <span class="pill pill-g">AgentChain</span> recording every delegation hop, and per-request <span class="pill pill-b">agent-proof+jwt</span> binding — preventing replay and proving <em>exactly which agent, on whose behalf, with what authority</em>.
     </div>
   </div>
 
@@ -466,7 +464,7 @@ main{max-width:960px;margin:0 auto;padding:2rem}
         <th style="width:22%">Approach</th>
         <th style="width:28%">What it solves</th>
         <th style="width:24%">Where it stops</th>
-        <th style="width:26%;color:var(--orange)">What WIMSE adds</th>
+        <th style="width:26%;color:var(--orange)">What agent-specific identity adds</th>
       </tr>
       <tr>
         <td><strong>Tool / function calling frameworks</strong><br><span style="font-size:10px;color:var(--muted)">OpenAI function_call, Anthropic tool_use, LangChain tools</span></td>
@@ -541,9 +539,223 @@ main{max-width:960px;margin:0 auto;padding:2rem}
   </div>
 
   <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1rem">
-    <button class="btn btn-primary" onclick="goToTab('happy')">Explore the Solution: Happy Path &#8594;</button>
-    <button class="btn" onclick="goToTab('threat')">View Threat Model &#8594;</button>
-    <button class="btn" onclick="goToTab('broker')">External API Credentials (CB4A) &#8594;</button>
+    <button class="btn btn-primary" onclick="goToTab('obo')">On-Behalf-Of: tie agent calls to user consent &#8594;</button>
+    <button class="btn" onclick="goToTab('happy')">Agent Identity: AgentToken &amp; proof chain &#8594;</button>
+    <button class="btn" onclick="goToTab('broker')">Credential Broker (CB4A) &#8594;</button>
+  </div>
+</div>
+
+<!-- ══ ON-BEHALF-OF ════════════════════════════════════════════════════════ -->
+<div class="scene" id="scene-obo">
+  <div class="card-title" style="font-size:11px;color:var(--muted);letter-spacing:.08em;margin-bottom:4px">SCENARIO</div>
+  <h1 class="scene-title">On-Behalf-Of — Tying Agent Calls to User Consent</h1>
+  <p class="scene-lead">MCP and agent frameworks use OAuth under the hood. When your booking assistant calls the Calendar API "on your behalf" — how does the Calendar service know <em>which user</em> authorised this call, <em>which agent</em> is making it, and that the agent hasn't exceeded the scope you consented to? Without On-Behalf-Of, a plain bearer token answers none of these questions cryptographically.</p>
+
+  <!-- The gap without OBO -->
+  <div class="card">
+    <div class="card-title">The gap: what a resource server sees without OBO</div>
+    <div class="diagram">
+      <svg viewBox="0 0 730 148" xmlns="http://www.w3.org/2000/svg">
+        <text x="365" y="16" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="11" font-weight="700" letter-spacing="1">WITHOUT OBO — AGENT PRESENTS USER TOKEN, RESOURCE SERVER IS BLIND</text>
+        <circle cx="52" cy="72" r="28" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+        <text x="52" y="69" text-anchor="middle" fill="#58a6ff" font-family="sans-serif" font-size="9" font-weight="700">USER</text>
+        <text x="52" y="81" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5">alice@corp</text>
+        <line x1="81" y1="72" x2="130" y2="72" stroke="#30363d" stroke-width="1.5"/>
+        <polygon points="126,67 136,72 126,77" fill="#30363d"/>
+        <text x="105" y="65" text-anchor="middle" fill="#7d8590" font-family="monospace" font-size="7">user token</text>
+        <rect x="136" y="52" width="125" height="40" rx="6" fill="#161b22" stroke="#bc8cff" stroke-width="1.5"/>
+        <text x="198" y="70" text-anchor="middle" fill="#bc8cff" font-family="sans-serif" font-size="9.5" font-weight="700">Booking Agent</text>
+        <text x="198" y="83" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5">spiffe://.../booking-assistant</text>
+        <line x1="261" y1="72" x2="395" y2="72" stroke="#f85149" stroke-width="1.5"/>
+        <polygon points="391,67 401,72 391,77" fill="#f85149"/>
+        <rect x="270" y="56" width="118" height="15" rx="3" fill="#1c2128" stroke="#f85149" stroke-width="1"/>
+        <text x="329" y="67" text-anchor="middle" fill="#f85149" font-family="monospace" font-size="7.5">Authorization: Bearer &lt;user_token&gt;</text>
+        <rect x="401" y="52" width="138" height="40" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+        <text x="470" y="70" text-anchor="middle" fill="#e6edf3" font-family="sans-serif" font-size="9.5" font-weight="700">Calendar API</text>
+        <text x="470" y="83" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5">calendar-service.example.com</text>
+        <text x="548" y="64" text-anchor="start" fill="#f85149" font-family="sans-serif" font-size="10" font-weight="700">?  which agent?</text>
+        <text x="548" y="80" text-anchor="start" fill="#f85149" font-family="sans-serif" font-size="10" font-weight="700">?  did user consent?</text>
+        <line x1="198" y1="92" x2="198" y2="111" stroke="#f85149" stroke-dasharray="3,2" stroke-width="1"/>
+        <text x="198" y="123" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="8.5" font-weight="700">No agent identity</text>
+        <text x="198" y="136" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5">Which process holds this token?</text>
+        <line x1="329" y1="92" x2="329" y2="111" stroke="#f85149" stroke-dasharray="3,2" stroke-width="1"/>
+        <text x="329" y="123" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="8.5" font-weight="700">No consent proof</text>
+        <text x="329" y="136" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5">Did user authorize this agent?</text>
+        <line x1="470" y1="92" x2="470" y2="111" stroke="#f85149" stroke-dasharray="3,2" stroke-width="1"/>
+        <text x="470" y="123" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="8.5" font-weight="700">No scope limit</text>
+        <text x="470" y="136" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5">Agent can use full user scope</text>
+      </svg>
+    </div>
+    <div class="info-grid c3" style="margin-top:.5rem">
+      <div class="info-box red">
+        <div class="ibt">No agent identity</div>
+        <div class="ibv" style="font-size:12px;line-height:1.5">The resource server sees only the user's token. Any process that holds it can call the API — there is no cryptographic proof of <em>which agent</em> is using it.</div>
+      </div>
+      <div class="info-box red">
+        <div class="ibt">No consent proof</div>
+        <div class="ibv" style="font-size:12px;line-height:1.5">There is no cryptographic record that the user actually authorized <em>this specific agent</em> to act on their behalf — the agent simply presents the token.</div>
+      </div>
+      <div class="info-box red">
+        <div class="ibt">No scope enforcement</div>
+        <div class="ibv" style="font-size:12px;line-height:1.5">The agent presents the user's full-scope token. Nothing in the token limits the agent to a subset of the user's permissions for this specific task.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OBO solution + interactive demo -->
+  <div class="card">
+    <div class="card-title">The OBO solution — both identities, one cryptographically verified token</div>
+    <svg viewBox="0 0 730 185" style="width:100%;max-width:730px;display:block;margin:0 auto;font-family:sans-serif">
+      <defs>
+        <marker id="obo-arr-b" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#58a6ff"/></marker>
+        <marker id="obo-arr-p" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#bc8cff"/></marker>
+        <marker id="obo-arr-o" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#f5a623"/></marker>
+        <marker id="obo-arr-g" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#3fb950"/></marker>
+      </defs>
+      <!-- User -->
+      <circle cx="44" cy="55" r="25" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+      <text x="44" y="52" text-anchor="middle" fill="#58a6ff" font-size="8" font-weight="700">USER</text>
+      <text x="44" y="64" text-anchor="middle" fill="#7d8590" font-size="7">alice@corp</text>
+      <!-- User IdP -->
+      <rect x="80" y="38" width="98" height="34" rx="5" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+      <text x="129" y="53" text-anchor="middle" fill="#58a6ff" font-size="8.5" font-weight="700">User IdP</text>
+      <text x="129" y="65" text-anchor="middle" fill="#7d8590" font-size="7">issues user+jwt</text>
+      <line x1="70" y1="55" x2="80" y2="55" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#obo-arr-b)"/>
+      <!-- user+jwt dashed arrow to OBO AS -->
+      <line x1="178" y1="55" x2="256" y2="80" stroke="#58a6ff" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#obo-arr-b)"/>
+      <text x="212" y="58" text-anchor="middle" fill="#58a6ff" font-size="7" font-family="monospace">user+jwt</text>
+      <!-- Agent -->
+      <rect x="80" y="112" width="98" height="34" rx="5" fill="#161b22" stroke="#bc8cff" stroke-width="1.5"/>
+      <text x="129" y="127" text-anchor="middle" fill="#bc8cff" font-size="8.5" font-weight="700">Booking Agent</text>
+      <text x="129" y="138" text-anchor="middle" fill="#7d8590" font-size="7">spiffe://.../booking</text>
+      <!-- Agent IdP label -->
+      <rect x="80" y="156" width="98" height="22" rx="4" fill="#161b22" stroke="#bc8cff" stroke-width="1"/>
+      <text x="129" y="171" text-anchor="middle" fill="#bc8cff" font-size="7.5" font-weight="700">Agent IdP → agent+jwt</text>
+      <line x1="129" y1="156" x2="129" y2="146" stroke="#bc8cff" stroke-width="1.2" marker-end="url(#obo-arr-p)"/>
+      <!-- agent+jwt dashed arrow to OBO AS -->
+      <line x1="178" y1="122" x2="256" y2="102" stroke="#bc8cff" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#obo-arr-p)"/>
+      <text x="212" y="122" text-anchor="middle" fill="#bc8cff" font-size="7" font-family="monospace">agent+jwt</text>
+      <!-- OBO AS -->
+      <rect x="258" y="78" width="120" height="44" rx="5" fill="#161b22" stroke="#f5a623" stroke-width="1.5"/>
+      <text x="318" y="96" text-anchor="middle" fill="#f5a623" font-size="9" font-weight="700">OBO AS</text>
+      <text x="318" y="109" text-anchor="middle" fill="#7d8590" font-size="7">grant_type=token-exchange</text>
+      <!-- Validation annotations -->
+      <text x="258" y="60" text-anchor="start" fill="#f5a623" font-size="7">&#10003; user token valid</text>
+      <text x="258" y="50" text-anchor="start" fill="#f5a623" font-size="7">&#10003; agent token valid</text>
+      <text x="258" y="40" text-anchor="start" fill="#f5a623" font-size="7">&#10003; scope &#8838; user grant</text>
+      <line x1="310" y1="55" x2="310" y2="78" stroke="#f5a623" stroke-dasharray="2,2" stroke-width="1"/>
+      <!-- obo+jwt output -->
+      <line x1="378" y1="100" x2="430" y2="100" stroke="#3fb950" stroke-width="1.5" marker-end="url(#obo-arr-g)"/>
+      <text x="404" y="93" text-anchor="middle" fill="#3fb950" font-size="7.5" font-family="monospace">obo+jwt</text>
+      <!-- Resource Server -->
+      <rect x="432" y="80" width="148" height="40" rx="5" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
+      <text x="506" y="97" text-anchor="middle" fill="#3fb950" font-size="9" font-weight="700">Calendar API</text>
+      <text x="506" y="110" text-anchor="middle" fill="#7d8590" font-size="7">validates sub + act.sub + scope</text>
+      <!-- Resource server confirmation -->
+      <text x="590" y="84" text-anchor="start" fill="#3fb950" font-size="7.5">&#10003; sub = alice@corp</text>
+      <text x="590" y="97" text-anchor="start" fill="#3fb950" font-size="7.5">&#10003; act.sub = booking-assistant</text>
+      <text x="590" y="110" text-anchor="start" fill="#3fb950" font-size="7.5">&#10003; scope = read:calendar</text>
+    </svg>
+
+    <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap">
+        <label style="font-size:13px;color:var(--muted)">Requested scope:</label>
+        <select id="obo-scope-select" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer">
+          <option value="read:calendar write:booking">read:calendar write:booking (valid subset)</option>
+          <option value="read:calendar">read:calendar (minimal &#8212; valid)</option>
+          <option value="">inherit all user scopes</option>
+          <option value="write:billing">write:billing (out of user scope &#8212; rejected)</option>
+        </select>
+        <button class="btn btn-primary" id="obo-run-btn" onclick="runOBODemo(this)">&#9654; Run OBO Flow</button>
+      </div>
+      <div id="obo-steps" style="display:none;flex-direction:column;gap:6px;margin-bottom:10px"></div>
+      <div id="obo-result" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- Token anatomy -->
+  <div class="card">
+    <div class="card-title">OBO token anatomy — two identities, one signed token</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
+      <div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:10px">The <code>obo+jwt</code> carries all three pieces the resource server needs:</p>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:var(--mono);font-size:11.5px;line-height:2;overflow-x:auto">
+          {<br>
+          &nbsp;&nbsp;<span style="color:#f5a623">"typ"</span>: <span style="color:#3fb950">"obo+jwt"</span>,<br>
+          &nbsp;&nbsp;<span style="color:#58a6ff">"sub"</span>: <span style="color:#3fb950">"user:alice@example.com"</span>,&nbsp;&nbsp;&nbsp;<span style="color:#7d8590">// human user</span><br>
+          &nbsp;&nbsp;<span style="color:#bc8cff">"act"</span>: {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#bc8cff">"sub"</span>: <span style="color:#3fb950">"spiffe://example.com/agents/booking-assistant"</span>&nbsp;<span style="color:#7d8590">// the agent</span><br>
+          &nbsp;&nbsp;},<br>
+          &nbsp;&nbsp;<span style="color:#58a6ff">"scope"</span>: <span style="color:#3fb950">"read:calendar write:booking"</span>,<br>
+          &nbsp;&nbsp;<span style="color:#7d8590">"iss"</span>: <span style="color:#7d8590">"https://as.example.com"</span>,<br>
+          &nbsp;&nbsp;<span style="color:#7d8590">"aud"</span>: <span style="color:#7d8590">"https://booking-service.example.com"</span>,<br>
+          &nbsp;&nbsp;<span style="color:#7d8590">"exp"</span>: <span style="color:#7d8590">1720000300</span><br>
+          }
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="info-box blue">
+          <div class="ibt">sub &#8212; the human user</div>
+          <div class="ibv" style="font-size:12px;line-height:1.5">The resource server can verify the human user's identity. The user's original consent is cryptographically embedded in the delegation chain.</div>
+        </div>
+        <div class="info-box" style="border-color:var(--purple)">
+          <div class="ibt" style="color:var(--purple)">act.sub &#8212; the acting agent</div>
+          <div class="ibv" style="font-size:12px;line-height:1.5">RFC 8693 &#167;4.1 actor claim. The resource server sees exactly which agent process made the call &#8212; its SPIFFE identity, not a generic application ID.</div>
+        </div>
+        <div class="info-box green">
+          <div class="ibt">scope &#8212; the enforced intersection</div>
+          <div class="ibv" style="font-size:12px;line-height:1.5">The OBO AS enforces scope &#8838; user_grant at issuance time. The agent cannot request more than the user originally consented to &#8212; any attempt is rejected.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Standards basis -->
+  <div class="card">
+    <div class="card-title">Standards basis and ecosystem context</div>
+    <div style="overflow-x:auto">
+    <table class="compare-table" style="font-size:12px">
+      <tr>
+        <th>Standard</th>
+        <th>Role in OBO</th>
+        <th>Status</th>
+        <th>Implementation</th>
+      </tr>
+      <tr>
+        <td><strong><a href="https://www.rfc-editor.org/rfc/rfc8693" target="_blank" style="color:var(--blue)">RFC 8693</a></strong> &#8212; OAuth 2.0 Token Exchange<br><code style="font-size:10px">grant_type=urn:ietf:params:oauth:grant-type:token-exchange</code></td>
+        <td>Base standard. Defines the <code>subject_token</code> + <code>actor_token</code> exchange and the <code>act</code> claim (&#167;4.1) for identifying the acting party in a delegated token.</td>
+        <td><span style="color:var(--green)">&#9679; Published RFC</span></td>
+        <td><code>pkg/obo/</code> &#8212; OBOIssuer, OBOValidator, UserIssuer, UserValidator. 8 tests passing.</td>
+      </tr>
+      <tr>
+        <td><strong><a href="https://datatracker.ietf.org/doc/draft-gco-oauth-delegate-sd-jwt/" target="_blank" style="color:var(--blue)">draft-gco-oauth-delegate-sd-jwt-00</a></strong><br>Delegated SD-JWT for OAuth 2.0</td>
+        <td>Extension: replaces the plain JWT user token with an SD-JWT, enabling selective disclosure &#8212; the agent presents only the user attributes the target resource needs. Privacy-preserving OBO.</td>
+        <td><span style="color:var(--muted)">&#9675; Individual draft</span></td>
+        <td>Monitored &#8212; <code>pkg/obo/</code> UserIssuer would add an SD-JWT path when/if adopted by WG</td>
+      </tr>
+      <tr>
+        <td><strong>AgentToken (<code>agent+jwt</code>)</strong><br>The <code>actor_token</code> in the OBO request</td>
+        <td>The agent's own identity token (SPIFFE URI subject, <code>cnf.jwk</code> binding) serves as the RFC 8693 <code>actor_token</code>. The OBO AS validates it before issuing the delegated token.</td>
+        <td><span style="color:var(--green)">&#9679; Implemented</span></td>
+        <td><code>pkg/identity/token.go</code> + <code>pkg/obo/issuer.go</code></td>
+      </tr>
+      <tr>
+        <td><strong>Microsoft Entra OBO</strong><br>The widely-deployed precedent</td>
+        <td>Microsoft's <code>on_behalf_of</code> grant is the production pattern this formalises &#8212; agents pass a user access token and receive a scoped downstream token. RFC 8693 standardises this across all OAuth 2.0 ASes.</td>
+        <td><span style="color:var(--green)">&#9679; Production (Entra ID)</span></td>
+        <td>Our demo reproduces this pattern with a self-signed IdP instead of Entra</td>
+      </tr>
+    </table>
+    </div>
+    <div class="callout" style="margin-top:12px">
+      <strong>Why this matters for MCP:</strong> The Model Context Protocol runs OAuth flows transparently. OBO lets the agent present both the user's consent token and its own identity on every tool call &#8212; the tool server sees exactly who authorised the action and which agent process is executing it. This directly addresses the delegation gap the MCP specification currently leaves unspecified at the identity layer.
+    </div>
+  </div>
+
+  <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1rem">
+    <button class="btn btn-primary" onclick="goToTab('happy')">Agent Identity: AgentToken &#8594;</button>
+    <button class="btn" onclick="goToTab('rfc8693')">Token Delegation (RFC 8693) &#8594;</button>
+    <button class="btn" onclick="goToTab('standards')">Standards Tracker &#8594;</button>
   </div>
 </div>
 
@@ -824,7 +1036,7 @@ main{max-width:960px;margin:0 auto;padding:2rem}
 <!-- ══ THREAT MODEL ════════════════════════════════════════════════════════ -->
 <div class="scene" id="scene-threat">
   <div class="card">
-    <div class="card-title">WIMSE Agent Fabric — Threat Model</div>
+    <div class="card-title">AI Agent Security Lab — Threat Model</div>
     <div class="threats">
       <div class="threat-card mitigated">
         <div class="threat-title">T1 · Stolen Identity Token</div>
@@ -904,505 +1116,6 @@ main{max-width:960px;margin:0 auto;padding:2rem}
   </div>
 </div>
 
-<!-- ══ OPENID FEDERATION ════════════════════════════════════════════════════ -->
-<div class="scene" id="scene-federation">
-  <div class="card">
-    <div class="card-title">Cross-Organisation Agent Federation (OID-FED 1.0)</div>
-    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">
-      An agent from <strong>Org B</strong> calls a gateway controlled by <strong>Org A</strong>.
-      The gateway has no static entry for Org B's IdP — it resolves the key dynamically via an
-      <strong>OpenID Federation trust chain</strong>: Trust Anchor → Subordinate Statement → Entity Configuration.
-    </p>
-    <div class="diagram">
-      <svg viewBox="0 0 650 160" xmlns="http://www.w3.org/2000/svg">
-        <!-- Trust chain arrows (top to bottom) -->
-        <line x1="325" y1="65" x2="210" y2="105" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="5,3"/>
-        <line x1="325" y1="65" x2="440" y2="105" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="5,3"/>
-        <line id="fw1" x1="440" y1="105" x2="440" y2="152" stroke="var(--border)" stroke-width="1.5"/>
-        <line id="fw2" x1="440" y1="152" x2="570" y2="152" stroke="var(--border)" stroke-width="1.5"/>
-        <!-- Trust Anchor (top centre) -->
-        <rect id="fn-anchor" x="250" y="10" width="150" height="55" rx="8" class="node-box"/>
-        <text x="325" y="36" class="node-lbl">⚓ Trust Anchor</text>
-        <text x="325" y="51" class="node-sub">enterprise.example</text>
-        <!-- Org B IdP (bottom left) -->
-        <rect id="fn-orgb" x="140" y="100" width="140" height="55" rx="8" class="node-box"/>
-        <text x="210" y="126" class="node-lbl">🏢 Org B IdP</text>
-        <text x="210" y="141" class="node-sub">idp.org-b.example</text>
-        <!-- Org B Agent (below IdP) -->
-        <rect id="fn-agent" x="380" y="100" width="130" height="55" rx="8" class="node-box"/>
-        <text x="445" y="126" class="node-lbl">🤖 Org B Agent</text>
-        <text x="445" y="141" class="node-sub">foreign agent</text>
-        <!-- Org A Gateway (far right) -->
-        <rect id="fn-gw" x="525" y="100" width="120" height="55" rx="8" class="node-box"/>
-        <text x="585" y="126" class="node-lbl">🛡️ Org A GW</text>
-        <text x="585" y="141" class="node-sub">federation resolver</text>
-        <!-- Labels -->
-        <text x="258" y="88" style="fill:var(--muted);font-size:8px;font-family:monospace">SS (signed by anchor)</text>
-        <text x="353" y="88" style="fill:var(--muted);font-size:8px;font-family:monospace">SS</text>
-      </svg>
-    </div>
-    <div class="btn-group">
-      <button class="btn btn-primary" id="btn-fed-setup" onclick="doFedSetup()">1. Build Federation Chain</button>
-      <button class="btn" id="btn-fed-issue"    disabled onclick="doFedIssue()">2. Issue Cross-Org Token</button>
-      <button class="btn" id="btn-fed-validate" disabled onclick="doFedValidate()">3. Validate via Federation</button>
-      <button class="btn btn-warning" style="margin-left:auto" onclick="doFedReset()">&#8635; Restart</button>
-    </div>
-    <div style="font-size:.78rem;color:var(--muted);margin:-.25rem 0 .5rem;padding:0 .1rem">
-      Run through the steps in order — each button unlocks the next. Click <strong style="color:var(--yellow)">Restart</strong> to reset anytime.
-    </div>
-  </div>
-  <div id="fed-complete" style="display:none;background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.35);border-radius:8px;padding:1rem 1.25rem;margin-bottom:1rem;align-items:center;gap:1rem">
-    <div style="flex:1">
-      <strong style="color:var(--green)">Demo complete!</strong>
-      <span style="color:var(--muted);font-size:.875rem;margin-left:.5rem">Cross-org token issued and validated via OID-FED trust chain.</span>
-    </div>
-    <button class="btn btn-warning" onclick="doFedReset()">&#8635; Restart Demo</button>
-  </div>
-
-  <!-- Federation step 1 output -->
-  <div id="out-fed-setup" class="reveal">
-    <div class="info-grid c3">
-      <div class="info-box blue"><div class="ibt">Trust Anchor</div><div class="ibv" id="fed-anchor-id">—</div></div>
-      <div class="info-box blue"><div class="ibt">Org B IdP</div><div class="ibv" id="fed-orgb-id">—</div></div>
-      <div class="info-box blue"><div class="ibt">Authority Hint</div><div class="ibv" id="fed-hint">—</div></div>
-    </div>
-    <div class="card-title">Entity Configuration JWT — Org B IdP's self-signed statement</div>
-    <div class="jwt-raw" id="jwt-ec-raw"><span style="color:var(--muted)">Loading…</span></div>
-    <div class="jwt-grid">
-      <div class="jwt-box jh"><h4>Header <span class="pill pill-r">red</span></h4><pre id="jwt-ec-hdr"></pre></div>
-      <div class="jwt-box jp"><h4>Payload <span class="pill pill-p">purple</span></h4><pre id="jwt-ec-pld"></pre></div>
-    </div>
-    <div class="callout">
-      <strong>Entity Configuration</strong> is Org B's self-signed statement (<code>typ: entity-statement+jwt</code>). It carries Org B's public key and an <code>authority_hints</code> list — the pointers that tell a resolver where to find the Trust Anchor that can certify this entity.
-    </div>
-  </div>
-
-  <!-- Federation step 2 output -->
-  <div id="out-fed-issue" class="reveal">
-    <div class="card-title">Org B Agent Token — issued by federated IdP</div>
-    <div class="jwt-raw" id="jwt-orgb-raw"><span style="color:var(--muted)">Loading…</span></div>
-    <div class="jwt-grid">
-      <div class="jwt-box jh"><h4>Header</h4><pre id="jwt-orgb-hdr"></pre></div>
-      <div class="jwt-box jp"><h4>Payload</h4><pre id="jwt-orgb-pld"></pre></div>
-    </div>
-    <div class="info-grid">
-      <div class="info-box green"><div class="ibt">subject</div><div class="ibv" id="orgb-sub">—</div></div>
-      <div class="info-box green"><div class="ibt">issuer</div><div class="ibv" id="orgb-iss">—</div></div>
-    </div>
-    <div class="callout">
-      <strong>Identical format, foreign issuer.</strong> This token is indistinguishable in format from a local agent token — it uses the same <code>agent+jwt</code> type and ES256. The only difference is the <code>iss</code> claim points to Org B's IdP rather than Org A's. The Gateway has no static config for this issuer — it must resolve it dynamically.
-    </div>
-  </div>
-
-  <!-- Federation step 3 output -->
-  <div id="out-fed-validate" class="reveal">
-    <div class="card-title">Trust Chain Resolution — Gateway Steps</div>
-    <div class="vsteps">
-      <div class="vstep" id="fvs0"><div class="vstep-icon">○</div>Peek <code>iss</code> from token — not in static validator map</div>
-      <div class="vstep" id="fvs1"><div class="vstep-icon">○</div>Fetch Entity Configuration from <code>idp.org-b.example/.well-known/openid-federation</code></div>
-      <div class="vstep" id="fvs2"><div class="vstep-icon">○</div>Follow <code>authority_hints</code> → Trust Anchor: <code id="fvs2-anchor">…</code></div>
-      <div class="vstep" id="fvs3"><div class="vstep-icon">○</div>Fetch Subordinate Statement for Org B from Trust Anchor</div>
-      <div class="vstep" id="fvs4"><div class="vstep-icon">○</div>Verify Subordinate Statement signature using anchor key ✓</div>
-      <div class="vstep" id="fvs5"><div class="vstep-icon">○</div>Extract Org B's certified key from SS.JWKS — <code>x=<span id="fvs5-key">…</span></code></div>
-      <div class="vstep" id="fvs6"><div class="vstep-icon">○</div>Verify Entity Configuration with extracted leaf key ✓</div>
-      <div class="vstep" id="fvs7"><div class="vstep-icon">○</div>Validate agent token with dynamically resolved key</div>
-    </div>
-    <div class="verdict allow" id="fed-verdict" style="display:none">
-      <span style="font-size:22px">✅</span>
-      <div>Token VALID — <strong><span id="fed-subject">…</span></strong> authenticated via trust chain<br><span style="font-size:12px;font-weight:400">No pre-shared keys. No static config for Org B.</span></div>
-    </div>
-    <div class="callout ok">
-      <strong>Zero pre-configuration.</strong> Org A's Gateway accepted a token from Org B's agent with <em>no static setup for Org B</em>. The Trust Anchor's public key is the only prerequisite — from it, the resolver can dynamically certify any entity in the federation.
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">How it works</div>
-    <ul class="steps">
-      <li><div class="step-num">1</div><div>The <strong>Trust Anchor</strong> generates a key pair and signs a <em>Subordinate Statement</em> (SS) certifying Org B's IdP public key.</div></li>
-      <li><div class="step-num">2</div><div>Org B's IdP publishes a self-signed <em>Entity Configuration</em> (EC) JWT at <code>/.well-known/openid-federation</code> with <code>authority_hints</code> pointing to the anchor.</div></li>
-      <li><div class="step-num">3</div><div>Org B's agent is issued a standard <span class="token-badge at">agent+jwt</span> — identical in format to a local agent token.</div></li>
-      <li><div class="step-num">4</div><div>When the token arrives at Org A's Gateway, it peeks at <code>iss</code>, finds no static validator, and falls back to the <em>Federation Resolver</em>.</div></li>
-      <li><div class="step-num">5</div><div>The resolver walks the chain: EC → authority_hints → SS → anchor key → SS signature verified → leaf key extracted → EC signature verified.</div></li>
-      <li><div class="step-num">6</div><div>The token is validated with the <strong>dynamically-resolved key</strong>. No pre-shared keys or static config were needed for Org B.</div></li>
-    </ul>
-  </div>
-</div>
-
-<!-- ── Post-Quantum Safety ─────────────────────────────────────────────── -->
-<div class="scene" id="scene-postquantum">
-  <div class="card">
-    <div class="card-title">Post-Quantum Safety for Agent Fabric</div>
-    <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">
-      Agent Fabric tokens (<code>agent+jwt</code>), proof tokens (<code>application/agent-proof+jwt</code>), and OID-FED entity statements all use <strong>ES256 (EC P-256)</strong>. Shor's algorithm on a quantum computer breaks EC in polynomial time — every delegation chain, every proof token, every trust chain becomes forgeable.
-    </p>
-    <div class="callout danger">
-      <strong>Harvest Now, Decrypt Later:</strong> Adversaries collecting today's inter-agent traffic can break the signatures retroactively once a cryptographically-relevant quantum computer (CRQC) is available (~2030–2035 estimates). Agent delegation chains are high-value targets — they encode full audit trails.
-    </div>
-  </div>
-
-  <!-- Quantum Cracking Animation -->
-  <div class="card">
-    <div class="card-title">Quantum Computer vs. EC P-256 — Attack Simulation</div>
-    <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">
-      EC P-256 relies on the <strong style="color:var(--text)">Elliptic Curve Discrete Logarithm Problem</strong>: given public point Q = k·G, finding private key k requires ~2<sup>128</sup> classical operations — infeasible. Shor's algorithm on a CRQC solves ECDLP in <code>O(n³)</code>, extracting k in seconds.
-    </p>
-    <div class="diagram">
-      <svg id="qc-svg" viewBox="0 0 820 145" xmlns="http://www.w3.org/2000/svg">
-        <rect x="5" y="40" width="135" height="65" rx="6" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
-        <text x="72" y="62" text-anchor="middle" font-size="10" fill="#58a6ff" font-family="sans-serif" font-weight="700">EC P-256 Key</text>
-        <text x="72" y="77" text-anchor="middle" font-size="9" fill="#7d8590" font-family="monospace">Q = k·G</text>
-        <text x="72" y="91" text-anchor="middle" font-size="8" fill="#3fb950" font-family="sans-serif">public: Q known</text>
-        <text x="72" y="103" text-anchor="middle" font-size="8" fill="#f85149" font-family="sans-serif">private: k hidden</text>
-        <line x1="140" y1="60" x2="205" y2="38" stroke="#30363d" stroke-width="1" stroke-dasharray="4,3"/>
-        <line x1="140" y1="85" x2="400" y2="72" stroke="#30363d" stroke-width="1" stroke-dasharray="4,3"/>
-        <!-- Classical -->
-        <rect x="205" y="8" width="195" height="50" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
-        <text x="302" y="28" text-anchor="middle" font-size="10" fill="#7d8590" font-family="sans-serif" font-weight="700">Classical Computer</text>
-        <text x="302" y="42" text-anchor="middle" font-size="8" fill="#7d8590" font-family="sans-serif">Baby-step Giant-step · ~2¹²⁸ ops</text>
-        <text x="302" y="54" text-anchor="middle" font-size="8" fill="#7d8590" font-family="monospace">infeasible</text>
-        <rect x="205" y="64" width="195" height="13" rx="3" fill="#21262d" stroke="#30363d" stroke-width="1"/>
-        <rect id="qc-classic-bar" x="205" y="64" width="0" height="13" rx="3" fill="#58a6ff" opacity=".7"/>
-        <text id="qc-classic-pct" x="302" y="74" text-anchor="middle" font-size="7" fill="#e6edf3" font-family="monospace">0%</text>
-        <text x="302" y="91" text-anchor="middle" font-size="8" fill="#f85149" font-family="sans-serif">→ heat death of universe</text>
-        <!-- Quantum -->
-        <rect x="400" y="45" width="215" height="50" rx="6" fill="#1a0a2e" stroke="#bc8cff" stroke-width="1.5"/>
-        <text x="508" y="65" text-anchor="middle" font-size="10" fill="#bc8cff" font-family="sans-serif" font-weight="700">Quantum CRQC</text>
-        <text x="508" y="79" text-anchor="middle" font-size="8" fill="#7d8590" font-family="sans-serif">Shor's Algorithm · QFT + period finding · O(n³)</text>
-        <text x="508" y="91" text-anchor="middle" font-size="8" fill="#bc8cff" font-family="monospace">polynomial time</text>
-        <rect x="400" y="100" width="215" height="13" rx="3" fill="#21262d" stroke="#bc8cff" stroke-width="1"/>
-        <rect id="qc-quantum-bar" x="400" y="100" width="0" height="13" rx="3" fill="#bc8cff"/>
-        <text id="qc-quantum-pct" x="508" y="110" text-anchor="middle" font-size="7" fill="#e6edf3" font-family="monospace">0%</text>
-        <text x="508" y="128" text-anchor="middle" font-size="8" fill="#bc8cff" font-family="sans-serif">→ seconds on CRQC</text>
-        <!-- Result -->
-        <rect x="685" y="40" width="125" height="65" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5" id="qc-result-box"/>
-        <text id="qc-result-txt1" x="748" y="66" text-anchor="middle" font-size="10" fill="#7d8590" font-family="sans-serif" font-weight="700">Result</text>
-        <text id="qc-result-txt2" x="748" y="82" text-anchor="middle" font-size="9" fill="#7d8590" font-family="sans-serif">awaiting</text>
-        <text id="qc-result-txt3" x="748" y="97" text-anchor="middle" font-size="9" fill="#7d8590" font-family="sans-serif">simulation</text>
-        <line id="qc-result-line" x1="615" y1="70" x2="683" y2="70" stroke="#30363d" stroke-width="1.5" stroke-dasharray="5,3"/>
-      </svg>
-    </div>
-    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-      <button class="btn btn-primary" id="qc-run-btn" onclick="runQCAttack(this)">&#9654; Simulate CRQC Attack on EC Key</button>
-      <button class="btn" id="qc-reset-btn" onclick="resetQCAttack()" style="display:none">↺ Reset</button>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
-      <div class="anim-step-sm" id="qc-s1">① Both computers receive EC public key Q=k·G. Classical and quantum attempt to recover the hidden private key k.</div>
-      <div class="anim-step-sm" id="qc-s2">② Classical: Baby-step Giant-step requires ~2¹²⁸ steps. EC P-256 security holds — progress stalls well below 1%.</div>
-      <div class="anim-step-sm" id="qc-s3">③ CRQC: Shor's Algorithm uses QFT to find the discrete logarithm period. Private key k extracted — all past signatures forgeable.</div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">Threat timeline</div>
-    <div class="tl-bar">
-      <div class="tl-seg tl-now"><strong style="color:var(--green)">Now — 2028</strong><span>EC P-256 secure. Begin inventory of agent key material. Adopt hybrid-capable validators.</span></div>
-      <div class="tl-seg tl-near"><strong style="color:var(--orange)">2028 — 2032</strong><span>Hybrid mode: agent+jwt carries both ES256 and ML-DSA-44 signatures. Both accepted by gateways.</span></div>
-      <div class="tl-seg tl-q"><strong style="color:var(--red)">2032+</strong><span>ES256-only agent tokens rejected. ML-DSA-44 mandatory for all chain links, proofs, and OID-FED JWTs.</span></div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">NIST PQC 2024 standards — what replaces EC</div>
-    <div class="pq-grid">
-      <div class="pq-card">
-        <span class="pq-badge pq-sig">Signature</span>
-        <h4>ML-DSA (Dilithium)</h4>
-        <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Primary NIST recommendation. Lattice-based. Replaces ECDSA for all agent+jwt and proof+jwt signing.</p>
-        <table class="compare-table">
-          <tr><td>Pub key</td><td><strong>1312 B</strong> vs 64 B (EC)</td></tr>
-          <tr><td>Signature</td><td><strong>2420 B</strong> vs 64 B</td></tr>
-          <tr><td>Used for</td><td>AgentToken, ProofToken, OID-FED EC</td></tr>
-        </table>
-      </div>
-      <div class="pq-card">
-        <span class="pq-badge pq-kem">KEM</span>
-        <h4>ML-KEM (Kyber)</h4>
-        <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Replaces ECDH in TLS 1.3 key exchange. Protects the transport layer for mTLS agent-to-gateway connections.</p>
-        <table class="compare-table">
-          <tr><td>Pub key</td><td><strong>1184 B</strong> vs 32 B (ECDH)</td></tr>
-          <tr><td>Ciphertext</td><td><strong>1088 B</strong></td></tr>
-          <tr><td>Used for</td><td>mTLS key exchange (Phase 2 mTLS)</td></tr>
-        </table>
-      </div>
-      <div class="pq-card">
-        <span class="pq-badge pq-hash">Hash-Based</span>
-        <h4>SLH-DSA (SPHINCS+)</h4>
-        <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Conservative option. Only relies on hash function security. Ideal for Trust Anchor signing (long-lived, high-assurance).</p>
-        <table class="compare-table">
-          <tr><td>Pub key</td><td><strong>32 B</strong> (small)</td></tr>
-          <tr><td>Signature</td><td><strong>8–50 KB</strong></td></tr>
-          <tr><td>Used for</td><td>OID-FED Trust Anchor subordinate statements</td></tr>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">Three-Era Migration Roadmap — Live Progressive View</div>
-    <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">
-      Click each era to explore the token structure, pros, cons, and required migration actions for that phase of the quantum transition.
-    </p>
-    <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
-      <button id="era-btn-classical" onclick="showEra('classical')" style="padding:6px 16px;border-radius:6px;border:1px solid #58a6ff;background:rgba(88,166,255,.15);color:#58a6ff;cursor:pointer;font-size:13px;font-weight:600">&#11044; Classical Era<br><span style="font-weight:400;font-size:11px">Now — 2028</span></button>
-      <button id="era-btn-transition" onclick="showEra('transition')" style="padding:6px 16px;border-radius:6px;border:1px solid #30363d;background:#21262d;color:#7d8590;cursor:pointer;font-size:13px;font-weight:600">&#11044; Transition Era<br><span style="font-weight:400;font-size:11px">2028 — 2032</span></button>
-      <button id="era-btn-quantum" onclick="showEra('quantum')" style="padding:6px 16px;border-radius:6px;border:1px solid #30363d;background:#21262d;color:#7d8590;cursor:pointer;font-size:13px;font-weight:600">&#11044; Quantum Era<br><span style="font-weight:400;font-size:11px">2032+</span></button>
-    </div>
-
-    <!-- Classical Era -->
-    <div id="era-classical" style="display:block">
-      <div style="border:1px solid rgba(88,166,255,.3);border-radius:8px;padding:12px;background:rgba(88,166,255,.05)">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-          <div>
-            <div style="font-size:12px;color:#58a6ff;font-weight:700;margin-bottom:6px">Token Structure (agent+jwt)</div>
-            <pre style="font-size:10px;background:#161b22;border-radius:6px;padding:10px;color:#3fb950;margin:0;overflow:auto">{
-  "typ": "agent+jwt",
-  "alg": "ES256"
-}.{
-  "sub": "spiffe://cloud-a/agent",
-  "cnf": { "jwk": { "kty":"EC",
-    "crv":"P-256","alg":"ES256" } },
-  "exp": ..., "jti": "..."
-}</pre>
-          </div>
-          <div>
-            <div style="font-size:12px;color:#58a6ff;font-weight:700;margin-bottom:6px">mTLS</div>
-            <pre style="font-size:10px;background:#161b22;border-radius:6px;padding:10px;color:#7d8590;margin:0">TLS 1.3
-ECDHE + ECDSA
-EC P-256 cert
-URI SAN: spiffe://...</pre>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div class="callout ok" style="margin:0;padding:10px">
-            <strong style="color:#3fb950">Pros</strong><br>
-            <span style="font-size:12px">Small tokens (~64B sig). Fast ES256 verification. Universal library support. Proven in production. No size overhead for JWT payloads.</span>
-          </div>
-          <div class="callout danger" style="margin:0;padding:10px">
-            <strong>Cons / Risks</strong><br>
-            <span style="font-size:12px">Vulnerable to Shor's algorithm on CRQC. HNDL: today's traffic collectible for future decryption. Migration window opens ~2028.</span>
-          </div>
-        </div>
-        <div style="margin-top:10px;font-size:12px;color:var(--muted)"><strong style="color:var(--text)">Action items now:</strong> Inventory all agent key material. Upgrade validators to be alg-agnostic. Do NOT hardcode "alg":"ES256" checks — use allow-list validation.</div>
-      </div>
-    </div>
-
-    <!-- Transition Era -->
-    <div id="era-transition" style="display:none">
-      <div style="border:1px solid rgba(255,166,87,.3);border-radius:8px;padding:12px;background:rgba(255,166,87,.05)">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-          <div>
-            <div style="font-size:12px;color:#ffa657;font-weight:700;margin-bottom:6px">Hybrid Token Structure</div>
-            <pre style="font-size:10px;background:#161b22;border-radius:6px;padding:10px;color:#ffa657;margin:0;overflow:auto">{
-  "typ": "agent+jwt",
-  "alg": "ES256"      &lt;-- primary sig
-}.{
-  "sub": "spiffe://cloud-a/agent",
-  "cnf": {
-    "jwk":    { "kty":"EC","crv":"P-256" },
-    "pq_jwk": { "kty":"OKP",
-                "crv":"ML-DSA-44" }
-  },
-  "pq_sig": "..."     &lt;-- second ML-DSA sig
-}</pre>
-          </div>
-          <div>
-            <div style="font-size:12px;color:#ffa657;font-weight:700;margin-bottom:6px">mTLS (Hybrid)</div>
-            <pre style="font-size:10px;background:#161b22;border-radius:6px;padding:10px;color:#7d8590;margin:0">TLS 1.3
-X25519MLKEM768
-(ECDHE + ML-KEM-768)
-Dual cert: EC + PQ
-Server accepts either</pre>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div class="callout ok" style="margin:0;padding:10px">
-            <strong style="color:#3fb950">Pros</strong><br>
-            <span style="font-size:12px">Backwards compatible — old validators accept ES256. Forward-secure against HNDL. Gradual rollout: upgrade validators before agents. No flag day required.</span>
-          </div>
-          <div class="callout" style="margin:0;padding:10px;border-color:rgba(255,166,87,.4);background:rgba(255,166,87,.07)">
-            <strong style="color:#ffa657">Trade-offs</strong><br>
-            <span style="font-size:12px">Token size grows: +2420 B ML-DSA sig, +1312 B PQ pub key in cnf.pq_jwk. Verification cost doubles. Dual validators must be maintained concurrently.</span>
-          </div>
-        </div>
-        <div style="margin-top:10px;font-size:12px;color:var(--muted)"><strong style="color:var(--text)">Action items 2028–2032:</strong> Deploy ML-DSA-44-capable IdP. Update gateway middleware to verify both sigs. Publish dual-alg JWKS. Test cross-version chain validation (ES256 parent → ML-DSA child links).</div>
-      </div>
-    </div>
-
-    <!-- Quantum Era -->
-    <div id="era-quantum" style="display:none">
-      <div style="border:1px solid rgba(63,185,80,.3);border-radius:8px;padding:12px;background:rgba(63,185,80,.05)">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-          <div>
-            <div style="font-size:12px;color:#3fb950;font-weight:700;margin-bottom:6px">PQ-Only Token Structure</div>
-            <pre style="font-size:10px;background:#161b22;border-radius:6px;padding:10px;color:#3fb950;margin:0;overflow:auto">{
-  "typ": "agent+jwt",
-  "alg": "ML-DSA-44"    &lt;-- PQ only
-}.{
-  "sub": "spiffe://cloud-a/agent",
-  "cnf": {
-    "pq_jwk": { "kty":"OKP",
-      "crv":"ML-DSA-44",
-      "x":"&lt;1312-byte pub key&gt;" }
-  },
-  "exp": ..., "jti": "..."
-}</pre>
-          </div>
-          <div>
-            <div style="font-size:12px;color:#3fb950;font-weight:700;margin-bottom:6px">mTLS (PQ-Only)</div>
-            <pre style="font-size:10px;background:#161b22;border-radius:6px;padding:10px;color:#7d8590;margin:0">TLS 1.3+
-ML-KEM-768 key exchange
-ML-DSA cert (X.509v3)
-SLH-DSA Trust Anchor
-No EC keys accepted</pre>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div class="callout ok" style="margin:0;padding:10px">
-            <strong style="color:#3fb950">Pros</strong><br>
-            <span style="font-size:12px">Fully CRQC-resistant. Clean single-algorithm codebase. No hybrid complexity. HNDL threat eliminated — even collected past traffic is secure.</span>
-          </div>
-          <div class="callout" style="margin:0;padding:10px;border-color:rgba(63,185,80,.3);background:rgba(63,185,80,.05)">
-            <strong style="color:#3fb950">Trade-offs</strong><br>
-            <span style="font-size:12px">PQ public keys are 20× larger. Signatures are 38× larger. JWT payloads grow significantly — may exceed HTTP header limits in some proxies without config changes.</span>
-          </div>
-        </div>
-        <div style="margin-top:10px;font-size:12px;color:var(--muted)"><strong style="color:var(--text)">Action items 2032+:</strong> Reject ES256-only tokens at gateway. Remove hybrid code paths. Increase HTTP header size limits (nginx/envoy). Update IANA JWT alg registry for ML-DSA IDs.</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">Agent Fabric component impact</div>
-    <table class="compare-table">
-      <tr><th>Component</th><th>Current</th><th>PQ-Safe</th><th>Migration</th></tr>
-      <tr><td><strong>AgentToken (agent+jwt)</strong></td><td class="cross">ES256</td><td class="check">ML-DSA-44</td><td>Hybrid: both sigs during transition; validators accept either</td></tr>
-      <tr><td><strong>AgentProofToken</strong></td><td class="cross">ES256 + cnf.jwk binding</td><td class="check">ML-DSA-44 + PQ cnf.jwk</td><td>cnf.jwk becomes OKP key with ML-DSA curve</td></tr>
-      <tr><td><strong>AgentChain links</strong></td><td class="cross">Each AT-N: ES256</td><td class="check">Each AT-N: ML-DSA-44</td><td>Chain validator must support both alg types per link</td></tr>
-      <tr><td><strong>OID-FED Entity Config</strong></td><td class="cross">entity-statement+jwt ES256</td><td class="check">ML-DSA or SLH-DSA for Trust Anchor</td><td>Publish both EC and PQ keys in JWKS during transition</td></tr>
-      <tr><td><strong>mTLS agent certs</strong></td><td class="cross">EC P-256 X.509</td><td class="check">ML-DSA cert + ML-KEM key exchange</td><td>Dual-cert: present both EC and PQ cert; server picks best</td></tr>
-      <tr><td><strong>JTI replay store</strong></td><td class="partial">In-memory (single node)</td><td class="check">Distributed (Raft-replicated)</td><td>JTI store upgrade is independent of PQ algorithm migration</td></tr>
-    </table>
-  </div>
-
-  <div class="card">
-    <div class="card-title">Quantum Threat Model — Updated</div>
-    <table class="compare-table">
-      <tr><th>Threat</th><th>Vector</th><th>Classical Risk</th><th>Quantum Risk</th><th>Mitigation</th></tr>
-      <tr>
-        <td><strong>T-Q1: CRQC Key Extraction</strong></td>
-        <td>Shor's algorithm extracts EC P-256 private key from public point Q</td>
-        <td class="check">Low — 2¹²⁸ ops</td>
-        <td class="cross">Critical — seconds on CRQC</td>
-        <td>Migrate all agent keys to ML-DSA-44; deprecate ES256</td>
-      </tr>
-      <tr>
-        <td><strong>T-Q2: HNDL — Delegation Chains</strong></td>
-        <td>Collect agent+jwt chains today; break sig keys post-CRQC; forge entire chains</td>
-        <td class="check">None</td>
-        <td class="cross">High — full audit trail exposed + forgeable</td>
-        <td>Deploy hybrid mode from 2028; PQ-only mandatory by 2032</td>
-      </tr>
-      <tr>
-        <td><strong>T-Q3: HNDL — mTLS Sessions</strong></td>
-        <td>Record TLS handshakes; ECDH session secrets recoverable via Shor's once CRQC available</td>
-        <td class="check">None</td>
-        <td class="cross">High — all past session secrets exposed</td>
-        <td>Deploy ML-KEM-768 (X25519MLKEM768) for TLS key exchange</td>
-      </tr>
-      <tr>
-        <td><strong>T-Q4: OID-FED Trust Chain Forgery</strong></td>
-        <td>Extract IdP signing key; issue fake subordinate statements; hijack entire federation</td>
-        <td class="check">Low</td>
-        <td class="cross">Critical — entire trust graph collapses</td>
-        <td>SLH-DSA for Trust Anchors; ML-DSA for subordinate statements</td>
-      </tr>
-      <tr>
-        <td><strong>T-Q5: JTI Hash Weakening (Grover)</strong></td>
-        <td>Grover's algorithm halves SHA-256 pre-image resistance from 256 to 128 effective bits</td>
-        <td class="check">Negligible</td>
-        <td class="partial">Medium — SHA-256 JTIs weaker but not broken</td>
-        <td>Upgrade JTI generation to SHA-512 or use 256-bit cryptographic random UUIDs</td>
-      </tr>
-      <tr>
-        <td><strong>T-Q6: Proof Token Forgery</strong></td>
-        <td>Recover workload private key via Shor's; generate valid agent-proof+jwt for any URI</td>
-        <td class="check">Low</td>
-        <td class="cross">Critical — replay protection bypassed for all old proof tokens</td>
-        <td>Migrate proof token cnf.jwk to OKP/ML-DSA; enforce short proof TTL ≤ 2 min</td>
-      </tr>
-    </table>
-  </div>
-
-  <div class="callout ok">
-    <strong>Agent Fabric advantage:</strong> Because each delegation link carries its own <code>cnf.jwk</code>, upgrading to PQ is link-by-link — you don't need to migrate all agents simultaneously. An orchestrator with an ML-DSA key can issue chains to executors that still use EC, and a mixed-alg chain can still be validated if the validator supports both.
-  </div>
-</div>
-
-<!-- ── Paxos Consensus ────────────────────────────────────────────────── -->
-<div class="scene" id="scene-paxos">
-  <div class="card">
-    <div class="card-title">Paxos / Raft Consensus for Agent Fabric</div>
-    <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">
-      A production Agent Fabric IdP cluster runs multiple replicas. Without distributed consensus, the JTI replay store is per-node (replay attacks succeed by hitting different replicas), key rotation creates a split-brain window, and token revocation propagates with unpredictable delay.
-    </p>
-    <table class="compare-table">
-      <tr><th>Problem</th><th>Without Consensus</th><th>With Raft/Paxos</th></tr>
-      <tr><td><strong>JTI replay across replicas</strong></td><td class="cross">Replay hits replica that hasn't seen the JTI</td><td class="check">JTI log replicated; replay rejected cluster-wide</td></tr>
-      <tr><td><strong>AgentToken issuance in HA</strong></td><td class="cross">Two leaders race → duplicate JTIs</td><td class="check">One Raft leader issues; committed before returning</td></tr>
-      <tr><td><strong>Signing key rotation</strong></td><td class="cross">Replicas briefly serve old and new keys</td><td class="check">Key swap committed as Raft entry with activation time</td></tr>
-      <tr><td><strong>Revocation propagation</strong></td><td class="cross">Revoked token accepted by lagging replica</td><td class="check">Revocation log replicated; instant cluster-wide effect</td></tr>
-      <tr><td><strong>OID-FED SS cache invalidation</strong></td><td class="cross">Stale SS used after Trust Anchor update</td><td class="check">Cache invalidation event committed as Raft entry</td></tr>
-    </table>
-  </div>
-
-  <div class="card">
-    <div class="card-title">Animated Paxos round — agent token issuance</div>
-    <p style="font-size:.875rem;color:var(--muted);margin-bottom:.75rem">Proposal value = <code>{sub, chain_depth, cnf.jwk, jti, exp}</code>. Proposer = IdP primary. Acceptors = IdP replicas. Quorum = 2 of 3.</p>
-    <button class="btn btn-primary" id="af-paxos-btn" onclick="playAgentPaxos()" style="margin-bottom:.75rem">&#9654; Run Paxos Round</button>
-    <svg id="af-paxos-svg" viewBox="0 0 680 180" xmlns="http://www.w3.org/2000/svg" class="paxos-svg">
-      <rect id="afpn0" x="10"  y="60" width="140" height="60" rx="8" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
-      <text x="80"  y="87" text-anchor="middle" fill="#ffa657" font-family="sans-serif" font-size="11" font-weight="700">Proposer</text>
-      <text x="80"  y="103" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="9">idp-primary</text>
-      <rect id="afpn1" x="270" y="60" width="140" height="60" rx="8" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
-      <text x="340" y="87" text-anchor="middle" fill="#58a6ff" font-family="sans-serif" font-size="11" font-weight="700">Acceptor 1</text>
-      <text x="340" y="103" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="9">idp-replica-1</text>
-      <rect id="afpn2" x="530" y="60" width="140" height="60" rx="8" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
-      <text x="600" y="87" text-anchor="middle" fill="#58a6ff" font-family="sans-serif" font-size="11" font-weight="700">Acceptor 2</text>
-      <text x="600" y="103" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="9">idp-replica-2</text>
-      <line x1="150" y1="90" x2="270" y2="90" stroke="#30363d" stroke-dasharray="4,3" stroke-width="1"/>
-      <line x1="410" y1="90" x2="530" y2="90" stroke="#30363d" stroke-dasharray="4,3" stroke-width="1"/>
-      <circle id="afppkt1" cx="80" cy="90" r="7" fill="#ffa657" class="pkt-circle"/>
-      <circle id="afppkt2" cx="80" cy="90" r="7" fill="#58a6ff" class="pkt-circle"/>
-      <text id="afpmsg1" x="210" y="80" text-anchor="middle" fill="#7d8590" font-family="monospace" font-size="9" visibility="hidden">Prepare(n=1)</text>
-      <text id="afpmsg2" x="210" y="108" text-anchor="middle" fill="#58a6ff" font-family="monospace" font-size="9" visibility="hidden">Promise(n=1)</text>
-      <text id="afpmsg3" x="470" y="80" text-anchor="middle" fill="#7d8590" font-family="monospace" font-size="9" visibility="hidden">Prepare(n=1)</text>
-      <text id="afpmsg4" x="470" y="108" text-anchor="middle" fill="#58a6ff" font-family="monospace" font-size="9" visibility="hidden">Promise(n=1)</text>
-      <text id="afpmsg5" x="210" y="80" text-anchor="middle" fill="#3fb950" font-family="monospace" font-size="9" visibility="hidden">Accept(n=1,{jti,sub})</text>
-      <text id="afpmsg6" x="470" y="80" text-anchor="middle" fill="#3fb950" font-family="monospace" font-size="9" visibility="hidden">Accept(n=1,{jti,sub})</text>
-      <text id="af-paxos-status" x="340" y="165" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="12" font-weight="700">Click ▶ to begin</text>
-    </svg>
-    <div>
-      <div class="anim-step-sm" id="afpxs1"><strong>Phase 1a — Prepare(n)</strong> — Proposer broadcasts ballot number to all acceptors</div>
-      <div class="anim-step-sm" id="afpxs2"><strong>Phase 1b — Promise(n)</strong> — Acceptors promise not to accept lower ballots; return any prior accepted value</div>
-      <div class="anim-step-sm" id="afpxs3"><strong>Phase 2a — Accept(n, v)</strong> — Proposer has quorum, broadcasts token payload for acceptance</div>
-      <div class="anim-step-sm" id="afpxs4"><strong>Phase 2b — Committed</strong> — Quorum accepted; agent+jwt issued; JTI recorded on all 3 replicas</div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">Practical: Raft over Classic Paxos</div>
-    <div class="callout">
-      <strong>Most deployments use Raft</strong> (Multi-Paxos equivalent with deterministic leader election). etcd, CockroachDB, and TiKV all use Raft. A 3-node or 5-node Agent Fabric IdP cluster backed by etcd (as used by Kubernetes) gets Raft consensus for free, including a replicated JTI store, consistent key rotation, and revocation log.
-    </div>
-    <ul class="steps" style="list-style:none;padding:0">
-      <li><div class="step-num">1</div><div>3 IdP replicas (or 5 for 2-failure tolerance). Raft leader handles all token issuance writes.</div></li>
-      <li><div class="step-num">2</div><div>JTI written to Raft log before token returned to caller. All replicas see the same JTI history.</div></li>
-      <li><div class="step-num">3</div><div>Key rotation committed as a Raft entry with a future activation timestamp. All replicas switch simultaneously.</div></li>
-      <li><div class="step-num">4</div><div>Gateways subscribe to revocation SSE stream from Raft leader. Revoked JTIs propagated within one RTT.</div></li>
-    </ul>
-  </div>
-</div>
 
 <!-- ── Scene: mTLS Transport ──────────────────────────────────────────────── -->
 <div class="scene" id="scene-mtls">
@@ -2527,7 +2240,7 @@ KER ═════════════════════════�
     </p>
     <div style="background:rgba(88,166,255,.07);border:1px solid rgba(88,166,255,.2);border-radius:8px;padding:12px;font-size:13px;margin-bottom:1rem;display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
       <div style="flex:1;min-width:200px">
-        <strong style="color:#58a6ff">WIMSE Agent Fabric</strong> handles <em>who the agent is</em>:<br>
+        <strong style="color:#58a6ff">AI Agent Security Lab</strong> handles <em>who the agent is</em>:<br>
         <span style="font-size:12px;color:var(--muted)">AgentToken (<code>agent+jwt</code>) + SPIFFE SVID prove agent identity to the gateway. Delegation chains show the full call path. mTLS binds cert to token.</span>
       </div>
       <div style="color:var(--muted);font-size:20px;align-self:center">→</div>
@@ -2907,7 +2620,7 @@ KER ═════════════════════════�
   <div class="card">
     <div class="card-title">x402 + WIMSE: Pay-per-Call APIs for AI Agents</div>
     <p class="spec-ref">
-      Integrating the <a href="https://x402.org" target="_blank">x402 HTTP payment protocol</a> with WIMSE Agent Fabric + CB4A.
+      Integrating the <a href="https://x402.org" target="_blank">x402 HTTP payment protocol</a> with AI Agent Security (AgentToken + CB4A).
       Instead of EVM wallet signatures, agents present CB4A-DPoP credentials as payment authorization — fully
       cryptographically bound to the paying agent's SPIFFE identity.
     </p>
@@ -3509,14 +3222,14 @@ KER ═════════════════════════�
   <div class="card">
     <div class="card-title">Standards Tracker</div>
     <p class="spec-ref">
-      This PoC implements twelve IETF and OpenID standards — most of them active drafts still evolving toward production readiness.
+      This PoC implements thirteen IETF and OpenID standards — most of them active drafts still evolving toward production readiness.
       A GitHub Actions workflow checks the IETF Datatracker API daily and opens a labelled issue when any revision changes.
       The <strong>Impl. commit</strong> column links to the exact commit that last implemented or verified compatibility with that draft revision.
     </p>
     <p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">
       Last checked: <code>2026-08-07</code> &nbsp;·&nbsp;
-      <a href="https://github.com/jralmaraz/wimse-agent-fabric/blob/main/standards-baseline.json" target="_blank" style="color:var(--blue)">standards-baseline.json</a> &nbsp;·&nbsp;
-      <a href="https://github.com/jralmaraz/wimse-agent-fabric/blob/main/.github/workflows/standards-tracker.yml" target="_blank" style="color:var(--blue)">standards-tracker.yml</a>
+      <a href="https://github.com/jralmaraz/ai-agent-security/blob/main/standards-baseline.json" target="_blank" style="color:var(--blue)">standards-baseline.json</a> &nbsp;·&nbsp;
+      <a href="https://github.com/jralmaraz/ai-agent-security/blob/main/.github/workflows/standards-tracker.yml" target="_blank" style="color:var(--blue)">standards-tracker.yml</a>
     </p>
     <div style="display:flex;gap:0;border-radius:6px;overflow:hidden;border:1px solid var(--border);margin-bottom:10px;font-size:10px">
       <div style="flex:1;padding:7px 6px;text-align:center;background:rgba(107,114,128,.12);color:var(--muted);font-weight:700" title="Not yet adopted by any WG. Highly unstable.">Individual Draft</div>
@@ -3551,7 +3264,7 @@ KER ═════════════════════════�
         <td style="text-align:center"><code>-02</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/identity/token.go</code>, <code>pkg/identity/chain.go</code></td>
         <td style="font-size:11px">AgentToken (<code>agent+jwt</code>) extends WIT — any <code>cnf.jwk</code> or <code>typ</code> changes affect <code>pkg/identity</code></td>
-        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/12a6936" target="_blank" style="color:var(--blue)"><code>12a6936</code></a></td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/ai-agent-security/commit/12a6936" target="_blank" style="color:var(--blue)"><code>12a6936</code></a></td>
       </tr>
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-wpt/" target="_blank" style="color:var(--blue)">WPT — Workload Proof Token</a></td>
@@ -3561,7 +3274,7 @@ KER ═════════════════════════�
         <td style="text-align:center"><code>-01</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/identity/proof.go</code>, <code>internal/gateway</code></td>
         <td style="font-size:11px">AgentProofToken (<code>application/agent-proof+jwt</code>) — <code>aud</code>, <code>wth</code>, <code>tth</code>=SHA-256(Txn-Token), <code>jti</code></td>
-        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/ed3bd65" target="_blank" style="color:var(--blue)"><code>ed3bd65</code></a></td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/ai-agent-security/commit/ed3bd65" target="_blank" style="color:var(--blue)"><code>ed3bd65</code></a></td>
       </tr>
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-transaction-tokens/" target="_blank" style="color:var(--blue)">Txn-Token — OAuth 2.0 Transaction Tokens</a></td>
@@ -3571,7 +3284,7 @@ KER ═════════════════════════�
         <td style="text-align:center"><code>-11</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/txntoken</code>, <code>pkg/identity (tth)</code></td>
         <td style="font-size:11px"><code>typ=txntoken+jwt</code>, propagates user identity + authz context through agent chains; <code>tth</code> binds AgentProofToken to the originating transaction</td>
-        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/ed3bd65" target="_blank" style="color:var(--blue)"><code>ed3bd65</code></a></td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/ai-agent-security/commit/ed3bd65" target="_blank" style="color:var(--blue)"><code>ed3bd65</code></a></td>
       </tr>
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/rfc8693/" target="_blank" style="color:var(--blue)">Token Exchange — OAuth 2.0 Token Exchange</a></td>
@@ -3579,9 +3292,19 @@ KER ═════════════════════════�
         <td><span style="color:var(--green);white-space:nowrap">● Published RFC</span></td>
         <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(62,207,142,.15);color:var(--green)">✓ Implemented</span></td>
         <td style="text-align:center"><code>RFC 8693</code></td>
-        <td style="font-size:10px;color:var(--muted)"><code>pkg/txntoken</code>, <code>pkg/identitychaining</code></td>
-        <td style="font-size:11px"><code>act.sub</code> (actor claim §4.1) in Txn-Token and JWT Authorization Grant — identifies the entry-point agent acting on behalf of the user (<code>sub</code>); nested <code>act</code> represents prior actors in multi-hop chains (informational only per §4.1)</td>
-        <td style="text-align:center;font-size:10px;white-space:nowrap"><span style="color:var(--muted)">this PR</span></td>
+        <td style="font-size:10px;color:var(--muted)"><code>pkg/obo/</code>, <code>pkg/txntoken</code>, <code>pkg/identitychaining</code></td>
+        <td style="font-size:11px"><code>act.sub</code> (actor claim §4.1) — OBO delegated token carries both user <code>sub</code> and agent <code>act.sub</code>; also used in Txn-Token and JWT Authorization Grant for multi-hop chains</td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/ai-agent-security/commit/b634b10" target="_blank" style="color:var(--blue)"><code>b634b10</code></a></td>
+      </tr>
+      <tr style="background:rgba(255,255,255,0.03)">
+        <td><a href="https://datatracker.ietf.org/doc/draft-gco-oauth-delegate-sd-jwt/" target="_blank" style="color:var(--blue)">Delegate SD-JWT — Delegated SD-JWT for OAuth 2.0</a></td>
+        <td style="white-space:nowrap;font-size:11px">IETF OAuth WG</td>
+        <td><span style="color:var(--muted);white-space:nowrap">◌ Individual draft</span></td>
+        <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(107,114,128,.15);color:var(--muted)">◌ Monitoring</span></td>
+        <td style="text-align:center"><code>-00</code></td>
+        <td style="font-size:10px;color:var(--muted)"><code>pkg/obo/user.go</code> (future UserIssuer SD-JWT path)</td>
+        <td style="font-size:11px">Extends RFC 8693 OBO with SD-JWT selective disclosure — the agent presents only the user attributes the target resource needs, enabling privacy-preserving delegation. Would extend <code>pkg/obo/</code> UserIssuer when/if WG-adopted.</td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><span style="color:var(--muted)">monitoring</span></td>
       </tr>
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-identifier/" target="_blank" style="color:var(--blue)">Identifiers — Workload Identifier</a></td>
@@ -3591,7 +3314,7 @@ KER ═════════════════════════�
         <td style="text-align:center"><code>-03</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/identity/token.go</code>, <code>pkg/keys/mtls.go</code></td>
         <td style="font-size:11px">SPIFFE URI format for agent SVIDs — <code>spiffe://trust-domain/path</code></td>
-        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/12a6936" target="_blank" style="color:var(--blue)"><code>12a6936</code></a></td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/ai-agent-security/commit/12a6936" target="_blank" style="color:var(--blue)"><code>12a6936</code></a></td>
       </tr>
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-mutual-tls/" target="_blank" style="color:var(--blue)">mTLS — Mutual TLS Binding</a></td>
@@ -3601,7 +3324,7 @@ KER ═════════════════════════�
         <td style="text-align:center"><code>-02</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/keys/mtls.go</code>, <code>internal/gateway/server.go</code></td>
         <td style="font-size:11px">Token-cert binding in gateway middleware — URI SAN matching against AgentToken <code>sub</code></td>
-        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/73f519b" target="_blank" style="color:var(--blue)"><code>73f519b</code></a></td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/ai-agent-security/commit/73f519b" target="_blank" style="color:var(--blue)"><code>73f519b</code></a></td>
       </tr>
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-arch/" target="_blank" style="color:var(--blue)">Arch — WIMSE Architecture</a></td>
@@ -3611,7 +3334,7 @@ KER ═════════════════════════�
         <td style="text-align:center"><code>-08</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/identity/chain.go</code>, <code>internal/gateway</code></td>
         <td style="font-size:11px">Token exchange, trust domain boundaries, delegation chain semantics</td>
-        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/018b9d8" target="_blank" style="color:var(--blue)"><code>018b9d8</code></a></td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/ai-agent-security/commit/018b9d8" target="_blank" style="color:var(--blue)"><code>018b9d8</code></a></td>
       </tr>
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-hartman-credential-broker-4-agents/" target="_blank" style="color:var(--blue)">CB4A — Credential Broker for Agents</a></td>
@@ -3621,7 +3344,7 @@ KER ═════════════════════════�
         <td style="text-align:center"><code>-00</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/cb4a</code></td>
         <td style="font-size:11px">TRE JWT, PDP decision JWT, CB4A token, Tier model, DPoP binding via <code>cnf.jkt</code></td>
-        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/77d0232" target="_blank" style="color:var(--blue)"><code>77d0232</code></a></td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/ai-agent-security/commit/77d0232" target="_blank" style="color:var(--blue)"><code>77d0232</code></a></td>
       </tr>
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/rfc9449/" target="_blank" style="color:var(--blue)">DPoP — OAuth 2.0 Demonstrating Proof of Possession</a></td>
@@ -3631,7 +3354,7 @@ KER ═════════════════════════�
         <td style="text-align:center"><code>RFC 9449</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/cb4a/cdp.go</code></td>
         <td style="font-size:11px">DPoP proof JWT (<code>dpop+jwt</code>), <code>cnf.jkt</code> thumbprint, <code>ath</code> binding, <code>jti</code> replay protection in CDP</td>
-        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/77d0232" target="_blank" style="color:var(--blue)"><code>77d0232</code></a></td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/ai-agent-security/commit/77d0232" target="_blank" style="color:var(--blue)"><code>77d0232</code></a></td>
       </tr>
       <tr>
         <td><a href="https://openid.net/specs/openid-federation-1_0.html" target="_blank" style="color:var(--blue)">OID-FED — OpenID Federation 1.0</a></td>
@@ -3641,7 +3364,7 @@ KER ═════════════════════════�
         <td style="text-align:center"><code>1.0-41</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/federation</code>, <code>internal/gateway/multivalidator.go</code></td>
         <td style="font-size:11px">Entity Configuration, Subordinate Statement, <code>authority_hints</code>, chain resolution for cross-org AgentToken validation</td>
-        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/dd5b164" target="_blank" style="color:var(--blue)"><code>dd5b164</code></a></td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/ai-agent-security/commit/dd5b164" target="_blank" style="color:var(--blue)"><code>dd5b164</code></a></td>
       </tr>
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-spiffe-client-auth/" target="_blank" style="color:var(--blue)">SPIFFE Client Auth — JWT-bearer OAuth assertion</a></td>
@@ -3651,7 +3374,7 @@ KER ═════════════════════════�
         <td style="text-align:center"><code>-02</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/spiffeclientauth</code></td>
         <td style="font-size:11px">AgentToken as <code>client_assertion</code> (<code>urn:…:jwt-bearer</code>) — eliminates pre-shared OAuth client secrets for agent workloads</td>
-        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/018b9d8" target="_blank" style="color:var(--blue)"><code>018b9d8</code></a></td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/ai-agent-security/commit/018b9d8" target="_blank" style="color:var(--blue)"><code>018b9d8</code></a></td>
       </tr>
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-identity-chaining/" target="_blank" style="color:var(--blue)">Identity Chaining — JWT Authorization Grant</a></td>
@@ -3661,7 +3384,7 @@ KER ═════════════════════════�
         <td style="text-align:center"><code>-17</code></td>
         <td style="font-size:10px;color:var(--muted)"><code>pkg/identitychaining</code></td>
         <td style="font-size:11px"><code>typ=jwt-authz-grant</code>, cross-trust-domain propagation of agent SPIFFE IDs; <code>aud</code>=target AS endpoint, <code>jti</code> replay protection</td>
-        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/018b9d8" target="_blank" style="color:var(--blue)"><code>018b9d8</code></a></td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/ai-agent-security/commit/018b9d8" target="_blank" style="color:var(--blue)"><code>018b9d8</code></a></td>
       </tr>
       <tr style="background:rgba(255,255,255,0.03)">
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-rfc8725bis/" target="_blank" style="color:var(--blue)">JWT-BCP — JWT Best Current Practices</a></td>
@@ -3671,7 +3394,7 @@ KER ═════════════════════════�
         <td style="text-align:center"><code>bis</code></td>
         <td style="font-size:10px;color:var(--muted)">All validator files</td>
         <td style="font-size:11px">Compliance audit 2026-08-02: all parsers now enforce <code>WithValidMethods(ES256)</code>, <code>WithExpirationRequired</code>, <code>WithIssuedAt</code>, and <code>typ</code> header checks — mitigates algorithm confusion, alg:none, and missing-exp attacks</td>
-        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/wimse-agent-fabric/commit/9d73ac4" target="_blank" style="color:var(--blue)"><code>9d73ac4</code></a></td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/ai-agent-security/commit/9d73ac4" target="_blank" style="color:var(--blue)"><code>9d73ac4</code></a></td>
       </tr>
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-http-signature/" target="_blank" style="color:var(--blue)">HTTP-Sig — WIMSE HTTP Message Signature Auth</a></td>
@@ -3771,7 +3494,7 @@ KER ═════════════════════════�
     <div class="card-title">Due-diligence policy — every tracker finding</div>
     <p class="spec-ref">
       Each standards-update issue must be triaged, reviewed for breaking changes, and verified against the threat model before it can be closed.
-      See <a href="https://github.com/jralmaraz/wimse-agent-fabric/blob/main/docs/standards-tracking.md#due-diligence-checklist-for-every-standards-tracker-finding" target="_blank" style="color:var(--blue)">docs/standards-tracking.md — checklist</a>.
+      See <a href="https://github.com/jralmaraz/ai-agent-security/blob/main/docs/standards-tracking.md#due-diligence-checklist-for-every-standards-tracker-finding" target="_blank" style="color:var(--blue)">docs/standards-tracking.md — checklist</a>.
     </p>
     <div class="info-grid" style="grid-template-columns:repeat(3,1fr)">
       <div class="info-box blue">
@@ -3798,7 +3521,7 @@ KER ═════════════════════════�
 const go = new Go();
 let wasmReady = false;
 
-WebAssembly.instantiateStreaming(fetch('wimse-agent.wasm'), go.importObject)
+WebAssembly.instantiateStreaming(fetch('agent.wasm'), go.importObject)
   .then(r => {
     go.run(r.instance);
     wasmReady = true;
@@ -5139,6 +4862,45 @@ function scaFlowReset() {
   });
   ['sca-s1','sca-s2','sca-s3','sca-s4'].forEach(id => afSetStep(id, ''));
 }
+
+// ── OBO delegation demo ───────────────────────────────────────────────────────
+function runOBODemo(btn) {
+  const scope = document.getElementById('obo-scope-select').value;
+  btn.disabled = true;
+  btn.innerHTML = '&#9203; Running\u2026';
+  const result = agentFabric.oboSimulate(scope);
+  btn.disabled = false;
+  btn.innerHTML = '&#9654; Run OBO Flow';
+
+  const stepsEl = document.getElementById('obo-steps');
+  const resultEl = document.getElementById('obo-result');
+
+  if (!result.ok) {
+    stepsEl.style.display = 'none';
+    resultEl.style.display = 'block';
+    resultEl.innerHTML = '<div class="callout danger"><strong>&#10005; OBO rejected:</strong> ' + result.error + '</div>';
+    return;
+  }
+
+  const steps = result.steps || [];
+  stepsEl.innerHTML = steps.map(function(s, i) {
+    return '<div class="anim-step-sm" style="border-color:var(--green)">' +
+      '<span style="color:var(--blue);font-weight:700">' + s.actor + '</span>' +
+      '&nbsp;&middot;&nbsp;<span style="color:var(--text)">' + s.label + '</span>' +
+      '<br><code style="font-size:10px;color:var(--muted)">' + s.detail + '</code>' +
+      '</div>';
+  }).join('');
+  stepsEl.style.display = 'flex';
+
+  resultEl.innerHTML = '<div class="callout ok">' +
+    '<strong>&#10003; Delegation complete.</strong> Resource server sees:<br>' +
+    '<code>sub</code> = <strong>' + result.userID + '</strong> (human user) &nbsp;&middot;&nbsp;' +
+    '<code>act.sub</code> = <strong>' + result.agentID + '</strong> (agent) &nbsp;&middot;&nbsp;' +
+    '<code>scope</code> = <strong>&quot;' + result.scope + '&quot;</strong>' +
+    '</div>';
+  resultEl.style.display = 'block';
+}
+
 async function playSCAFlow() {
   if (scaFlowRunning) return;
   scaFlowRunning = true;
