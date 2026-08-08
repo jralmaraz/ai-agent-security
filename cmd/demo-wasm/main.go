@@ -18,6 +18,7 @@ import (
 	"github.com/jralmaraz/ai-agent-security/pkg/federation"
 	"github.com/jralmaraz/ai-agent-security/pkg/identity"
 	"github.com/jralmaraz/ai-agent-security/pkg/keys"
+	"github.com/jralmaraz/ai-agent-security/pkg/obo"
 	x402pkg "github.com/jralmaraz/ai-agent-security/pkg/x402"
 )
 
@@ -1177,6 +1178,120 @@ func simulateCredentialBroker(_ js.Value, _ []js.Value) any {
 	})
 }
 
+// ── OBO delegation ────────────────────────────────────────────────────────────
+
+// oboSimulate runs the full On-Behalf-Of flow in one call and returns a
+// structured trace suitable for the demo animation.
+//
+// JS signature: agentFabric.oboSimulate(requestedScope) → {ok, steps:[]}
+func oboSimulate(this js.Value, args []js.Value) any {
+	requestedScope := "read:calendar write:booking"
+	if len(args) > 0 && args[0].Type() == js.TypeString && args[0].String() != "" {
+		requestedScope = args[0].String()
+	}
+
+	// ── key generation ──────────────────────────────────────────────────────
+	idpKP, err := keys.GenerateECKeyPair()
+	if err != nil {
+		return errObj("generate IdP key: " + err.Error())
+	}
+	agentIdpKP, err := keys.GenerateECKeyPair()
+	if err != nil {
+		return errObj("generate agent IdP key: " + err.Error())
+	}
+	agentKP, err := keys.GenerateECKeyPair()
+	if err != nil {
+		return errObj("generate agent key: " + err.Error())
+	}
+	oboKP, err := keys.GenerateECKeyPair()
+	if err != nil {
+		return errObj("generate OBO AS key: " + err.Error())
+	}
+
+	const (
+		idpID      = "https://idp.example.com"
+		asID       = "https://as.example.com"
+		agentSubj  = "spiffe://example.com/agents/booking-assistant"
+		userSubj   = "user:alice@example.com"
+		userEmail  = "alice@example.com"
+		userScope  = "read:calendar write:booking read:contacts"
+		resourceID = "https://booking-service.example.com"
+	)
+
+	steps := []any{}
+	addStep := func(actor, label, detail string) {
+		steps = append(steps, map[string]any{
+			"actor":  actor,
+			"label":  label,
+			"detail": detail,
+		})
+	}
+
+	// Step 1: IdP issues user token.
+	userIssuer := obo.NewUserIssuer(idpID, idpKP.Private, time.Hour)
+	userToken, err := userIssuer.Issue(userSubj, userEmail, userScope, asID)
+	if err != nil {
+		return errObj("issue user token: " + err.Error())
+	}
+	addStep("IdP", "Issue user token",
+		"sub="+userSubj+" scope=\""+userScope+"\"  typ=user+jwt")
+
+	// Step 2: Agent IdP issues AgentToken.
+	agentIssuer := identity.NewAgentIssuer(asID, agentIdpKP.Private, time.Hour)
+	agentToken, err := agentIssuer.Issue(identity.IssueOptions{
+		Subject:     agentSubj,
+		Role:        identity.RoleOrchestrator,
+		WorkloadKey: agentKP.Public,
+	})
+	if err != nil {
+		return errObj("issue agent token: " + err.Error())
+	}
+	addStep("Agent IdP", "Issue AgentToken",
+		"sub="+agentSubj+"  typ=agent+jwt")
+
+	// Step 3: Agent presents both tokens to OBO endpoint.
+	addStep("Agent", "OBO request to AS",
+		"grant_type=token-exchange  subject_token=user+jwt  actor_token=agent+jwt  scope=\""+requestedScope+"\"")
+
+	agentValidator := identity.NewAgentValidator(asID, agentIdpKP.Public)
+	userValidator := obo.NewUserValidator(idpID, idpKP.Public)
+	oboIssuer := obo.NewOBOIssuer(asID, oboKP.Private, agentValidator, userValidator, 5*time.Minute)
+
+	oboToken, err := oboIssuer.Issue(agentToken, userToken, resourceID, requestedScope)
+	if err != nil {
+		return errObj("issue OBO token: " + err.Error())
+	}
+
+	// Step 4: AS validates and issues delegated token.
+	addStep("AS (OBO endpoint)", "Validate both tokens — issue delegated token",
+		"✓ user token valid  ✓ agent token valid  ✓ scope \""+requestedScope+"\" ⊆ user scope  → issue obo+jwt")
+
+	// Step 5: Agent calls resource with OBO token.
+	addStep("Agent", "Call resource with OBO token",
+		"Authorization: Bearer <obo+jwt>  aud="+resourceID)
+
+	// Step 6: Resource validates and reads both identities.
+	oboValidator := obo.NewOBOValidator(asID, oboKP.Public)
+	result, err := oboValidator.Validate(oboToken, resourceID)
+	if err != nil {
+		return errObj("validate OBO token: " + err.Error())
+	}
+	addStep("Booking Service", "Validate OBO token — see both identities",
+		"sub (user)="+result.UserID+"  act.sub (agent)="+result.AgentID+"  scope=\""+result.Scope+"\"")
+
+	_ = userToken
+	_ = agentToken
+	return okObj(map[string]any{
+		"steps":     steps,
+		"userID":    result.UserID,
+		"agentID":   result.AgentID,
+		"scope":     result.Scope,
+		"oboTyp":    "obo+jwt",
+		"userTyp":   "user+jwt",
+		"agentTyp":  "agent+jwt",
+	})
+}
+
 // ── WASM registration ─────────────────────────────────────────────────────────
 
 func main() {
@@ -1204,6 +1319,8 @@ func main() {
 		"cb4aMint":    js.FuncOf(cb4aMint),
 		"cb4aAPICall": js.FuncOf(cb4aAPICall),
 		"cb4aAudit":   js.FuncOf(cb4aAudit),
+		// OBO delegation flow
+		"oboSimulate": js.FuncOf(oboSimulate),
 		// x402 payment flow
 		"x402Init":            js.FuncOf(x402Init),
 		"x402HitAPI":          js.FuncOf(x402HitAPI),

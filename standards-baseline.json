@@ -544,9 +544,27 @@
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-hardt-oauth-aauth-protocol/",
       "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-hardt-oauth-aauth-protocol/",
       "source_repo": null,
-      "impact": "AI-agent-specific authorization protocol \u2014 defines how agents request delegated permissions (scopes) for sub-tasks, with explicit user/operator approval flows. Directly addresses the gap in scene-landscape: OAuth+RFC 8693 does not define how an agent communicates the scope of what it needs to do, or how a user approves fine-grained agent actions. AAuth fills this with an agent-to-AS authorization request flow. When adopted, adds an AAuth request type alongside AgentToken and CB4A in the Auth Landscape tab.",
+      "impact": "AI-agent-specific authorization protocol — defines cryptographic agent identity (aa-agent+jwt), resource authorization requirements (aa-resource+jwt, AAuth-Requirement header), and authorization grants (aa-auth+jwt). A clean-slate alternative to OBO+RFC 8693: no pre-registration, no shared secrets, HTTP Message Signatures bind all requests to the agent's key. Delegation via call-chaining (upstream_token) and sub-agent patterns. Compared to OBO/RFC 8693 (server-mediated, works with existing OAuth AS), AAuth is cryptographic and decentralized but requires new infrastructure everywhere. Both address the delegation gap; AAuth additionally covers identity and PoP. Demo shows both paths for the x402 payment scenario.",
       "used_in": [
-        "demo/index.html (scene-landscape)"
+        "demo/index.html (scene-landscape)",
+        "demo/index.html (scene-delegation)",
+        "demo/index.html (scene-protocol-map)"
+      ]
+    },
+    {
+      "id": "draft-gco-oauth-delegate-sd-jwt",
+      "label": "Delegated SD-JWT (dSD-JWT)",
+      "short": "dSD-JWT",
+      "wg": "IETF OAuth WG",
+      "last_known_rev": "00",
+      "implemented_rev": null,
+      "status": "individual-draft",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-gco-oauth-delegate-sd-jwt/",
+      "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-gco-oauth-delegate-sd-jwt/",
+      "source_repo": null,
+      "impact": "Cryptographic delegation via SD-JWT chains — each delegation level signs the next, proving the delegate was the original recipient. Selective disclosure ensures downstream parties only see claims they need (privacy-preserving delegation). Sits between OBO (server-mediated, no privacy) and AAuth (full clean-slate). Tracked in the Protocol Map comparison as the privacy-preserving delegation option. When adopted, adds dSD-JWT issuance alongside OBO in the Delegation tab.",
+      "used_in": [
+        "demo/index.html (scene-protocol-map)"
       ]
     }
   ]
