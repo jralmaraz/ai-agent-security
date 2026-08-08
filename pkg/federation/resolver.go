@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/keys"
+	"github.com/jralmaraz/ai-agent-security/pkg/keys"
 )
 
 // ResolvedEntity holds the verified public keys for an entity and when they expire.

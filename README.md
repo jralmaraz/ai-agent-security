@@ -2,7 +2,7 @@
 
 **Proof-of-concept: cryptographic identity for multi-hop AI agent workloads**
 
-[![CI](https://github.com/jralmaraz/wimse-agent-fabric/actions/workflows/ci.yml/badge.svg)](https://github.com/jralmaraz/wimse-agent-fabric/actions/workflows/ci.yml)
+[![CI](https://github.com/jralmaraz/ai-agent-security/actions/workflows/ci.yml/badge.svg)](https://github.com/jralmaraz/ai-agent-security/actions/workflows/ci.yml)
 [![Go 1.26](https://img.shields.io/badge/go-1.26-00ADD8?logo=go)](https://go.dev)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
@@ -27,8 +27,8 @@ This is a research PoC — not production software. It is intended to illustrate
 
 ```bash
 # Prerequisites: Go 1.26+
-git clone https://github.com/jralmaraz/wimse-agent-fabric
-cd wimse-agent-fabric
+git clone https://github.com/jralmaraz/ai-agent-security
+cd ai-agent-security
 
 # Activate the pre-push quality gate (run once after cloning)
 make hooks
@@ -126,7 +126,7 @@ Agent-Proof-Token:    <compact AgentProofToken JWT>
 ## Project layout
 
 ```
-wimse-agent-fabric/
+ai-agent-security/
 ├── pkg/
 │   ├── keys/
 │   │   ├── ec.go           EC P-256 key generation, JWK (de)serialization

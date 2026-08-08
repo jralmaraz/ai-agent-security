@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/keys"
+	"github.com/jralmaraz/ai-agent-security/pkg/keys"
 )
 
 func TestGenerateCA(t *testing.T) {

@@ -1,5 +1,5 @@
 // Package keys provides EC P-256 key pair generation and JWK serialization
-// for the wimse-agent-fabric identity layer.
+// for the ai-agent-security identity layer.
 package keys
 
 import (

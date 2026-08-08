@@ -36,10 +36,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jralmaraz/wimse-agent-fabric/internal/authz"
-	"github.com/jralmaraz/wimse-agent-fabric/internal/gateway"
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/identity"
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/keys"
+	"github.com/jralmaraz/ai-agent-security/internal/authz"
+	"github.com/jralmaraz/ai-agent-security/internal/gateway"
+	"github.com/jralmaraz/ai-agent-security/pkg/identity"
+	"github.com/jralmaraz/ai-agent-security/pkg/keys"
 )
 
 func main() {

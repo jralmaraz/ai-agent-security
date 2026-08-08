@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/cb4a"
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/identity"
+	"github.com/jralmaraz/ai-agent-security/pkg/cb4a"
+	"github.com/jralmaraz/ai-agent-security/pkg/identity"
 )
 
 // PaymentGateway is the server-side component that issues x402 payment challenges

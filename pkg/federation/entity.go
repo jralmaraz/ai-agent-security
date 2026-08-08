@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/keys"
+	"github.com/jralmaraz/ai-agent-security/pkg/keys"
 )
 
 const entityStatementTyp = "entity-statement+jwt"

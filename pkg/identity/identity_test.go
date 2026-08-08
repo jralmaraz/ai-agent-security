@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/jralmaraz/wimse-agent-fabric/pkg/identity"
+	"github.com/jralmaraz/ai-agent-security/pkg/identity"
 )
 
 // ── helpers ──────────────────────────────────────────────────────────────────
