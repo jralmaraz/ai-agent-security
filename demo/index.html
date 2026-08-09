@@ -614,30 +614,30 @@ main{max-width:960px;margin:0 auto;padding:2rem}
         <marker id="obo-arr-g" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#3fb950"/></marker>
       </defs>
       <!-- User -->
-      <circle cx="44" cy="55" r="25" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+      <circle id="obo-node-user" cx="44" cy="55" r="25" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
       <text x="44" y="52" text-anchor="middle" fill="#58a6ff" font-size="8" font-weight="700">USER</text>
       <text x="44" y="64" text-anchor="middle" fill="#7d8590" font-size="7">alice@corp</text>
       <!-- User IdP -->
-      <rect x="80" y="38" width="98" height="34" rx="5" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+      <rect id="obo-node-useridp" x="80" y="38" width="98" height="34" rx="5" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
       <text x="129" y="53" text-anchor="middle" fill="#58a6ff" font-size="8.5" font-weight="700">User IdP</text>
       <text x="129" y="65" text-anchor="middle" fill="#7d8590" font-size="7">issues user+jwt</text>
       <line x1="70" y1="55" x2="80" y2="55" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#obo-arr-b)"/>
       <!-- user+jwt dashed arrow to OBO AS -->
-      <line x1="178" y1="55" x2="256" y2="80" stroke="#58a6ff" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#obo-arr-b)"/>
+      <line id="obo-arrow-useras" x1="178" y1="55" x2="256" y2="80" stroke="#58a6ff" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#obo-arr-b)"/>
       <text x="212" y="58" text-anchor="middle" fill="#58a6ff" font-size="7" font-family="monospace">user+jwt</text>
       <!-- Agent -->
-      <rect x="80" y="112" width="98" height="34" rx="5" fill="#161b22" stroke="#bc8cff" stroke-width="1.5"/>
+      <rect id="obo-node-agent" x="80" y="112" width="98" height="34" rx="5" fill="#161b22" stroke="#bc8cff" stroke-width="1.5"/>
       <text x="129" y="127" text-anchor="middle" fill="#bc8cff" font-size="8.5" font-weight="700">Booking Agent</text>
       <text x="129" y="138" text-anchor="middle" fill="#7d8590" font-size="7">spiffe://.../booking</text>
       <!-- Agent IdP label -->
-      <rect x="80" y="156" width="98" height="22" rx="4" fill="#161b22" stroke="#bc8cff" stroke-width="1"/>
+      <rect id="obo-node-agentidp" x="80" y="156" width="98" height="22" rx="4" fill="#161b22" stroke="#bc8cff" stroke-width="1"/>
       <text x="129" y="171" text-anchor="middle" fill="#bc8cff" font-size="7.5" font-weight="700">Agent IdP → agent+jwt</text>
       <line x1="129" y1="156" x2="129" y2="146" stroke="#bc8cff" stroke-width="1.2" marker-end="url(#obo-arr-p)"/>
       <!-- agent+jwt dashed arrow to OBO AS -->
-      <line x1="178" y1="122" x2="256" y2="102" stroke="#bc8cff" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#obo-arr-p)"/>
+      <line id="obo-arrow-agentas" x1="178" y1="122" x2="256" y2="102" stroke="#bc8cff" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#obo-arr-p)"/>
       <text x="212" y="122" text-anchor="middle" fill="#bc8cff" font-size="7" font-family="monospace">agent+jwt</text>
       <!-- OBO AS -->
-      <rect x="258" y="78" width="120" height="44" rx="5" fill="#161b22" stroke="#f5a623" stroke-width="1.5"/>
+      <rect id="obo-node-as" x="258" y="78" width="120" height="44" rx="5" fill="#161b22" stroke="#f5a623" stroke-width="1.5"/>
       <text x="318" y="96" text-anchor="middle" fill="#f5a623" font-size="9" font-weight="700">OBO AS</text>
       <text x="318" y="109" text-anchor="middle" fill="#7d8590" font-size="7">grant_type=token-exchange</text>
       <!-- Validation annotations -->
@@ -646,10 +646,10 @@ main{max-width:960px;margin:0 auto;padding:2rem}
       <text x="258" y="40" text-anchor="start" fill="#f5a623" font-size="7">&#10003; scope &#8838; user grant</text>
       <line x1="310" y1="55" x2="310" y2="78" stroke="#f5a623" stroke-dasharray="2,2" stroke-width="1"/>
       <!-- obo+jwt output -->
-      <line x1="378" y1="100" x2="430" y2="100" stroke="#3fb950" stroke-width="1.5" marker-end="url(#obo-arr-g)"/>
+      <line id="obo-arrow-obo" x1="378" y1="100" x2="430" y2="100" stroke="#3fb950" stroke-width="1.5" marker-end="url(#obo-arr-g)"/>
       <text x="404" y="93" text-anchor="middle" fill="#3fb950" font-size="7.5" font-family="monospace">obo+jwt</text>
       <!-- Resource Server -->
-      <rect x="432" y="80" width="148" height="40" rx="5" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
+      <rect id="obo-node-resource" x="432" y="80" width="148" height="40" rx="5" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
       <text x="506" y="97" text-anchor="middle" fill="#3fb950" font-size="9" font-weight="700">Calendar API</text>
       <text x="506" y="110" text-anchor="middle" fill="#7d8590" font-size="7">validates sub + act.sub + scope</text>
       <!-- Resource server confirmation -->
@@ -762,7 +762,7 @@ main{max-width:960px;margin:0 auto;padding:2rem}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
       <div>
         <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Plain OBO (today)</div>
-        <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:var(--mono);font-size:11px;line-height:1.9">
+        <div id="sd-panel-plain" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:var(--mono);font-size:11px;line-height:1.9;transition:border-color .3s,box-shadow .3s">
           <span style="color:#7d8590">// User token sent to OBO AS:</span><br>
           {<br>
           &nbsp;&nbsp;<span style="color:#58a6ff">"sub"</span>: <span style="color:#3fb950">"user:alice@example.com"</span>,<br>
@@ -774,7 +774,7 @@ main{max-width:960px;margin:0 auto;padding:2rem}
       </div>
       <div>
         <div style="font-size:11px;color:var(--purple);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">SD-JWT OBO (draft-gco)</div>
-        <div style="background:var(--bg);border:1px solid rgba(188,140,255,0.4);border-radius:8px;padding:12px;font-family:var(--mono);font-size:11px;line-height:1.9">
+        <div id="sd-panel-sd" style="background:var(--bg);border:1px solid rgba(188,140,255,0.4);border-radius:8px;padding:12px;font-family:var(--mono);font-size:11px;line-height:1.9;transition:border-color .3s,box-shadow .3s">
           <span style="color:#7d8590">// SD-JWT presented to OBO AS:</span><br>
           {<br>
           &nbsp;&nbsp;<span style="color:#58a6ff">"sub"</span>: <span style="color:#3fb950">"user:alice@example.com"</span>,<br>
@@ -5122,75 +5122,253 @@ function scaFlowReset() {
 }
 
 // ── OBO delegation demo ───────────────────────────────────────────────────────
-function runOBODemo(btn) {
+// Default stroke for each OBO SVG node (for reset)
+const OBO_NODE_DEFAULTS = {
+  'obo-node-user':     { stroke:'#58a6ff', sw:'1.5', fill:'#161b22' },
+  'obo-node-useridp':  { stroke:'#58a6ff', sw:'1.5', fill:'#161b22' },
+  'obo-node-agent':    { stroke:'#bc8cff', sw:'1.5', fill:'#161b22' },
+  'obo-node-agentidp': { stroke:'#bc8cff', sw:'1',   fill:'#161b22' },
+  'obo-node-as':       { stroke:'#f5a623', sw:'1.5', fill:'#161b22' },
+  'obo-node-resource': { stroke:'#3fb950', sw:'1.5', fill:'#161b22' },
+};
+const OBO_ARROW_DEFAULTS = {
+  'obo-arrow-useras':  { stroke:'#58a6ff', sw:'1.2' },
+  'obo-arrow-agentas': { stroke:'#bc8cff', sw:'1.2' },
+  'obo-arrow-obo':     { stroke:'#3fb950', sw:'1.5' },
+};
+
+function oboSVGReset() {
+  Object.entries(OBO_NODE_DEFAULTS).forEach(function([id, d]) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.setAttribute('stroke', d.stroke);
+    el.setAttribute('stroke-width', d.sw);
+    el.setAttribute('fill', d.fill);
+    el.style.filter = '';
+  });
+  Object.entries(OBO_ARROW_DEFAULTS).forEach(function([id, d]) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.setAttribute('stroke', d.stroke);
+    el.setAttribute('stroke-width', d.sw);
+    el.style.animation = '';
+  });
+}
+
+function oboSVGActivate(id, color) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.setAttribute('stroke', color || '#e6edf3');
+  el.setAttribute('stroke-width', '2.5');
+  if (el.tagName !== 'line') el.setAttribute('fill', 'rgba(255,255,255,0.04)');
+}
+
+function oboSVGSuccess(id) { oboSVGActivate(id, '#3fb950'); }
+function oboSVGError(id)   { oboSVGActivate(id, '#f85149'); if (document.getElementById(id)) document.getElementById(id).setAttribute('fill','rgba(248,81,73,0.07)'); }
+
+function oboArrowFlow(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.setAttribute('stroke-width', '2');
+  el.style.strokeDasharray = '8,4';
+  el.style.animation = 'dashscroll 0.4s linear infinite';
+}
+
+async function runOBODemo(btn) {
   const scope = document.getElementById('obo-scope-select').value;
   btn.disabled = true;
   btn.innerHTML = '&#9203; Running\u2026';
-  const result = agentFabric.oboSimulate(scope);
-  btn.disabled = false;
-  btn.innerHTML = '&#9654; Run OBO Flow';
+
+  // Dim all SVG nodes to set the "pending" baseline
+  oboSVGReset();
+  Object.keys(OBO_NODE_DEFAULTS).forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) { el.setAttribute('stroke', '#30363d'); el.setAttribute('fill', '#161b22'); }
+  });
 
   const stepsEl = document.getElementById('obo-steps');
   const resultEl = document.getElementById('obo-result');
+  stepsEl.innerHTML = '';
+  stepsEl.style.display = 'flex';
+  resultEl.style.display = 'none';
 
-  if (!result.ok) {
-    stepsEl.style.display = 'none';
-    resultEl.style.display = 'block';
-    resultEl.innerHTML = '<div class="callout danger"><strong>&#10005; OBO rejected:</strong> ' + result.error + '</div>';
-    return;
+  const result = agentFabric.oboSimulate(scope);
+  const steps = result.steps || [];
+
+  // Which SVG nodes to highlight per actor
+  const actorNodes = {
+    'IdP':               ['obo-node-useridp', 'obo-node-user'],
+    'Agent IdP':         ['obo-node-agentidp', 'obo-node-agent'],
+    'Agent':             ['obo-node-agent'],
+    'AS (OBO endpoint)': ['obo-node-as'],
+    'Booking Service':   ['obo-node-resource'],
+  };
+  const actorColors = {
+    'IdP':               '#58a6ff',
+    'Agent IdP':         '#bc8cff',
+    'Agent':             '#bc8cff',
+    'AS (OBO endpoint)': '#f5a623',
+    'Booking Service':   '#3fb950',
+  };
+
+  // Animate through all returned steps
+  for (let i = 0; i < steps.length; i++) {
+    const s = steps[i];
+    const color = actorColors[s.actor] || '#e6edf3';
+
+    // Highlight current actor nodes
+    (actorNodes[s.actor] || []).forEach(function(id) { oboSVGActivate(id, color); });
+
+    // Animate arrows for specific steps
+    if (i === 2) { oboArrowFlow('obo-arrow-useras'); oboArrowFlow('obo-arrow-agentas'); }
+    if (i === 4) { oboArrowFlow('obo-arrow-obo'); }
+
+    // Append step row, fade in
+    const div = document.createElement('div');
+    div.className = 'anim-step-sm active';
+    div.style.borderColor = color;
+    div.innerHTML =
+      '<span style="color:' + color + ';font-weight:700">' + s.actor + '</span>' +
+      '&nbsp;&middot;&nbsp;<span style="color:var(--text)">' + s.label + '</span>' +
+      '<br><code style="font-size:10px;color:var(--muted)">' + s.detail + '</code>';
+    stepsEl.appendChild(div);
+    stepsEl.scrollTop = stepsEl.scrollHeight;
+
+    await delay(850);
+
+    // Mark this step done (dim slightly) before moving on
+    div.classList.remove('active');
+    div.classList.add('done');
+    div.style.borderColor = color;
   }
 
-  const steps = result.steps || [];
-  stepsEl.innerHTML = steps.map(function(s, i) {
-    return '<div class="anim-step-sm" style="border-color:var(--green)">' +
-      '<span style="color:var(--blue);font-weight:700">' + s.actor + '</span>' +
-      '&nbsp;&middot;&nbsp;<span style="color:var(--text)">' + s.label + '</span>' +
-      '<br><code style="font-size:10px;color:var(--muted)">' + s.detail + '</code>' +
-      '</div>';
-  }).join('');
-  stepsEl.style.display = 'flex';
+  if (result.rejected) {
+    // Show rejection at OBO AS
+    oboSVGReset();
+    Object.keys(OBO_NODE_DEFAULTS).forEach(function(id) {
+      const el = document.getElementById(id);
+      if (el && id !== 'obo-node-as') { el.setAttribute('stroke', '#30363d'); }
+    });
+    oboSVGError('obo-node-as');
 
-  resultEl.innerHTML = '<div class="callout ok">' +
-    '<strong>&#10003; Delegation complete.</strong> Resource server sees:<br>' +
-    '<code>sub</code> = <strong>' + result.userID + '</strong> (human user) &nbsp;&middot;&nbsp;' +
-    '<code>act.sub</code> = <strong>' + result.agentID + '</strong> (agent) &nbsp;&middot;&nbsp;' +
-    '<code>scope</code> = <strong>&quot;' + result.scope + '&quot;</strong>' +
-    '</div>';
-  resultEl.style.display = 'block';
+    const rejDiv = document.createElement('div');
+    rejDiv.className = 'anim-step-sm active';
+    rejDiv.style.borderColor = '#f85149';
+    rejDiv.innerHTML =
+      '<span style="color:#f85149;font-weight:700">AS (OBO endpoint)</span>' +
+      '&nbsp;&middot;&nbsp;<span style="color:var(--text)">Reject &#8212; scope not a subset of user grant</span>' +
+      '<br><code style="font-size:10px;color:#f85149">' + result.error + '</code>';
+    stepsEl.appendChild(rejDiv);
+
+    resultEl.innerHTML = '<div class="callout danger"><strong>&#10005; OBO rejected:</strong> ' + result.error + '<br><span style="font-size:12px;color:var(--muted)">The OBO AS enforces scope &sube; user_grant. Requesting a scope the user never consented to is rejected at issuance time.</span></div>';
+    resultEl.style.display = 'block';
+
+  } else if (result.ok) {
+    // Final state: AS + resource both green
+    oboSVGReset();
+    Object.keys(OBO_NODE_DEFAULTS).forEach(function(id) {
+      const el = document.getElementById(id);
+      if (el && id !== 'obo-node-as' && id !== 'obo-node-resource') {
+        el.setAttribute('stroke', '#30363d');
+      }
+    });
+    oboSVGSuccess('obo-node-as');
+    oboSVGSuccess('obo-node-resource');
+
+    resultEl.innerHTML = '<div class="callout ok">' +
+      '<strong>&#10003; Delegation complete.</strong> Resource server sees:<br>' +
+      '<code>sub</code> = <strong>' + result.userID + '</strong> (human user)' +
+      ' &nbsp;&middot;&nbsp;<code>act.sub</code> = <strong>' + result.agentID + '</strong> (agent)' +
+      ' &nbsp;&middot;&nbsp;<code>scope</code> = <strong>&quot;' + result.scope + '&quot;</strong>' +
+      '</div>';
+    resultEl.style.display = 'block';
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '&#9654; Run OBO Flow';
 }
 
-function runSDDemo(btn) {
+function sdPanelReset() {
+  const plain = document.getElementById('sd-panel-plain');
+  const sd    = document.getElementById('sd-panel-sd');
+  if (plain) { plain.style.borderColor = 'var(--border)'; plain.style.boxShadow = ''; }
+  if (sd)    { sd.style.borderColor = 'rgba(188,140,255,0.4)'; sd.style.boxShadow = ''; }
+}
+function sdPanelHighlight(which) { // 'plain' | 'sd' | 'both'
+  sdPanelReset();
+  if (which === 'plain' || which === 'both') {
+    const el = document.getElementById('sd-panel-plain');
+    if (el) { el.style.borderColor = '#f85149'; el.style.boxShadow = '0 0 0 2px rgba(248,81,73,0.2)'; }
+  }
+  if (which === 'sd' || which === 'both') {
+    const el = document.getElementById('sd-panel-sd');
+    if (el) { el.style.borderColor = '#bc8cff'; el.style.boxShadow = '0 0 0 2px rgba(188,140,255,0.3)'; }
+  }
+}
+
+async function runSDDemo(btn) {
   const reveal = document.getElementById('sd-reveal-select').value;
   btn.disabled = true;
   btn.innerHTML = '&#9203; Running\u2026';
-  const result = agentFabric.oboSimulateSD(reveal);
-  btn.disabled = false;
-  btn.innerHTML = '&#9654; Run SD-JWT OBO Flow';
 
   const stepsEl = document.getElementById('sd-steps');
   const resultEl = document.getElementById('sd-result');
+  stepsEl.innerHTML = '';
+  stepsEl.style.display = 'flex';
+  resultEl.style.display = 'none';
+  sdPanelReset();
+
+  const result = agentFabric.oboSimulateSD(reveal);
 
   if (!result.ok) {
-    stepsEl.style.display = 'none';
-    resultEl.style.display = 'block';
     resultEl.innerHTML = '<div class="callout danger"><strong>&#10005; Error:</strong> ' + result.error + '</div>';
+    resultEl.style.display = 'block';
+    btn.disabled = false;
+    btn.innerHTML = '&#9654; Run SD-JWT OBO Flow';
     return;
   }
 
-  // Render SD-JWT steps
   const sdSteps = result.sdSteps || [];
-  stepsEl.innerHTML = sdSteps.map(function(s) {
-    return '<div class="anim-step-sm" style="border-color:rgba(188,140,255,0.5)">' +
-      '<span style="color:var(--purple);font-weight:700">' + s.actor + '</span>' +
+
+  // Actor → panel highlight + step color
+  const stepMeta = [
+    { panel: 'sd',   color: '#58a6ff' },  // IdP issues SD-JWT
+    { panel: 'sd',   color: '#bc8cff' },  // Agent selects disclosures
+    { panel: 'both', color: '#f5a623' },  // AS validates
+    { panel: 'sd',   color: '#3fb950' },  // Booking Service sees result
+  ];
+
+  for (let i = 0; i < sdSteps.length; i++) {
+    const s = sdSteps[i];
+    const meta = stepMeta[i] || { panel: 'sd', color: '#bc8cff' };
+
+    sdPanelHighlight(meta.panel);
+
+    const div = document.createElement('div');
+    div.className = 'anim-step-sm active';
+    div.style.borderColor = meta.color;
+    div.innerHTML =
+      '<span style="color:' + meta.color + ';font-weight:700">' + s.actor + '</span>' +
       '&nbsp;&middot;&nbsp;<span style="color:var(--text)">' + s.label + '</span>' +
-      '<br><code style="font-size:10px;color:var(--muted)">' + s.detail + '</code>' +
-      '</div>';
-  }).join('');
-  stepsEl.style.display = 'flex';
+      '<br><code style="font-size:10px;color:var(--muted)">' + s.detail + '</code>';
+    stepsEl.appendChild(div);
+    stepsEl.scrollTop = stepsEl.scrollHeight;
+
+    await delay(850);
+
+    div.classList.remove('active');
+    div.classList.add('done');
+    div.style.borderColor = meta.color;
+  }
+
+  // Final highlight: SD panel wins
+  sdPanelReset();
+  const sdEl = document.getElementById('sd-panel-sd');
+  if (sdEl) { sdEl.style.borderColor = '#3fb950'; sdEl.style.boxShadow = '0 0 0 2px rgba(63,185,80,0.25)'; }
 
   const emailLine = result.sdEmail && result.sdEmail !== '(not revealed)'
     ? '<code>email</code> = <strong>' + result.sdEmail + '</strong> &nbsp;&middot;&nbsp;'
-    : '<code>email</code> = <em style="color:var(--muted)">(not revealed — private)</em> &nbsp;&middot;&nbsp;';
+    : '<code>email</code> = <em style="color:var(--muted)">(not revealed &#8212; private)</em> &nbsp;&middot;&nbsp;';
 
   resultEl.innerHTML = '<div class="callout ok" style="border-color:rgba(188,140,255,0.5)">' +
     '<strong style="color:var(--purple)">&#10003; SD-JWT OBO complete.</strong> ' +
@@ -5202,6 +5380,9 @@ function runSDDemo(btn) {
     '<span style="font-size:11px;color:var(--muted);margin-top:4px;display:block">Privacy: ' + result.sdPIIExposed + '</span>' +
     '</div>';
   resultEl.style.display = 'block';
+
+  btn.disabled = false;
+  btn.innerHTML = '&#9654; Run SD-JWT OBO Flow';
 }
 
 function runMTLSBindingDemo(btn) {

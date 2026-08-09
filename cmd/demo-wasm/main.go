@@ -1259,7 +1259,13 @@ func oboSimulate(this js.Value, args []js.Value) any {
 
 	oboToken, err := oboIssuer.Issue(agentToken, userToken, resourceID, requestedScope)
 	if err != nil {
-		return errObj("issue OBO token: " + err.Error())
+		// Return partial steps so the JS animation can show the flow up to rejection.
+		return map[string]any{
+			"ok":       false,
+			"error":    err.Error(),
+			"steps":    steps,
+			"rejected": true,
+		}
 	}
 
 	// Step 4: AS validates and issues delegated token.
