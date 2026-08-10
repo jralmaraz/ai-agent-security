@@ -826,41 +826,77 @@ main{max-width:960px;margin:0 auto;padding:2rem}
   <!-- The bearer-token problem -->
   <div class="card">
     <div class="card-title">The bearer token problem</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px">A bearer token is identity-agnostic &#8212; any holder gets access. Click to watch what happens when an attacker intercepts one.</p>
     <div class="diagram">
-      <svg viewBox="0 0 730 118" xmlns="http://www.w3.org/2000/svg">
-        <text x="365" y="14" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="10" font-weight="700" letter-spacing="1">BEARER TOKEN — STOLEN TOKEN = FREE ACCESS</text>
-        <!-- Legit agent -->
-        <rect x="20" y="28" width="110" height="40" rx="6" fill="#161b22" stroke="#bc8cff" stroke-width="1.5"/>
-        <text x="75" y="45" text-anchor="middle" fill="#bc8cff" font-family="sans-serif" font-size="9" font-weight="700">Booking Agent</text>
-        <text x="75" y="57" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5">spiffe://.../booking</text>
-        <!-- Token -->
-        <rect x="145" y="36" width="130" height="24" rx="4" fill="#1c2128" stroke="#f5a623" stroke-width="1"/>
-        <text x="210" y="52" text-anchor="middle" fill="#f5a623" font-family="monospace" font-size="8">Authorization: Bearer &lt;tok&gt;</text>
-        <line x1="130" y1="48" x2="145" y2="48" stroke="#f5a623" stroke-width="1.5" marker-end="url(#obo-arr-o)"/>
-        <!-- API -->
-        <rect x="290" y="28" width="100" height="40" rx="6" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
-        <text x="340" y="45" text-anchor="middle" fill="#3fb950" font-family="sans-serif" font-size="9" font-weight="700">Calendar API</text>
-        <text x="340" y="57" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5">validates token</text>
-        <line x1="275" y1="48" x2="290" y2="48" stroke="#3fb950" stroke-width="1.5" marker-end="url(#obo-arr-g)"/>
-        <!-- Attacker copies token -->
-        <line x1="210" y1="60" x2="210" y2="80" stroke="#f85149" stroke-dasharray="3,2" stroke-width="1.5"/>
-        <text x="210" y="92" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="8" font-weight="700">token intercepted</text>
-        <!-- Attacker -->
-        <rect x="440" y="28" width="110" height="40" rx="6" fill="#1c2128" stroke="#f85149" stroke-width="2"/>
-        <text x="495" y="45" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="9" font-weight="700">&#9888; Attacker</text>
-        <text x="495" y="57" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5">holds stolen token</text>
-        <!-- Attacker uses token -->
-        <rect x="565" y="36" width="130" height="24" rx="4" fill="#1c2128" stroke="#f85149" stroke-width="1"/>
-        <text x="630" y="52" text-anchor="middle" fill="#f85149" font-family="monospace" font-size="8">Authorization: Bearer &lt;tok&gt;</text>
-        <line x1="550" y1="48" x2="565" y2="48" stroke="#f85149" stroke-width="1.5" marker-end="url(#arr-r)"/>
+      <svg id="pop-bearer-svg" viewBox="0 0 730 182" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <marker id="arr-r" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#f85149"/></marker>
-          <marker id="arr-g2" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#3fb950"/></marker>
+          <marker id="pop-b-arr-o" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#f5a623"/></marker>
+          <marker id="pop-b-arr-g" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#3fb950"/></marker>
+          <marker id="pop-b-arr-r" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#f85149"/></marker>
         </defs>
-        <text x="700" y="44" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="8" font-weight="700">&#10003; accepted!</text>
-        <text x="700" y="56" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="7.5">token is valid :(</text>
-        <text x="495" y="110" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="8">Bearer tokens are identity-agnostic — any holder gets access</text>
+        <!-- ROW 1 label -->
+        <text x="5" y="16" fill="#7d8590" font-family="sans-serif" font-size="8.5" letter-spacing=".4">LEGITIMATE AGENT</text>
+        <!-- Legit agent box -->
+        <rect id="pop-b-agent" x="5" y="22" width="120" height="44" rx="6" fill="#161b22" stroke="#bc8cff" stroke-width="1.5" opacity="0"/>
+        <text id="pop-b-agent-t1" x="65" y="40" text-anchor="middle" fill="#bc8cff" font-family="sans-serif" font-size="9" font-weight="700" opacity="0">Booking Agent</text>
+        <text id="pop-b-agent-t2" x="65" y="52" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5" opacity="0">spiffe://.../booking</text>
+        <text id="pop-b-agent-t3" x="65" y="62" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5" opacity="0">owns private key</text>
+        <!-- Legit arrow agent → token -->
+        <line id="pop-b-arr1" x1="125" y1="44" x2="144" y2="44" stroke="#f5a623" stroke-width="1.5" marker-end="url(#pop-b-arr-o)" opacity="0"/>
+        <!-- Legit token rect -->
+        <rect id="pop-b-tok1" x="146" y="32" width="158" height="24" rx="4" fill="#1c2128" stroke="#f5a623" stroke-width="1" opacity="0"/>
+        <text id="pop-b-tok1-t" x="225" y="48" text-anchor="middle" fill="#f5a623" font-family="monospace" font-size="8" opacity="0">Authorization: Bearer &lt;tok&gt;</text>
+        <!-- Token → API arrow row 1 -->
+        <line id="pop-b-arr2" x1="304" y1="44" x2="323" y2="44" stroke="#3fb950" stroke-width="1.5" marker-end="url(#pop-b-arr-g)" opacity="0"/>
+        <!-- API box row 1 -->
+        <rect id="pop-b-api1" x="325" y="22" width="100" height="44" rx="6" fill="#161b22" stroke="#3fb950" stroke-width="1.5" opacity="0"/>
+        <text id="pop-b-api1-t1" x="375" y="40" text-anchor="middle" fill="#3fb950" font-family="sans-serif" font-size="9" font-weight="700" opacity="0">Calendar API</text>
+        <text id="pop-b-api1-t2" x="375" y="52" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5" opacity="0">validates signature</text>
+        <text id="pop-b-api1-t3" x="375" y="62" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5" opacity="0">no key check</text>
+        <!-- API → result arrow row 1 -->
+        <line id="pop-b-arr3" x1="425" y1="44" x2="443" y2="44" stroke="#3fb950" stroke-width="1.5" marker-end="url(#pop-b-arr-g)" opacity="0"/>
+        <!-- Result OK box -->
+        <rect id="pop-b-result-ok" x="445" y="28" width="135" height="32" rx="4" fill="#0d1117" stroke="#3fb950" stroke-width="1.5" opacity="0"/>
+        <text id="pop-b-result-ok-t1" x="512" y="42" text-anchor="middle" fill="#3fb950" font-family="sans-serif" font-size="9" font-weight="700" opacity="0">&#10003; 200 OK &#8212; ACCEPTED</text>
+        <text id="pop-b-result-ok-t2" x="512" y="54" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5" opacity="0">signature valid, access granted</text>
+
+        <!-- INTERCEPT INDICATOR (vertical dashed) -->
+        <line id="pop-b-intercept-line" x1="225" y1="58" x2="225" y2="104" stroke="#f85149" stroke-dasharray="3,2" stroke-width="1.5" opacity="0"/>
+        <text id="pop-b-intercept-lbl" x="260" y="84" fill="#f85149" font-family="sans-serif" font-size="9" font-weight="700" opacity="0">&#9888; token intercepted!</text>
+
+        <!-- ROW 2 label -->
+        <text x="5" y="118" fill="#f85149" font-family="sans-serif" font-size="8.5" letter-spacing=".4">ATTACKER (holds stolen token)</text>
+        <!-- Attacker box -->
+        <rect id="pop-b-attacker" x="5" y="124" width="120" height="44" rx="6" fill="#1c2128" stroke="#f85149" stroke-width="2" opacity="0"/>
+        <text id="pop-b-attacker-t1" x="65" y="142" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="9" font-weight="700" opacity="0">&#9888; Attacker</text>
+        <text id="pop-b-attacker-t2" x="65" y="154" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5" opacity="0">different identity</text>
+        <text id="pop-b-attacker-t3" x="65" y="164" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5" opacity="0">no private key</text>
+        <!-- Attacker → stolen token arrow -->
+        <line id="pop-b-arr4" x1="125" y1="146" x2="144" y2="146" stroke="#f85149" stroke-width="1.5" marker-end="url(#pop-b-arr-r)" opacity="0"/>
+        <!-- Stolen token rect -->
+        <rect id="pop-b-tok2" x="146" y="134" width="158" height="24" rx="4" fill="#1c2128" stroke="#f85149" stroke-width="1.5" opacity="0"/>
+        <text id="pop-b-tok2-t" x="225" y="150" text-anchor="middle" fill="#f85149" font-family="monospace" font-size="8" opacity="0">Authorization: Bearer &lt;tok&gt;</text>
+        <!-- Stolen token → API arrow row 2 -->
+        <line id="pop-b-arr5" x1="304" y1="146" x2="323" y2="146" stroke="#f85149" stroke-width="1.5" marker-end="url(#pop-b-arr-r)" opacity="0"/>
+        <!-- API box row 2 -->
+        <rect id="pop-b-api2" x="325" y="124" width="100" height="44" rx="6" fill="#161b22" stroke="#3fb950" stroke-width="1.5" opacity="0"/>
+        <text id="pop-b-api2-t1" x="375" y="142" text-anchor="middle" fill="#3fb950" font-family="sans-serif" font-size="9" font-weight="700" opacity="0">Calendar API</text>
+        <text id="pop-b-api2-t2" x="375" y="154" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5" opacity="0">validates signature</text>
+        <text id="pop-b-api2-t3" x="375" y="164" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5" opacity="0">no key check</text>
+        <!-- API → result-bad arrow row 2 -->
+        <line id="pop-b-arr6" x1="425" y1="146" x2="443" y2="146" stroke="#f85149" stroke-width="1.5" marker-end="url(#pop-b-arr-r)" opacity="0"/>
+        <!-- Result BAD box -->
+        <rect id="pop-b-result-bad" x="445" y="130" width="135" height="32" rx="4" fill="#0d1117" stroke="#f85149" stroke-width="2" opacity="0"/>
+        <text id="pop-b-result-bad-t1" x="512" y="144" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="9" font-weight="700" opacity="0">&#10003; 200 OK &#8212; ACCEPTED!</text>
+        <text id="pop-b-result-bad-t2" x="512" y="156" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="7.5" opacity="0">stolen token = free access &#9888;</text>
+
+        <!-- Bottom warning -->
+        <text id="pop-b-warn" x="365" y="178" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="9" opacity="0">Bearer tokens are identity-agnostic &#8212; any holder gets access. Proof of Possession changes this.</text>
       </svg>
+    </div>
+    <div class="btn-group" style="margin-top:10px">
+      <button class="btn btn-primary" onclick="playBearerAttack(this)">&#9654; Play Attack Scenario</button>
+      <button class="btn" onclick="popBearerReset()" style="margin-left:8px">&#8635; Reset</button>
     </div>
   </div>
 
@@ -934,10 +970,79 @@ main{max-width:960px;margin:0 auto;padding:2rem}
 
   <!-- mTLS binding -->
   <div class="card">
-    <div class="card-title">mTLS token-cert binding — live demonstration</div>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:14px">The gateway extracts the TLS client certificate URI SAN and checks it matches the AgentToken <code>sub</code>. A stolen token presented by an attacker with a different cert fails this check &#8212; click Run to see both outcomes.</p>
-    <div class="btn-group">
+    <div class="card-title">mTLS token-cert binding — animated demonstration</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px">The gateway extracts the TLS client certificate URI SAN and checks it matches the AgentToken <code>sub</code>. A stolen token presented by an attacker with a different cert fails this check.</p>
+    <div class="diagram">
+      <svg id="pop-mtls-svg" viewBox="0 0 730 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="pop-m-arr-p" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#bc8cff"/></marker>
+          <marker id="pop-m-arr-r" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#f85149"/></marker>
+          <marker id="pop-m-arr-g" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#3fb950"/></marker>
+          <marker id="pop-m-arr-b" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#58a6ff"/></marker>
+        </defs>
+
+        <!-- Legit agent (top left) -->
+        <rect id="pop-m-legit" x="10" y="22" width="145" height="62" rx="6" fill="#161b22" stroke="#bc8cff" stroke-width="1.5"/>
+        <text x="82" y="40" text-anchor="middle" fill="#bc8cff" font-family="sans-serif" font-size="9" font-weight="700">Booking Agent</text>
+        <text x="82" y="53" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5">cert SAN:</text>
+        <text x="82" y="64" text-anchor="middle" fill="#7d8590" font-family="monospace" font-size="7">spiffe://.../booking</text>
+        <text x="82" y="75" text-anchor="middle" fill="#3fb950" font-family="sans-serif" font-size="7.5" font-weight="700">&#10003; SAN == token.sub</text>
+
+        <!-- Attacker (bottom left) -->
+        <rect id="pop-m-attacker" x="10" y="118" width="145" height="62" rx="6" fill="#1c2128" stroke="#f85149" stroke-width="2"/>
+        <text x="82" y="136" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="9" font-weight="700">&#9888; Attacker</text>
+        <text x="82" y="149" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5">cert SAN:</text>
+        <text x="82" y="160" text-anchor="middle" fill="#7d8590" font-family="monospace" font-size="7">spiffe://.../attacker</text>
+        <text x="82" y="171" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="7.5" font-weight="700">&#10007; SAN &#8800; token.sub</text>
+
+        <!-- Arrow legit → gateway -->
+        <line id="pop-m-arr-legit" x1="155" y1="53" x2="275" y2="90" stroke="#bc8cff" stroke-width="1.5" marker-end="url(#pop-m-arr-p)" opacity="0.25"/>
+        <text id="pop-m-lbl-legit" x="205" y="60" fill="#7d8590" font-family="sans-serif" font-size="8" opacity="0">cert + token</text>
+
+        <!-- Arrow attacker → gateway -->
+        <line id="pop-m-arr-attack" x1="155" y1="149" x2="275" y2="118" stroke="#f85149" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#pop-m-arr-r)" opacity="0.25"/>
+        <text id="pop-m-lbl-attack" x="190" y="148" fill="#f85149" font-family="sans-serif" font-size="8" opacity="0">stolen token</text>
+
+        <!-- Gateway (center) -->
+        <rect id="pop-m-gateway" x="277" y="74" width="176" height="56" rx="8" fill="#161b22" stroke="#58a6ff" stroke-width="2"/>
+        <text x="365" y="94" text-anchor="middle" fill="#58a6ff" font-family="sans-serif" font-size="10" font-weight="700">Gateway</text>
+        <text x="365" y="108" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5">verifyMTLSBinding()</text>
+        <text x="365" y="120" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5">cert URI SAN == token.sub ?</text>
+
+        <!-- Arrow gateway → ALLOWED -->
+        <line id="pop-m-arr-allow" x1="453" y1="90" x2="568" y2="53" stroke="#3fb950" stroke-width="1.5" marker-end="url(#pop-m-arr-g)" opacity="0.25"/>
+
+        <!-- Arrow gateway → REJECTED -->
+        <line id="pop-m-arr-reject" x1="453" y1="114" x2="568" y2="149" stroke="#f85149" stroke-width="1.5" marker-end="url(#pop-m-arr-r)" opacity="0.25"/>
+
+        <!-- ALLOWED box (top right) -->
+        <rect id="pop-m-allowed" x="570" y="26" width="148" height="52" rx="6" fill="#0d1117" stroke="#3fb950" stroke-width="1.5" opacity="0.25"/>
+        <text id="pop-m-allowed-t1" x="644" y="46" text-anchor="middle" fill="#3fb950" font-family="sans-serif" font-size="10" font-weight="700" opacity="0.25">&#10003; ALLOWED</text>
+        <text id="pop-m-allowed-t2" x="644" y="60" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5" opacity="0.25">SAN matched &#8212; request proxied</text>
+        <text id="pop-m-allowed-t3" x="644" y="71" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5" opacity="0.25">200 OK</text>
+
+        <!-- REJECTED box (bottom right) -->
+        <rect id="pop-m-rejected" x="570" y="122" width="148" height="52" rx="6" fill="#0d1117" stroke="#f85149" stroke-width="2" opacity="0.25"/>
+        <text id="pop-m-rejected-t1" x="644" y="142" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="10" font-weight="700" opacity="0.25">&#10007; REJECTED</text>
+        <text id="pop-m-rejected-t2" x="644" y="156" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5" opacity="0.25">SAN mismatch &#8212; 403 Forbidden</text>
+        <text id="pop-m-rejected-t3" x="644" y="167" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="7.5" opacity="0.25">stolen token useless</text>
+
+        <!-- Bottom caption -->
+        <text x="365" y="192" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="9">Stolen tokens are useless without the matching private key &#8212; the attacker cannot forge the cert.</text>
+      </svg>
+    </div>
+
+    <!-- Step list (shown during animation) -->
+    <div id="pop-mtls-steps" style="display:none;margin-top:12px">
+      <div id="pop-m-s1" class="anim-step-sm">&#9312; Booking Agent connects with TLS cert (URI SAN: spiffe://.../booking) and presents AgentToken</div>
+      <div id="pop-m-s2" class="anim-step-sm">&#9313; Gateway checks cert URI SAN == token.sub &#8594; <span style="color:#3fb950">MATCH &#10003;</span> &#8594; request proxied, 200 OK</div>
+      <div id="pop-m-s3" class="anim-step-sm">&#9314; Attacker connects with their own cert (URI SAN: spiffe://.../attacker) and presents the stolen token</div>
+      <div id="pop-m-s4" class="anim-step-sm">&#9315; Gateway checks cert URI SAN == token.sub &#8594; <span style="color:#f85149">MISMATCH &#10007;</span> &#8594; 403 Forbidden &#8212; token is bound, useless without the key</div>
+    </div>
+
+    <div class="btn-group" style="margin-top:12px">
       <button class="btn btn-primary" onclick="runMTLSBindingDemo(this)">&#9654; Run Token-Cert Binding Demo</button>
+      <button class="btn" onclick="popMTLSReset()" style="margin-left:8px">&#8635; Reset</button>
     </div>
     <div id="pop-mtls-result" style="display:none;margin-top:10px"></div>
   </div>
@@ -5385,42 +5490,144 @@ async function runSDDemo(btn) {
   btn.innerHTML = '&#9654; Run SD-JWT OBO Flow';
 }
 
-function runMTLSBindingDemo(btn) {
-  if (!window.agentFabric || !agentFabric.setup) {
-    document.getElementById('pop-mtls-result').style.display = 'block';
-    document.getElementById('pop-mtls-result').innerHTML = '<div class="callout danger">WASM not loaded yet — please wait a moment and try again.</div>';
-    return;
-  }
-  // Ensure global state is ready
-  agentFabric.setup();
-  agentFabric.issueOrchestratorToken();
+// ── PoP tab helpers ──────────────────────────────────────────────────────────
+function popFade(id, opacity) {
+  const el = document.getElementById(id);
+  if (el) el.setAttribute('opacity', String(opacity));
+}
 
+function popBearerReset() {
+  const ids = [
+    'pop-b-agent','pop-b-agent-t1','pop-b-agent-t2','pop-b-agent-t3',
+    'pop-b-arr1','pop-b-tok1','pop-b-tok1-t','pop-b-arr2',
+    'pop-b-api1','pop-b-api1-t1','pop-b-api1-t2','pop-b-api1-t3',
+    'pop-b-arr3','pop-b-result-ok','pop-b-result-ok-t1','pop-b-result-ok-t2',
+    'pop-b-intercept-line','pop-b-intercept-lbl',
+    'pop-b-attacker','pop-b-attacker-t1','pop-b-attacker-t2','pop-b-attacker-t3',
+    'pop-b-arr4','pop-b-tok2','pop-b-tok2-t','pop-b-arr5',
+    'pop-b-api2','pop-b-api2-t1','pop-b-api2-t2','pop-b-api2-t3',
+    'pop-b-arr6','pop-b-result-bad','pop-b-result-bad-t1','pop-b-result-bad-t2',
+    'pop-b-warn'
+  ];
+  ids.forEach(id => popFade(id, 0));
+}
+
+async function playBearerAttack(btn) {
+  if (btn.disabled) return;
   btn.disabled = true;
   btn.innerHTML = '&#9203; Running\u2026';
-  const result = agentFabric.simulateMTLSBinding();
-  btn.disabled = false;
-  btn.innerHTML = '&#9654; Run Token-Cert Binding Demo';
+  popBearerReset();
+  await delay(300);
 
-  const el = document.getElementById('pop-mtls-result');
+  // Step 1: Legitimate agent sends token to API
+  ['pop-b-agent','pop-b-agent-t1','pop-b-agent-t2','pop-b-agent-t3'].forEach(id => popFade(id, 1));
+  await delay(600);
+  popFade('pop-b-arr1', 1);
+  popFade('pop-b-tok1', 1); popFade('pop-b-tok1-t', 1);
+  await delay(600);
+  popFade('pop-b-arr2', 1);
+  ['pop-b-api1','pop-b-api1-t1','pop-b-api1-t2','pop-b-api1-t3'].forEach(id => popFade(id, 1));
+  await delay(700);
+  popFade('pop-b-arr3', 1);
+  ['pop-b-result-ok','pop-b-result-ok-t1','pop-b-result-ok-t2'].forEach(id => popFade(id, 1));
+  await delay(1000);
+
+  // Step 2: Token intercepted in transit
+  popFade('pop-b-intercept-line', 1);
+  await delay(500);
+  popFade('pop-b-intercept-lbl', 1);
+  await delay(900);
+
+  // Step 3: Attacker reuses stolen token — same result
+  ['pop-b-attacker','pop-b-attacker-t1','pop-b-attacker-t2','pop-b-attacker-t3'].forEach(id => popFade(id, 1));
+  await delay(600);
+  popFade('pop-b-arr4', 1);
+  popFade('pop-b-tok2', 1); popFade('pop-b-tok2-t', 1);
+  await delay(600);
+  popFade('pop-b-arr5', 1);
+  ['pop-b-api2','pop-b-api2-t1','pop-b-api2-t2','pop-b-api2-t3'].forEach(id => popFade(id, 1));
+  await delay(700);
+  popFade('pop-b-arr6', 1);
+  ['pop-b-result-bad','pop-b-result-bad-t1','pop-b-result-bad-t2'].forEach(id => popFade(id, 1));
+  await delay(900);
+
+  // Step 4: Warning
+  popFade('pop-b-warn', 1);
+
+  btn.disabled = false;
+  btn.innerHTML = '&#9654; Play Attack Scenario';
+}
+
+function popMTLSReset() {
+  ['pop-m-s1','pop-m-s2','pop-m-s3','pop-m-s4'].forEach(id => afSetStep(id, ''));
+  document.getElementById('pop-mtls-steps').style.display = 'none';
+  document.getElementById('pop-mtls-result').style.display = 'none';
+  // Arrows and outcome boxes back to dim
+  ['pop-m-arr-legit','pop-m-arr-attack','pop-m-arr-allow','pop-m-arr-reject'].forEach(id => popFade(id, 0.25));
+  ['pop-m-allowed','pop-m-allowed-t1','pop-m-allowed-t2','pop-m-allowed-t3',
+   'pop-m-rejected','pop-m-rejected-t1','pop-m-rejected-t2','pop-m-rejected-t3'].forEach(id => popFade(id, 0.25));
+  ['pop-m-lbl-legit','pop-m-lbl-attack'].forEach(id => popFade(id, 0));
+  document.getElementById('pop-m-gateway').setAttribute('stroke', '#58a6ff');
+  document.getElementById('pop-m-legit').setAttribute('stroke', '#bc8cff');
+  document.getElementById('pop-m-attacker').setAttribute('stroke', '#f85149');
+}
+
+async function runMTLSBindingDemo(btn) {
+  if (btn.disabled) return;
+  if (!window.agentFabric || !agentFabric.setup) {
+    document.getElementById('pop-mtls-result').innerHTML = '<div class="callout danger">WASM not loaded yet \u2014 please wait a moment and try again.</div>';
+    document.getElementById('pop-mtls-result').style.display = 'block';
+    return;
+  }
+  btn.disabled = true;
+  btn.innerHTML = '&#9203; Running\u2026';
+  popMTLSReset();
+
+  agentFabric.setup();
+  agentFabric.issueOrchestratorToken();
+  const result = agentFabric.simulateMTLSBinding();
+
   if (!result.ok) {
-    el.innerHTML = '<div class="callout danger"><strong>Error:</strong> ' + result.error + '</div>';
-    el.style.display = 'block';
+    document.getElementById('pop-mtls-result').innerHTML = '<div class="callout danger"><strong>Error:</strong> ' + result.error + '</div>';
+    document.getElementById('pop-mtls-result').style.display = 'block';
+    btn.disabled = false;
+    btn.innerHTML = '&#9654; Run Token-Cert Binding Demo';
     return;
   }
 
-  el.innerHTML =
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
-    '<div class="callout ok"><strong>&#10003; Legitimate agent — ALLOWED</strong><br>' +
-    '<code>cert URI SAN</code>: <code style="font-size:11px">' + result.legitSAN + '</code><br>' +
-    '<code>token sub</code>&nbsp;&nbsp;&nbsp;: <code style="font-size:11px">' + result.legitSub + '</code><br>' +
-    '<span style="color:var(--green);font-size:12px">Match: both are the same identity &#10003;</span></div>' +
-    '<div class="callout danger"><strong>&#10005; Attacker (stolen token) — REJECTED</strong><br>' +
-    '<code>cert URI SAN</code>: <code style="font-size:11px">' + result.attackerSAN + '</code><br>' +
-    '<code>token sub</code>&nbsp;&nbsp;&nbsp;: <code style="font-size:11px">' + result.stolenSub + '</code><br>' +
-    '<span style="color:var(--red);font-size:12px">Mismatch: different identities &#10005;</span><br>' +
-    '<span style="font-size:10px;color:var(--muted)">' + result.attackResult + '</span></div>' +
-    '</div>';
-  el.style.display = 'block';
+  document.getElementById('pop-mtls-steps').style.display = 'block';
+  await delay(400);
+
+  // Step 1: Legit agent → gateway
+  afSetStep('pop-m-s1', 'active');
+  popFade('pop-m-lbl-legit', 1);
+  popFade('pop-m-arr-legit', 1);
+  document.getElementById('pop-m-legit').setAttribute('stroke', '#3fb950');
+  document.getElementById('pop-m-gateway').setAttribute('stroke', '#58a6ff');
+  await delay(1000);
+
+  // Step 2: Gateway → ALLOWED
+  afSetStep('pop-m-s1', 'done'); afSetStep('pop-m-s2', 'active');
+  popFade('pop-m-arr-allow', 1);
+  ['pop-m-allowed','pop-m-allowed-t1','pop-m-allowed-t2','pop-m-allowed-t3'].forEach(id => popFade(id, 1));
+  await delay(1000);
+
+  // Step 3: Attacker → gateway
+  afSetStep('pop-m-s2', 'done'); afSetStep('pop-m-s3', 'active');
+  popFade('pop-m-lbl-attack', 1);
+  popFade('pop-m-arr-attack', 1);
+  document.getElementById('pop-m-gateway').setAttribute('stroke', '#f85149');
+  await delay(1000);
+
+  // Step 4: Gateway → REJECTED
+  afSetStep('pop-m-s3', 'done'); afSetStep('pop-m-s4', 'active');
+  popFade('pop-m-arr-reject', 1);
+  ['pop-m-rejected','pop-m-rejected-t1','pop-m-rejected-t2','pop-m-rejected-t3'].forEach(id => popFade(id, 1));
+  await delay(1000);
+  afSetStep('pop-m-s4', 'done');
+
+  btn.disabled = false;
+  btn.innerHTML = '&#9654; Run Token-Cert Binding Demo';
 }
 
 async function playSCAFlow() {
