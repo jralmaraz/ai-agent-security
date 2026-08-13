@@ -6,6 +6,8 @@
 [![Go 1.26](https://img.shields.io/badge/go-1.26-00ADD8?logo=go)](https://go.dev)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
+**Live demo:** https://ai-agent-security-cgt.pages.dev/
+
 ---
 
 ## What this is
