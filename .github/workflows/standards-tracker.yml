@@ -1,8 +1,18 @@
 name: Standards Tracker
 
 # Checks IETF Datatracker daily for new revisions of the drafts this PoC
-# implements.  When a revision is found it commits the updated baseline and
-# opens a GitHub issue with an action checklist.
+# implements.
+#
+# Issue creation policy:
+#   - An issue is opened ONLY when a tracked standard bumps its revision,
+#     an RSS-monitored spec has new activity, or a page-hash spec changes.
+#     These require human review and potentially a code/demo PR.
+#   - Newly discovered drafts from WG feeds are written into the baseline
+#     immediately (status: "discovered") so they are NOT re-reported on
+#     subsequent runs.  No issue is opened for discoveries alone.
+#
+# This keeps the issue tracker signal-to-noise high: one issue per
+# meaningful spec change, never a daily discovery-noise flood.
 
 on:
   schedule:
@@ -36,14 +46,14 @@ jobs:
         id: tracker
         run: python3 scripts/check_standards.py
 
-      # Only runs when at least one draft was updated
+      # Commit whenever the baseline file changed — this covers both revision
+      # updates AND newly discovered drafts being registered for the first time.
       - name: Commit updated baseline
-        if: steps.tracker.outputs.updates_found == 'true'
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add standards-baseline.json
-          # Guard: only commit if the file actually changed
+          # Guard: only commit when the file actually changed
           git diff --cached --quiet || \
             git commit -m "chore(standards): update baseline after daily check [skip ci]"
           git push
