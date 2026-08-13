@@ -266,6 +266,7 @@ main{max-width:960px;margin:0 auto;padding:2rem}
   <nav id="main-nav">
     <div class="tab active" onclick="showTab('problem',this)" style="border-bottom-color:var(--blue);color:var(--blue)">The Problem</div>
     <div class="tab" onclick="showTab('obo',this)">On-Behalf-Of ⭐</div>
+    <div class="tab" onclick="showTab('pop',this)">Proof of Possession</div>
     <div class="tab" onclick="showTab('happy',this)">Agent Identity</div>
     <div class="tab" onclick="showTab('rfc8693',this)">Token Delegation</div>
     <div class="tab" onclick="showTab('txntoken',this)">Txn-Token</div>
@@ -613,30 +614,30 @@ main{max-width:960px;margin:0 auto;padding:2rem}
         <marker id="obo-arr-g" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#3fb950"/></marker>
       </defs>
       <!-- User -->
-      <circle cx="44" cy="55" r="25" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+      <circle id="obo-node-user" cx="44" cy="55" r="25" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
       <text x="44" y="52" text-anchor="middle" fill="#58a6ff" font-size="8" font-weight="700">USER</text>
       <text x="44" y="64" text-anchor="middle" fill="#7d8590" font-size="7">alice@corp</text>
       <!-- User IdP -->
-      <rect x="80" y="38" width="98" height="34" rx="5" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+      <rect id="obo-node-useridp" x="80" y="38" width="98" height="34" rx="5" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
       <text x="129" y="53" text-anchor="middle" fill="#58a6ff" font-size="8.5" font-weight="700">User IdP</text>
       <text x="129" y="65" text-anchor="middle" fill="#7d8590" font-size="7">issues user+jwt</text>
       <line x1="70" y1="55" x2="80" y2="55" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#obo-arr-b)"/>
       <!-- user+jwt dashed arrow to OBO AS -->
-      <line x1="178" y1="55" x2="256" y2="80" stroke="#58a6ff" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#obo-arr-b)"/>
+      <line id="obo-arrow-useras" x1="178" y1="55" x2="256" y2="80" stroke="#58a6ff" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#obo-arr-b)"/>
       <text x="212" y="58" text-anchor="middle" fill="#58a6ff" font-size="7" font-family="monospace">user+jwt</text>
       <!-- Agent -->
-      <rect x="80" y="112" width="98" height="34" rx="5" fill="#161b22" stroke="#bc8cff" stroke-width="1.5"/>
+      <rect id="obo-node-agent" x="80" y="112" width="98" height="34" rx="5" fill="#161b22" stroke="#bc8cff" stroke-width="1.5"/>
       <text x="129" y="127" text-anchor="middle" fill="#bc8cff" font-size="8.5" font-weight="700">Booking Agent</text>
       <text x="129" y="138" text-anchor="middle" fill="#7d8590" font-size="7">spiffe://.../booking</text>
       <!-- Agent IdP label -->
-      <rect x="80" y="156" width="98" height="22" rx="4" fill="#161b22" stroke="#bc8cff" stroke-width="1"/>
+      <rect id="obo-node-agentidp" x="80" y="156" width="98" height="22" rx="4" fill="#161b22" stroke="#bc8cff" stroke-width="1"/>
       <text x="129" y="171" text-anchor="middle" fill="#bc8cff" font-size="7.5" font-weight="700">Agent IdP → agent+jwt</text>
       <line x1="129" y1="156" x2="129" y2="146" stroke="#bc8cff" stroke-width="1.2" marker-end="url(#obo-arr-p)"/>
       <!-- agent+jwt dashed arrow to OBO AS -->
-      <line x1="178" y1="122" x2="256" y2="102" stroke="#bc8cff" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#obo-arr-p)"/>
+      <line id="obo-arrow-agentas" x1="178" y1="122" x2="256" y2="102" stroke="#bc8cff" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#obo-arr-p)"/>
       <text x="212" y="122" text-anchor="middle" fill="#bc8cff" font-size="7" font-family="monospace">agent+jwt</text>
       <!-- OBO AS -->
-      <rect x="258" y="78" width="120" height="44" rx="5" fill="#161b22" stroke="#f5a623" stroke-width="1.5"/>
+      <rect id="obo-node-as" x="258" y="78" width="120" height="44" rx="5" fill="#161b22" stroke="#f5a623" stroke-width="1.5"/>
       <text x="318" y="96" text-anchor="middle" fill="#f5a623" font-size="9" font-weight="700">OBO AS</text>
       <text x="318" y="109" text-anchor="middle" fill="#7d8590" font-size="7">grant_type=token-exchange</text>
       <!-- Validation annotations -->
@@ -645,10 +646,10 @@ main{max-width:960px;margin:0 auto;padding:2rem}
       <text x="258" y="40" text-anchor="start" fill="#f5a623" font-size="7">&#10003; scope &#8838; user grant</text>
       <line x1="310" y1="55" x2="310" y2="78" stroke="#f5a623" stroke-dasharray="2,2" stroke-width="1"/>
       <!-- obo+jwt output -->
-      <line x1="378" y1="100" x2="430" y2="100" stroke="#3fb950" stroke-width="1.5" marker-end="url(#obo-arr-g)"/>
+      <line id="obo-arrow-obo" x1="378" y1="100" x2="430" y2="100" stroke="#3fb950" stroke-width="1.5" marker-end="url(#obo-arr-g)"/>
       <text x="404" y="93" text-anchor="middle" fill="#3fb950" font-size="7.5" font-family="monospace">obo+jwt</text>
       <!-- Resource Server -->
-      <rect x="432" y="80" width="148" height="40" rx="5" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
+      <rect id="obo-node-resource" x="432" y="80" width="148" height="40" rx="5" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
       <text x="506" y="97" text-anchor="middle" fill="#3fb950" font-size="9" font-weight="700">Calendar API</text>
       <text x="506" y="110" text-anchor="middle" fill="#7d8590" font-size="7">validates sub + act.sub + scope</text>
       <!-- Resource server confirmation -->
@@ -730,8 +731,8 @@ main{max-width:960px;margin:0 auto;padding:2rem}
       <tr>
         <td><strong><a href="https://datatracker.ietf.org/doc/draft-gco-oauth-delegate-sd-jwt/" target="_blank" style="color:var(--blue)">draft-gco-oauth-delegate-sd-jwt-00</a></strong><br>Delegated SD-JWT for OAuth 2.0</td>
         <td>Extension: replaces the plain JWT user token with an SD-JWT, enabling selective disclosure &#8212; the agent presents only the user attributes the target resource needs. Privacy-preserving OBO.</td>
-        <td><span style="color:var(--muted)">&#9675; Individual draft</span></td>
-        <td>Monitored &#8212; <code>pkg/obo/</code> UserIssuer would add an SD-JWT path when/if adopted by WG</td>
+        <td><span style="color:var(--yellow)">&#9651; Individual draft (PoC implemented)</span></td>
+        <td><code>pkg/obo/sdjwt.go</code> &#8212; SDUserIssuer, SDUserValidator, OBOIssuer SD path, 16 tests. Implemented to explore the privacy model; not WG-adopted.</td>
       </tr>
       <tr>
         <td><strong>AgentToken (<code>agent+jwt</code>)</strong><br>The <code>actor_token</code> in the OBO request</td>
@@ -752,10 +753,372 @@ main{max-width:960px;margin:0 auto;padding:2rem}
     </div>
   </div>
 
+  <!-- SD-JWT for privacy-preserving OBO -->
+  <div class="card" style="border-color:rgba(188,140,255,0.35)">
+    <div class="card-title" style="color:var(--purple)">Looking ahead &#8212; SD-JWT for privacy-preserving OBO <span style="font-size:10px;background:rgba(188,140,255,0.15);color:var(--purple);border:1px solid rgba(188,140,255,0.4);border-radius:4px;padding:2px 7px;margin-left:6px">draft-gco-oauth-delegate-sd-jwt-00 · PoC</span></div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Plain OBO is powerful, but it exposes all user attributes (email, given_name, phone&#8230;) to the AS on every delegation. <strong style="color:var(--text)">draft-gco-oauth-delegate-sd-jwt-00</strong> extends OBO with Selective Disclosure JWTs: the agent presents only the claims the target resource actually needs. The AS can verify the user's identity without seeing attributes that aren't its business.</p>
+
+    <!-- Side-by-side comparison -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Plain OBO (today)</div>
+        <div id="sd-panel-plain" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:var(--mono);font-size:11px;line-height:1.9;transition:border-color .3s,box-shadow .3s">
+          <span style="color:#7d8590">// User token sent to OBO AS:</span><br>
+          {<br>
+          &nbsp;&nbsp;<span style="color:#58a6ff">"sub"</span>: <span style="color:#3fb950">"user:alice@example.com"</span>,<br>
+          &nbsp;&nbsp;<span style="color:#f85149">"email"</span>: <span style="color:#f85149">"alice@example.com"</span>,<span style="color:#7d8590"> // AS sees this</span><br>
+          &nbsp;&nbsp;<span style="color:#f85149">"given_name"</span>: <span style="color:#f85149">"Alice"</span>,<span style="color:#7d8590"> // AS sees this too</span><br>
+          &nbsp;&nbsp;<span style="color:#e6edf3">"scope"</span>: <span style="color:#3fb950">"read:calendar"</span><br>
+          }
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--purple);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">SD-JWT OBO (draft-gco)</div>
+        <div id="sd-panel-sd" style="background:var(--bg);border:1px solid rgba(188,140,255,0.4);border-radius:8px;padding:12px;font-family:var(--mono);font-size:11px;line-height:1.9;transition:border-color .3s,box-shadow .3s">
+          <span style="color:#7d8590">// SD-JWT presented to OBO AS:</span><br>
+          {<br>
+          &nbsp;&nbsp;<span style="color:#58a6ff">"sub"</span>: <span style="color:#3fb950">"user:alice@example.com"</span>,<br>
+          &nbsp;&nbsp;<span style="color:#bc8cff">"_sd"</span>: [<span style="color:#bc8cff">"hash(email)"</span>, <span style="color:#bc8cff">"hash(given_name)"</span>],<br>
+          &nbsp;&nbsp;<span style="color:#e6edf3">"scope"</span>: <span style="color:#3fb950">"read:calendar"</span><br>
+          }<span style="color:#7d8590">~</span><span style="color:#3fb950">disclosure(email)</span><span style="color:#7d8590">~</span><span style="color:#7d8590">// given_name omitted</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wire format explainer -->
+    <div class="callout" style="border-color:rgba(188,140,255,0.3);margin-bottom:14px">
+      <strong style="color:var(--purple)">SD-JWT wire format:</strong> <code style="color:var(--purple)">&lt;JWT&gt;~&lt;disc1&gt;~&lt;disc2&gt;~</code><br>
+      Each disclosure is <code>base64url(json([salt, claim_name, claim_value]))</code>. The JWT contains only SHA-256 digests in <code>_sd</code> &#8212; no raw PII. The agent selects which disclosures to include in the <code>~</code>-separated presentation. The verifier rejects any disclosure whose digest isn&#39;t in <code>_sd</code>.
+    </div>
+
+    <!-- Interactive SD-JWT demo -->
+    <div style="padding-top:14px;border-top:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap">
+        <label style="font-size:13px;color:var(--muted)">What the agent reveals:</label>
+        <select id="sd-reveal-select" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer">
+          <option value="email">email only &#8212; given_name stays private</option>
+          <option value="both">email + given_name (both revealed)</option>
+          <option value="none">nothing &#8212; sub and scope only</option>
+        </select>
+        <button class="btn btn-primary" id="sd-run-btn" onclick="runSDDemo(this)">&#9654; Run SD-JWT OBO Flow</button>
+      </div>
+      <div id="sd-steps" style="display:none;flex-direction:column;gap:5px;margin-bottom:10px"></div>
+      <div id="sd-result" style="display:none"></div>
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-top:12px">
+      Implementation: <code>pkg/obo/sdjwt.go</code> &#8212; SDUserIssuer, SDUserValidator, SDUserToken.Present(). Status: proof-of-concept for the privacy model; <strong>draft-gco-oauth-delegate-sd-jwt-00</strong> is an individual draft (not yet WG-adopted). This explores what privacy-preserving delegation could look like as the ecosystem evolves.
+    </p>
+  </div>
+
+  <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1rem">
+    <button class="btn btn-primary" onclick="goToTab('pop')">Proof of Possession &#8594;</button>
+    <button class="btn" onclick="goToTab('happy')">Agent Identity: AgentToken &#8594;</button>
+    <button class="btn" onclick="goToTab('standards')">Standards Tracker &#8594;</button>
+  </div>
+</div>
+
+<!-- ══ PROOF OF POSSESSION ════════════════════════════════════════════════ -->
+<div class="scene" id="scene-pop">
+  <div class="card-title" style="font-size:11px;color:var(--muted);letter-spacing:.08em;margin-bottom:4px">SCENARIO</div>
+  <h1 class="scene-title">Proof of Possession &#8212; Binding Tokens to Keys</h1>
+  <p class="scene-lead">A bearer token is like cash: whoever holds it can spend it. Proof of Possession (PoP) changes this &#8212; the token is cryptographically bound to a key, and the caller must prove they hold that key on every request. Stolen tokens become useless. This project implements three complementary PoP mechanisms.</p>
+
+  <!-- The bearer-token problem -->
+  <div class="card">
+    <div class="card-title">The bearer token problem</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px">A bearer token is identity-agnostic &#8212; any holder gets access. Click to watch what happens when an attacker intercepts one.</p>
+    <div class="diagram">
+      <svg id="pop-bearer-svg" viewBox="0 0 730 182" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="pop-b-arr-o" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#f5a623"/></marker>
+          <marker id="pop-b-arr-g" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#3fb950"/></marker>
+          <marker id="pop-b-arr-r" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#f85149"/></marker>
+        </defs>
+        <!-- ROW 1 label -->
+        <text x="5" y="16" fill="#7d8590" font-family="sans-serif" font-size="8.5" letter-spacing=".4">LEGITIMATE AGENT</text>
+        <!-- Legit agent box -->
+        <rect id="pop-b-agent" x="5" y="22" width="120" height="44" rx="6" fill="#161b22" stroke="#bc8cff" stroke-width="1.5" opacity="0"/>
+        <text id="pop-b-agent-t1" x="65" y="40" text-anchor="middle" fill="#bc8cff" font-family="sans-serif" font-size="9" font-weight="700" opacity="0">Booking Agent</text>
+        <text id="pop-b-agent-t2" x="65" y="52" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5" opacity="0">spiffe://.../booking</text>
+        <text id="pop-b-agent-t3" x="65" y="62" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5" opacity="0">owns private key</text>
+        <!-- Legit arrow agent → token -->
+        <line id="pop-b-arr1" x1="125" y1="44" x2="144" y2="44" stroke="#f5a623" stroke-width="1.5" marker-end="url(#pop-b-arr-o)" opacity="0"/>
+        <!-- Legit token rect -->
+        <rect id="pop-b-tok1" x="146" y="32" width="158" height="24" rx="4" fill="#1c2128" stroke="#f5a623" stroke-width="1" opacity="0"/>
+        <text id="pop-b-tok1-t" x="225" y="48" text-anchor="middle" fill="#f5a623" font-family="monospace" font-size="8" opacity="0">Authorization: Bearer &lt;tok&gt;</text>
+        <!-- Token → API arrow row 1 -->
+        <line id="pop-b-arr2" x1="304" y1="44" x2="323" y2="44" stroke="#3fb950" stroke-width="1.5" marker-end="url(#pop-b-arr-g)" opacity="0"/>
+        <!-- API box row 1 -->
+        <rect id="pop-b-api1" x="325" y="22" width="100" height="44" rx="6" fill="#161b22" stroke="#3fb950" stroke-width="1.5" opacity="0"/>
+        <text id="pop-b-api1-t1" x="375" y="40" text-anchor="middle" fill="#3fb950" font-family="sans-serif" font-size="9" font-weight="700" opacity="0">Calendar API</text>
+        <text id="pop-b-api1-t2" x="375" y="52" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5" opacity="0">validates signature</text>
+        <text id="pop-b-api1-t3" x="375" y="62" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5" opacity="0">no key check</text>
+        <!-- API → result arrow row 1 -->
+        <line id="pop-b-arr3" x1="425" y1="44" x2="443" y2="44" stroke="#3fb950" stroke-width="1.5" marker-end="url(#pop-b-arr-g)" opacity="0"/>
+        <!-- Result OK box -->
+        <rect id="pop-b-result-ok" x="445" y="28" width="135" height="32" rx="4" fill="#0d1117" stroke="#3fb950" stroke-width="1.5" opacity="0"/>
+        <text id="pop-b-result-ok-t1" x="512" y="42" text-anchor="middle" fill="#3fb950" font-family="sans-serif" font-size="9" font-weight="700" opacity="0">&#10003; 200 OK &#8212; ACCEPTED</text>
+        <text id="pop-b-result-ok-t2" x="512" y="54" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5" opacity="0">signature valid, access granted</text>
+
+        <!-- INTERCEPT INDICATOR (vertical dashed) -->
+        <line id="pop-b-intercept-line" x1="225" y1="58" x2="225" y2="104" stroke="#f85149" stroke-dasharray="3,2" stroke-width="1.5" opacity="0"/>
+        <text id="pop-b-intercept-lbl" x="260" y="84" fill="#f85149" font-family="sans-serif" font-size="9" font-weight="700" opacity="0">&#9888; token intercepted!</text>
+
+        <!-- ROW 2 label -->
+        <text x="5" y="118" fill="#f85149" font-family="sans-serif" font-size="8.5" letter-spacing=".4">ATTACKER (holds stolen token)</text>
+        <!-- Attacker box -->
+        <rect id="pop-b-attacker" x="5" y="124" width="120" height="44" rx="6" fill="#1c2128" stroke="#f85149" stroke-width="2" opacity="0"/>
+        <text id="pop-b-attacker-t1" x="65" y="142" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="9" font-weight="700" opacity="0">&#9888; Attacker</text>
+        <text id="pop-b-attacker-t2" x="65" y="154" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5" opacity="0">different identity</text>
+        <text id="pop-b-attacker-t3" x="65" y="164" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5" opacity="0">no private key</text>
+        <!-- Attacker → stolen token arrow -->
+        <line id="pop-b-arr4" x1="125" y1="146" x2="144" y2="146" stroke="#f85149" stroke-width="1.5" marker-end="url(#pop-b-arr-r)" opacity="0"/>
+        <!-- Stolen token rect -->
+        <rect id="pop-b-tok2" x="146" y="134" width="158" height="24" rx="4" fill="#1c2128" stroke="#f85149" stroke-width="1.5" opacity="0"/>
+        <text id="pop-b-tok2-t" x="225" y="150" text-anchor="middle" fill="#f85149" font-family="monospace" font-size="8" opacity="0">Authorization: Bearer &lt;tok&gt;</text>
+        <!-- Stolen token → API arrow row 2 -->
+        <line id="pop-b-arr5" x1="304" y1="146" x2="323" y2="146" stroke="#f85149" stroke-width="1.5" marker-end="url(#pop-b-arr-r)" opacity="0"/>
+        <!-- API box row 2 -->
+        <rect id="pop-b-api2" x="325" y="124" width="100" height="44" rx="6" fill="#161b22" stroke="#3fb950" stroke-width="1.5" opacity="0"/>
+        <text id="pop-b-api2-t1" x="375" y="142" text-anchor="middle" fill="#3fb950" font-family="sans-serif" font-size="9" font-weight="700" opacity="0">Calendar API</text>
+        <text id="pop-b-api2-t2" x="375" y="154" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5" opacity="0">validates signature</text>
+        <text id="pop-b-api2-t3" x="375" y="164" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5" opacity="0">no key check</text>
+        <!-- API → result-bad arrow row 2 -->
+        <line id="pop-b-arr6" x1="425" y1="146" x2="443" y2="146" stroke="#f85149" stroke-width="1.5" marker-end="url(#pop-b-arr-r)" opacity="0"/>
+        <!-- Result BAD box -->
+        <rect id="pop-b-result-bad" x="445" y="130" width="135" height="32" rx="4" fill="#0d1117" stroke="#f85149" stroke-width="2" opacity="0"/>
+        <text id="pop-b-result-bad-t1" x="512" y="144" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="9" font-weight="700" opacity="0">&#10003; 200 OK &#8212; ACCEPTED!</text>
+        <text id="pop-b-result-bad-t2" x="512" y="156" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="7.5" opacity="0">stolen token = free access &#9888;</text>
+
+        <!-- Bottom warning -->
+        <text id="pop-b-warn" x="365" y="178" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="9" opacity="0">Bearer tokens are identity-agnostic &#8212; any holder gets access. Proof of Possession changes this.</text>
+      </svg>
+    </div>
+    <div class="btn-group" style="margin-top:10px">
+      <button class="btn btn-primary" onclick="playBearerAttack(this)">&#9654; Play Attack Scenario</button>
+      <button class="btn" onclick="popBearerReset()" style="margin-left:8px">&#8635; Reset</button>
+    </div>
+  </div>
+
+  <!-- Three PoP mechanisms -->
+  <div class="card">
+    <div class="card-title">Three complementary PoP mechanisms implemented</div>
+    <div class="info-grid c3">
+      <div class="info-box" style="border-color:rgba(245,166,35,0.5)">
+        <div class="ibt" style="color:#f5a623">&#9312; DPoP — RFC 9449</div>
+        <div class="ibv" style="font-size:12px;line-height:1.6">
+          <strong style="color:var(--text)">Demonstration Proof-of-Possession</strong>. The CB4A CDP mints access tokens with a <code>cnf.jkt</code> claim (JWK thumbprint). On every API call the agent sends a signed DPoP proof in a header &#8212; the resource server verifies the ephemeral key matches. No key, no access, even with a valid token.
+          <br><br><span style="color:var(--muted)">&#x2514; <code>pkg/cb4a/cdp.go</code> &#8212; GenerateDPoPProof(), SimulateAPICall()</span>
+        </div>
+      </div>
+      <div class="info-box" style="border-color:rgba(88,166,255,0.5)">
+        <div class="ibt" style="color:#58a6ff">&#9313; mTLS Token-Cert Binding — RFC 8705</div>
+        <div class="ibv" style="font-size:12px;line-height:1.6">
+          <strong style="color:var(--text)">Mutual TLS</strong> client certificate presented at the TLS layer. The gateway extracts the client cert&#39;s URI SAN and checks it equals the AgentToken <code>sub</code>. A stolen token presented with a different cert is rejected — the attacker can&#39;t fake the cert without the private key.
+          <br><br><span style="color:var(--muted)">&#x2514; <code>internal/gateway/server.go</code> &#8212; verifyMTLSBinding()</span>
+        </div>
+      </div>
+      <div class="info-box" style="border-color:rgba(63,185,80,0.5)">
+        <div class="ibt" style="color:#3fb950">&#9314; AgentProofToken — WPT</div>
+        <div class="ibv" style="font-size:12px;line-height:1.6">
+          <strong style="color:var(--text)">Workload Proof Token</strong>. A short-lived per-request JWT signed with the agent&#39;s <code>cnf.jwk</code> key, covering the request URI and the full chain hash. Binds each API call to a specific agent workload and chain state. JTI replay protection prevents reuse.
+          <br><br><span style="color:var(--muted)">&#x2514; <code>pkg/identity/proof.go</code> &#8212; GenerateProof(), ProofValidator</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DPoP deep dive -->
+  <div class="card">
+    <div class="card-title">DPoP — ephemeral key binding (RFC 9449) via CB4A</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
+      <div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:10px">The CB4A CDP generates a fresh P-256 key pair per credential. The public key thumbprint (<code>cnf.jkt</code>) is embedded in the token. On every API call, the agent signs a DPoP proof with the private half:</p>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:var(--mono);font-size:11px;line-height:1.9">
+          <span style="color:#7d8590">// Token payload:</span><br>
+          { <span style="color:#f5a623">"cnf"</span>: { <span style="color:#f5a623">"jkt"</span>: <span style="color:#3fb950">"SHA-256(pubkey)"</span> } }<br><br>
+          <span style="color:#7d8590">// DPoP proof header (sent with every request):</span><br>
+          { <span style="color:#bc8cff">"jwk"</span>: &lt;ephPublicKey&gt;,<br>
+          &nbsp;&nbsp;<span style="color:#bc8cff">"alg"</span>: <span style="color:#3fb950">"ES256"</span> }<br><br>
+          <span style="color:#7d8590">// Resource server verifies:</span><br>
+          SHA-256(proof.jwk) == token.cnf.jkt<br>
+          proof.htm == request method<br>
+          proof.htu == request URI<br>
+          proof.ath == SHA-256(token)<br>
+          jti not seen before (replay)
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="info-box" style="border-color:rgba(245,166,35,0.4)">
+          <div class="ibt" style="color:#f5a623">Key per credential</div>
+          <div class="ibv" style="font-size:12px;line-height:1.5">Each <code>CDP.Mint()</code> call generates a fresh ephemeral EC P-256 key. The private key lives only in memory for the duration of the credential. Compromise of one credential doesn't expose others.</div>
+        </div>
+        <div class="info-box" style="border-color:rgba(245,166,35,0.4)">
+          <div class="ibt" style="color:#f5a623">Request-bound proof</div>
+          <div class="ibv" style="font-size:12px;line-height:1.5">The DPoP proof covers the exact HTTP method + URI + token hash. A proof captured from one request can't be replayed to a different endpoint &#8212; the resource server checks <code>htm</code> and <code>htu</code>.</div>
+        </div>
+        <div class="info-box" style="border-color:rgba(245,166,35,0.4)">
+          <div class="ibt" style="color:#f5a623">JTI replay prevention</div>
+          <div class="ibv" style="font-size:12px;line-height:1.5">Each DPoP proof has a unique <code>jti</code>. The resource server records seen JTIs. A replayed proof (same JTI) is rejected even if the key and URI match &#8212; demonstrated in the Replay Attack tab.</div>
+        </div>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:12px">
+      <strong>Live demo:</strong> The Credential Broker tab runs a full interactive CB4A + DPoP flow: PDP evaluation &#8594; CDP mint &#8594; DPoP proof generation &#8594; API call verification. The Replay Attack tab demonstrates JTI replay rejection on the AgentProofToken.
+    </div>
+  </div>
+
+  <!-- mTLS binding -->
+  <div class="card">
+    <div class="card-title">mTLS token-cert binding — animated demonstration</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px">The gateway extracts the TLS client certificate URI SAN and checks it matches the AgentToken <code>sub</code>. A stolen token presented by an attacker with a different cert fails this check.</p>
+    <div class="diagram">
+      <svg id="pop-mtls-svg" viewBox="0 0 730 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="pop-m-arr-p" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#bc8cff"/></marker>
+          <marker id="pop-m-arr-r" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#f85149"/></marker>
+          <marker id="pop-m-arr-g" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#3fb950"/></marker>
+          <marker id="pop-m-arr-b" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#58a6ff"/></marker>
+        </defs>
+
+        <!-- Legit agent (top left) -->
+        <rect id="pop-m-legit" x="10" y="22" width="145" height="62" rx="6" fill="#161b22" stroke="#bc8cff" stroke-width="1.5"/>
+        <text x="82" y="40" text-anchor="middle" fill="#bc8cff" font-family="sans-serif" font-size="9" font-weight="700">Booking Agent</text>
+        <text x="82" y="53" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5">cert SAN:</text>
+        <text x="82" y="64" text-anchor="middle" fill="#7d8590" font-family="monospace" font-size="7">spiffe://.../booking</text>
+        <text x="82" y="75" text-anchor="middle" fill="#3fb950" font-family="sans-serif" font-size="7.5" font-weight="700">&#10003; SAN == token.sub</text>
+
+        <!-- Attacker (bottom left) -->
+        <rect id="pop-m-attacker" x="10" y="118" width="145" height="62" rx="6" fill="#1c2128" stroke="#f85149" stroke-width="2"/>
+        <text x="82" y="136" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="9" font-weight="700">&#9888; Attacker</text>
+        <text x="82" y="149" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5">cert SAN:</text>
+        <text x="82" y="160" text-anchor="middle" fill="#7d8590" font-family="monospace" font-size="7">spiffe://.../attacker</text>
+        <text x="82" y="171" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="7.5" font-weight="700">&#10007; SAN &#8800; token.sub</text>
+
+        <!-- Arrow legit → gateway -->
+        <line id="pop-m-arr-legit" x1="155" y1="53" x2="275" y2="90" stroke="#bc8cff" stroke-width="1.5" marker-end="url(#pop-m-arr-p)" opacity="0.25"/>
+        <text id="pop-m-lbl-legit" x="205" y="60" fill="#7d8590" font-family="sans-serif" font-size="8" opacity="0">cert + token</text>
+
+        <!-- Arrow attacker → gateway -->
+        <line id="pop-m-arr-attack" x1="155" y1="149" x2="275" y2="118" stroke="#f85149" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#pop-m-arr-r)" opacity="0.25"/>
+        <text id="pop-m-lbl-attack" x="190" y="148" fill="#f85149" font-family="sans-serif" font-size="8" opacity="0">stolen token</text>
+
+        <!-- Gateway (center) -->
+        <rect id="pop-m-gateway" x="277" y="74" width="176" height="56" rx="8" fill="#161b22" stroke="#58a6ff" stroke-width="2"/>
+        <text x="365" y="94" text-anchor="middle" fill="#58a6ff" font-family="sans-serif" font-size="10" font-weight="700">Gateway</text>
+        <text x="365" y="108" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5">verifyMTLSBinding()</text>
+        <text x="365" y="120" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5">cert URI SAN == token.sub ?</text>
+
+        <!-- Arrow gateway → ALLOWED -->
+        <line id="pop-m-arr-allow" x1="453" y1="90" x2="568" y2="53" stroke="#3fb950" stroke-width="1.5" marker-end="url(#pop-m-arr-g)" opacity="0.25"/>
+
+        <!-- Arrow gateway → REJECTED -->
+        <line id="pop-m-arr-reject" x1="453" y1="114" x2="568" y2="149" stroke="#f85149" stroke-width="1.5" marker-end="url(#pop-m-arr-r)" opacity="0.25"/>
+
+        <!-- ALLOWED box (top right) -->
+        <rect id="pop-m-allowed" x="570" y="26" width="148" height="52" rx="6" fill="#0d1117" stroke="#3fb950" stroke-width="1.5" opacity="0.25"/>
+        <text id="pop-m-allowed-t1" x="644" y="46" text-anchor="middle" fill="#3fb950" font-family="sans-serif" font-size="10" font-weight="700" opacity="0.25">&#10003; ALLOWED</text>
+        <text id="pop-m-allowed-t2" x="644" y="60" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5" opacity="0.25">SAN matched &#8212; request proxied</text>
+        <text id="pop-m-allowed-t3" x="644" y="71" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5" opacity="0.25">200 OK</text>
+
+        <!-- REJECTED box (bottom right) -->
+        <rect id="pop-m-rejected" x="570" y="122" width="148" height="52" rx="6" fill="#0d1117" stroke="#f85149" stroke-width="2" opacity="0.25"/>
+        <text id="pop-m-rejected-t1" x="644" y="142" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="10" font-weight="700" opacity="0.25">&#10007; REJECTED</text>
+        <text id="pop-m-rejected-t2" x="644" y="156" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="7.5" opacity="0.25">SAN mismatch &#8212; 403 Forbidden</text>
+        <text id="pop-m-rejected-t3" x="644" y="167" text-anchor="middle" fill="#f85149" font-family="sans-serif" font-size="7.5" opacity="0.25">stolen token useless</text>
+
+        <!-- Bottom caption -->
+        <text x="365" y="192" text-anchor="middle" fill="#7d8590" font-family="sans-serif" font-size="9">Stolen tokens are useless without the matching private key &#8212; the attacker cannot forge the cert.</text>
+      </svg>
+    </div>
+
+    <!-- Step list (shown during animation) -->
+    <div id="pop-mtls-steps" style="display:none;margin-top:12px">
+      <div id="pop-m-s1" class="anim-step-sm">&#9312; Booking Agent connects with TLS cert (URI SAN: spiffe://.../booking) and presents AgentToken</div>
+      <div id="pop-m-s2" class="anim-step-sm">&#9313; Gateway checks cert URI SAN == token.sub &#8594; <span style="color:#3fb950">MATCH &#10003;</span> &#8594; request proxied, 200 OK</div>
+      <div id="pop-m-s3" class="anim-step-sm">&#9314; Attacker connects with their own cert (URI SAN: spiffe://.../attacker) and presents the stolen token</div>
+      <div id="pop-m-s4" class="anim-step-sm">&#9315; Gateway checks cert URI SAN == token.sub &#8594; <span style="color:#f85149">MISMATCH &#10007;</span> &#8594; 403 Forbidden &#8212; token is bound, useless without the key</div>
+    </div>
+
+    <div class="btn-group" style="margin-top:12px">
+      <button class="btn btn-primary" onclick="runMTLSBindingDemo(this)">&#9654; Run Token-Cert Binding Demo</button>
+      <button class="btn" onclick="popMTLSReset()" style="margin-left:8px">&#8635; Reset</button>
+    </div>
+    <div id="pop-mtls-result" style="display:none;margin-top:10px"></div>
+  </div>
+
+  <!-- Comparison table -->
+  <div class="card">
+    <div class="card-title">Comparison — when to use which mechanism</div>
+    <div style="overflow-x:auto">
+    <table class="compare-table" style="font-size:12px">
+      <tr>
+        <th>Mechanism</th>
+        <th>Transport layer</th>
+        <th>Proof frequency</th>
+        <th>Key lifetime</th>
+        <th>Best for</th>
+      </tr>
+      <tr>
+        <td><strong>DPoP (RFC 9449)</strong></td>
+        <td>HTTP header (<code>DPoP:</code>)</td>
+        <td>Every request</td>
+        <td>Per-credential (ephemeral)</td>
+        <td>API calls via CB4A-minted credentials; OAuth bearer replacement</td>
+      </tr>
+      <tr>
+        <td><strong>mTLS (RFC 8705)</strong></td>
+        <td>TLS handshake</td>
+        <td>Per connection</td>
+        <td>Cert validity period (e.g. 24h)</td>
+        <td>Service-to-service; gateway front-door; high-throughput agents</td>
+      </tr>
+      <tr>
+        <td><strong>AgentProofToken (WPT)</strong></td>
+        <td>HTTP header (<code>Agent-Proof:</code>)</td>
+        <td>Every request</td>
+        <td>Minutes (short-lived JWT)</td>
+        <td>Agent-specific PoP; binds the proof to the full delegation chain hash</td>
+      </tr>
+    </table>
+    </div>
+    <div class="callout" style="margin-top:12px">
+      <strong>Forward look:</strong> OBO tokens can also be PoP-enhanced via DPoP &#8212; the OBO AS would embed a <code>cnf</code> claim in the delegated token and require the agent to present a DPoP proof on every downstream call. This combination (RFC 8693 + RFC 9449) is the direction draft-gco-oauth-delegate-sd-jwt also points toward for privacy-preserving, possession-bound delegation.
+    </div>
+  </div>
+
+  <!-- Standards basis -->
+  <div class="card">
+    <div class="card-title">Standards basis</div>
+    <div style="overflow-x:auto">
+    <table class="compare-table" style="font-size:12px">
+      <tr><th>Standard</th><th>Role</th><th>Status</th><th>Implementation</th></tr>
+      <tr>
+        <td><strong><a href="https://www.rfc-editor.org/rfc/rfc9449" target="_blank" style="color:var(--blue)">RFC 9449</a></strong> &#8212; OAuth 2.0 DPoP</td>
+        <td>Defines the DPoP proof header format, <code>cnf.jkt</code> token claim, and resource server verification steps</td>
+        <td><span style="color:var(--green)">&#9679; Published RFC</span></td>
+        <td><code>pkg/cb4a/cdp.go</code> &#8212; GenerateDPoPProof, SimulateAPICall</td>
+      </tr>
+      <tr>
+        <td><strong><a href="https://www.rfc-editor.org/rfc/rfc8705" target="_blank" style="color:var(--blue)">RFC 8705</a></strong> &#8212; OAuth 2.0 mTLS Client Auth and Certificate-Bound Access Tokens</td>
+        <td>Defines the token-cert binding model: resource server extracts the client cert and checks it against a token claim</td>
+        <td><span style="color:var(--green)">&#9679; Published RFC</span></td>
+        <td><code>internal/gateway/server.go</code> &#8212; verifyMTLSBinding(), URI SAN == sub check</td>
+      </tr>
+      <tr>
+        <td><strong>AgentProofToken / WPT</strong> &#8212; Workload Proof Token</td>
+        <td>Per-request proof JWT signed by the agent&#39;s workload key; covers chain hash + target URI; JTI replay detection</td>
+        <td><span style="color:var(--green)">&#9679; Implemented</span></td>
+        <td><code>pkg/identity/proof.go</code> &#8212; GenerateProof, ProofValidator</td>
+      </tr>
+    </table>
+    </div>
+  </div>
+
   <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1rem">
     <button class="btn btn-primary" onclick="goToTab('happy')">Agent Identity: AgentToken &#8594;</button>
-    <button class="btn" onclick="goToTab('rfc8693')">Token Delegation (RFC 8693) &#8594;</button>
-    <button class="btn" onclick="goToTab('standards')">Standards Tracker &#8594;</button>
+    <button class="btn" onclick="goToTab('obo')">&#8592; On-Behalf-Of</button>
+    <button class="btn" onclick="goToTab('broker')">Credential Broker (DPoP live demo) &#8594;</button>
   </div>
 </div>
 
@@ -3300,11 +3663,11 @@ KER ═════════════════════════�
         <td><a href="https://datatracker.ietf.org/doc/draft-gco-oauth-delegate-sd-jwt/" target="_blank" style="color:var(--blue)">Delegate SD-JWT — Delegated SD-JWT for OAuth 2.0</a></td>
         <td style="white-space:nowrap;font-size:11px">IETF OAuth WG</td>
         <td><span style="color:var(--muted);white-space:nowrap">◌ Individual draft</span></td>
-        <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(107,114,128,.15);color:var(--muted)">◌ Monitoring</span></td>
+        <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(255,211,61,.12);color:var(--yellow)">&#9651; PoC implemented</span></td>
         <td style="text-align:center"><code>-00</code></td>
-        <td style="font-size:10px;color:var(--muted)"><code>pkg/obo/user.go</code> (future UserIssuer SD-JWT path)</td>
-        <td style="font-size:11px">Extends RFC 8693 OBO with SD-JWT selective disclosure — the agent presents only the user attributes the target resource needs, enabling privacy-preserving delegation. Would extend <code>pkg/obo/</code> UserIssuer when/if WG-adopted.</td>
-        <td style="text-align:center;font-size:10px;white-space:nowrap"><span style="color:var(--muted)">monitoring</span></td>
+        <td style="font-size:10px"><code>pkg/obo/sdjwt.go</code> — SDUserIssuer, SDUserValidator, OBOIssuer SD path (16 tests)</td>
+        <td style="font-size:11px">Extends RFC 8693 OBO with SD-JWT selective disclosure — agent presents only the claims the target resource needs. PoC implemented to explore the privacy model; not WG-adopted. Demonstrated in the On-Behalf-Of tab.</td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/ai-agent-security/commit/HEAD" target="_blank" style="color:var(--blue)"><code>current</code></a></td>
       </tr>
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-ietf-wimse-identifier/" target="_blank" style="color:var(--blue)">Identifiers — Workload Identifier</a></td>
@@ -4864,41 +5227,407 @@ function scaFlowReset() {
 }
 
 // ── OBO delegation demo ───────────────────────────────────────────────────────
-function runOBODemo(btn) {
+// Default stroke for each OBO SVG node (for reset)
+const OBO_NODE_DEFAULTS = {
+  'obo-node-user':     { stroke:'#58a6ff', sw:'1.5', fill:'#161b22' },
+  'obo-node-useridp':  { stroke:'#58a6ff', sw:'1.5', fill:'#161b22' },
+  'obo-node-agent':    { stroke:'#bc8cff', sw:'1.5', fill:'#161b22' },
+  'obo-node-agentidp': { stroke:'#bc8cff', sw:'1',   fill:'#161b22' },
+  'obo-node-as':       { stroke:'#f5a623', sw:'1.5', fill:'#161b22' },
+  'obo-node-resource': { stroke:'#3fb950', sw:'1.5', fill:'#161b22' },
+};
+const OBO_ARROW_DEFAULTS = {
+  'obo-arrow-useras':  { stroke:'#58a6ff', sw:'1.2' },
+  'obo-arrow-agentas': { stroke:'#bc8cff', sw:'1.2' },
+  'obo-arrow-obo':     { stroke:'#3fb950', sw:'1.5' },
+};
+
+function oboSVGReset() {
+  Object.entries(OBO_NODE_DEFAULTS).forEach(function([id, d]) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.setAttribute('stroke', d.stroke);
+    el.setAttribute('stroke-width', d.sw);
+    el.setAttribute('fill', d.fill);
+    el.style.filter = '';
+  });
+  Object.entries(OBO_ARROW_DEFAULTS).forEach(function([id, d]) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.setAttribute('stroke', d.stroke);
+    el.setAttribute('stroke-width', d.sw);
+    el.style.animation = '';
+  });
+}
+
+function oboSVGActivate(id, color) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.setAttribute('stroke', color || '#e6edf3');
+  el.setAttribute('stroke-width', '2.5');
+  if (el.tagName !== 'line') el.setAttribute('fill', 'rgba(255,255,255,0.04)');
+}
+
+function oboSVGSuccess(id) { oboSVGActivate(id, '#3fb950'); }
+function oboSVGError(id)   { oboSVGActivate(id, '#f85149'); if (document.getElementById(id)) document.getElementById(id).setAttribute('fill','rgba(248,81,73,0.07)'); }
+
+function oboArrowFlow(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.setAttribute('stroke-width', '2');
+  el.style.strokeDasharray = '8,4';
+  el.style.animation = 'dashscroll 0.4s linear infinite';
+}
+
+async function runOBODemo(btn) {
   const scope = document.getElementById('obo-scope-select').value;
   btn.disabled = true;
   btn.innerHTML = '&#9203; Running\u2026';
-  const result = agentFabric.oboSimulate(scope);
-  btn.disabled = false;
-  btn.innerHTML = '&#9654; Run OBO Flow';
+
+  // Dim all SVG nodes to set the "pending" baseline
+  oboSVGReset();
+  Object.keys(OBO_NODE_DEFAULTS).forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) { el.setAttribute('stroke', '#30363d'); el.setAttribute('fill', '#161b22'); }
+  });
 
   const stepsEl = document.getElementById('obo-steps');
   const resultEl = document.getElementById('obo-result');
+  stepsEl.innerHTML = '';
+  stepsEl.style.display = 'flex';
+  resultEl.style.display = 'none';
+
+  const result = agentFabric.oboSimulate(scope);
+  const steps = result.steps || [];
+
+  // Which SVG nodes to highlight per actor
+  const actorNodes = {
+    'IdP':               ['obo-node-useridp', 'obo-node-user'],
+    'Agent IdP':         ['obo-node-agentidp', 'obo-node-agent'],
+    'Agent':             ['obo-node-agent'],
+    'AS (OBO endpoint)': ['obo-node-as'],
+    'Booking Service':   ['obo-node-resource'],
+  };
+  const actorColors = {
+    'IdP':               '#58a6ff',
+    'Agent IdP':         '#bc8cff',
+    'Agent':             '#bc8cff',
+    'AS (OBO endpoint)': '#f5a623',
+    'Booking Service':   '#3fb950',
+  };
+
+  // Animate through all returned steps
+  for (let i = 0; i < steps.length; i++) {
+    const s = steps[i];
+    const color = actorColors[s.actor] || '#e6edf3';
+
+    // Highlight current actor nodes
+    (actorNodes[s.actor] || []).forEach(function(id) { oboSVGActivate(id, color); });
+
+    // Animate arrows for specific steps
+    if (i === 2) { oboArrowFlow('obo-arrow-useras'); oboArrowFlow('obo-arrow-agentas'); }
+    if (i === 4) { oboArrowFlow('obo-arrow-obo'); }
+
+    // Append step row, fade in
+    const div = document.createElement('div');
+    div.className = 'anim-step-sm active';
+    div.style.borderColor = color;
+    div.innerHTML =
+      '<span style="color:' + color + ';font-weight:700">' + s.actor + '</span>' +
+      '&nbsp;&middot;&nbsp;<span style="color:var(--text)">' + s.label + '</span>' +
+      '<br><code style="font-size:10px;color:var(--muted)">' + s.detail + '</code>';
+    stepsEl.appendChild(div);
+    stepsEl.scrollTop = stepsEl.scrollHeight;
+
+    await delay(850);
+
+    // Mark this step done (dim slightly) before moving on
+    div.classList.remove('active');
+    div.classList.add('done');
+    div.style.borderColor = color;
+  }
+
+  if (result.rejected) {
+    // Show rejection at OBO AS
+    oboSVGReset();
+    Object.keys(OBO_NODE_DEFAULTS).forEach(function(id) {
+      const el = document.getElementById(id);
+      if (el && id !== 'obo-node-as') { el.setAttribute('stroke', '#30363d'); }
+    });
+    oboSVGError('obo-node-as');
+
+    const rejDiv = document.createElement('div');
+    rejDiv.className = 'anim-step-sm active';
+    rejDiv.style.borderColor = '#f85149';
+    rejDiv.innerHTML =
+      '<span style="color:#f85149;font-weight:700">AS (OBO endpoint)</span>' +
+      '&nbsp;&middot;&nbsp;<span style="color:var(--text)">Reject &#8212; scope not a subset of user grant</span>' +
+      '<br><code style="font-size:10px;color:#f85149">' + result.error + '</code>';
+    stepsEl.appendChild(rejDiv);
+
+    resultEl.innerHTML = '<div class="callout danger"><strong>&#10005; OBO rejected:</strong> ' + result.error + '<br><span style="font-size:12px;color:var(--muted)">The OBO AS enforces scope &sube; user_grant. Requesting a scope the user never consented to is rejected at issuance time.</span></div>';
+    resultEl.style.display = 'block';
+
+  } else if (result.ok) {
+    // Final state: AS + resource both green
+    oboSVGReset();
+    Object.keys(OBO_NODE_DEFAULTS).forEach(function(id) {
+      const el = document.getElementById(id);
+      if (el && id !== 'obo-node-as' && id !== 'obo-node-resource') {
+        el.setAttribute('stroke', '#30363d');
+      }
+    });
+    oboSVGSuccess('obo-node-as');
+    oboSVGSuccess('obo-node-resource');
+
+    resultEl.innerHTML = '<div class="callout ok">' +
+      '<strong>&#10003; Delegation complete.</strong> Resource server sees:<br>' +
+      '<code>sub</code> = <strong>' + result.userID + '</strong> (human user)' +
+      ' &nbsp;&middot;&nbsp;<code>act.sub</code> = <strong>' + result.agentID + '</strong> (agent)' +
+      ' &nbsp;&middot;&nbsp;<code>scope</code> = <strong>&quot;' + result.scope + '&quot;</strong>' +
+      '</div>';
+    resultEl.style.display = 'block';
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '&#9654; Run OBO Flow';
+}
+
+function sdPanelReset() {
+  const plain = document.getElementById('sd-panel-plain');
+  const sd    = document.getElementById('sd-panel-sd');
+  if (plain) { plain.style.borderColor = 'var(--border)'; plain.style.boxShadow = ''; }
+  if (sd)    { sd.style.borderColor = 'rgba(188,140,255,0.4)'; sd.style.boxShadow = ''; }
+}
+function sdPanelHighlight(which) { // 'plain' | 'sd' | 'both'
+  sdPanelReset();
+  if (which === 'plain' || which === 'both') {
+    const el = document.getElementById('sd-panel-plain');
+    if (el) { el.style.borderColor = '#f85149'; el.style.boxShadow = '0 0 0 2px rgba(248,81,73,0.2)'; }
+  }
+  if (which === 'sd' || which === 'both') {
+    const el = document.getElementById('sd-panel-sd');
+    if (el) { el.style.borderColor = '#bc8cff'; el.style.boxShadow = '0 0 0 2px rgba(188,140,255,0.3)'; }
+  }
+}
+
+async function runSDDemo(btn) {
+  const reveal = document.getElementById('sd-reveal-select').value;
+  btn.disabled = true;
+  btn.innerHTML = '&#9203; Running\u2026';
+
+  const stepsEl = document.getElementById('sd-steps');
+  const resultEl = document.getElementById('sd-result');
+  stepsEl.innerHTML = '';
+  stepsEl.style.display = 'flex';
+  resultEl.style.display = 'none';
+  sdPanelReset();
+
+  const result = agentFabric.oboSimulateSD(reveal);
 
   if (!result.ok) {
-    stepsEl.style.display = 'none';
+    resultEl.innerHTML = '<div class="callout danger"><strong>&#10005; Error:</strong> ' + result.error + '</div>';
     resultEl.style.display = 'block';
-    resultEl.innerHTML = '<div class="callout danger"><strong>&#10005; OBO rejected:</strong> ' + result.error + '</div>';
+    btn.disabled = false;
+    btn.innerHTML = '&#9654; Run SD-JWT OBO Flow';
     return;
   }
 
-  const steps = result.steps || [];
-  stepsEl.innerHTML = steps.map(function(s, i) {
-    return '<div class="anim-step-sm" style="border-color:var(--green)">' +
-      '<span style="color:var(--blue);font-weight:700">' + s.actor + '</span>' +
-      '&nbsp;&middot;&nbsp;<span style="color:var(--text)">' + s.label + '</span>' +
-      '<br><code style="font-size:10px;color:var(--muted)">' + s.detail + '</code>' +
-      '</div>';
-  }).join('');
-  stepsEl.style.display = 'flex';
+  const sdSteps = result.sdSteps || [];
 
-  resultEl.innerHTML = '<div class="callout ok">' +
-    '<strong>&#10003; Delegation complete.</strong> Resource server sees:<br>' +
-    '<code>sub</code> = <strong>' + result.userID + '</strong> (human user) &nbsp;&middot;&nbsp;' +
-    '<code>act.sub</code> = <strong>' + result.agentID + '</strong> (agent) &nbsp;&middot;&nbsp;' +
-    '<code>scope</code> = <strong>&quot;' + result.scope + '&quot;</strong>' +
+  // Actor → panel highlight + step color
+  const stepMeta = [
+    { panel: 'sd',   color: '#58a6ff' },  // IdP issues SD-JWT
+    { panel: 'sd',   color: '#bc8cff' },  // Agent selects disclosures
+    { panel: 'both', color: '#f5a623' },  // AS validates
+    { panel: 'sd',   color: '#3fb950' },  // Booking Service sees result
+  ];
+
+  for (let i = 0; i < sdSteps.length; i++) {
+    const s = sdSteps[i];
+    const meta = stepMeta[i] || { panel: 'sd', color: '#bc8cff' };
+
+    sdPanelHighlight(meta.panel);
+
+    const div = document.createElement('div');
+    div.className = 'anim-step-sm active';
+    div.style.borderColor = meta.color;
+    div.innerHTML =
+      '<span style="color:' + meta.color + ';font-weight:700">' + s.actor + '</span>' +
+      '&nbsp;&middot;&nbsp;<span style="color:var(--text)">' + s.label + '</span>' +
+      '<br><code style="font-size:10px;color:var(--muted)">' + s.detail + '</code>';
+    stepsEl.appendChild(div);
+    stepsEl.scrollTop = stepsEl.scrollHeight;
+
+    await delay(850);
+
+    div.classList.remove('active');
+    div.classList.add('done');
+    div.style.borderColor = meta.color;
+  }
+
+  // Final highlight: SD panel wins
+  sdPanelReset();
+  const sdEl = document.getElementById('sd-panel-sd');
+  if (sdEl) { sdEl.style.borderColor = '#3fb950'; sdEl.style.boxShadow = '0 0 0 2px rgba(63,185,80,0.25)'; }
+
+  const emailLine = result.sdEmail && result.sdEmail !== '(not revealed)'
+    ? '<code>email</code> = <strong>' + result.sdEmail + '</strong> &nbsp;&middot;&nbsp;'
+    : '<code>email</code> = <em style="color:var(--muted)">(not revealed &#8212; private)</em> &nbsp;&middot;&nbsp;';
+
+  resultEl.innerHTML = '<div class="callout ok" style="border-color:rgba(188,140,255,0.5)">' +
+    '<strong style="color:var(--purple)">&#10003; SD-JWT OBO complete.</strong> ' +
+    '<span style="color:var(--muted)">' + result.revealDesc + '</span><br>' +
+    '<code>sub</code> = <strong>' + result.sdUserID + '</strong> (user) &nbsp;&middot;&nbsp;' +
+    '<code>act.sub</code> = <strong>' + result.sdAgentID + '</strong> (agent) &nbsp;&middot;&nbsp;' +
+    emailLine +
+    '<code>scope</code> = <strong>&quot;' + result.sdScope + '&quot;</strong><br>' +
+    '<span style="font-size:11px;color:var(--muted);margin-top:4px;display:block">Privacy: ' + result.sdPIIExposed + '</span>' +
     '</div>';
   resultEl.style.display = 'block';
+
+  btn.disabled = false;
+  btn.innerHTML = '&#9654; Run SD-JWT OBO Flow';
+}
+
+// ── PoP tab helpers ──────────────────────────────────────────────────────────
+function popFade(id, opacity) {
+  const el = document.getElementById(id);
+  if (el) el.setAttribute('opacity', String(opacity));
+}
+
+function popBearerReset() {
+  const ids = [
+    'pop-b-agent','pop-b-agent-t1','pop-b-agent-t2','pop-b-agent-t3',
+    'pop-b-arr1','pop-b-tok1','pop-b-tok1-t','pop-b-arr2',
+    'pop-b-api1','pop-b-api1-t1','pop-b-api1-t2','pop-b-api1-t3',
+    'pop-b-arr3','pop-b-result-ok','pop-b-result-ok-t1','pop-b-result-ok-t2',
+    'pop-b-intercept-line','pop-b-intercept-lbl',
+    'pop-b-attacker','pop-b-attacker-t1','pop-b-attacker-t2','pop-b-attacker-t3',
+    'pop-b-arr4','pop-b-tok2','pop-b-tok2-t','pop-b-arr5',
+    'pop-b-api2','pop-b-api2-t1','pop-b-api2-t2','pop-b-api2-t3',
+    'pop-b-arr6','pop-b-result-bad','pop-b-result-bad-t1','pop-b-result-bad-t2',
+    'pop-b-warn'
+  ];
+  ids.forEach(id => popFade(id, 0));
+}
+
+async function playBearerAttack(btn) {
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.innerHTML = '&#9203; Running\u2026';
+  popBearerReset();
+  await delay(300);
+
+  // Step 1: Legitimate agent sends token to API
+  ['pop-b-agent','pop-b-agent-t1','pop-b-agent-t2','pop-b-agent-t3'].forEach(id => popFade(id, 1));
+  await delay(600);
+  popFade('pop-b-arr1', 1);
+  popFade('pop-b-tok1', 1); popFade('pop-b-tok1-t', 1);
+  await delay(600);
+  popFade('pop-b-arr2', 1);
+  ['pop-b-api1','pop-b-api1-t1','pop-b-api1-t2','pop-b-api1-t3'].forEach(id => popFade(id, 1));
+  await delay(700);
+  popFade('pop-b-arr3', 1);
+  ['pop-b-result-ok','pop-b-result-ok-t1','pop-b-result-ok-t2'].forEach(id => popFade(id, 1));
+  await delay(1000);
+
+  // Step 2: Token intercepted in transit
+  popFade('pop-b-intercept-line', 1);
+  await delay(500);
+  popFade('pop-b-intercept-lbl', 1);
+  await delay(900);
+
+  // Step 3: Attacker reuses stolen token — same result
+  ['pop-b-attacker','pop-b-attacker-t1','pop-b-attacker-t2','pop-b-attacker-t3'].forEach(id => popFade(id, 1));
+  await delay(600);
+  popFade('pop-b-arr4', 1);
+  popFade('pop-b-tok2', 1); popFade('pop-b-tok2-t', 1);
+  await delay(600);
+  popFade('pop-b-arr5', 1);
+  ['pop-b-api2','pop-b-api2-t1','pop-b-api2-t2','pop-b-api2-t3'].forEach(id => popFade(id, 1));
+  await delay(700);
+  popFade('pop-b-arr6', 1);
+  ['pop-b-result-bad','pop-b-result-bad-t1','pop-b-result-bad-t2'].forEach(id => popFade(id, 1));
+  await delay(900);
+
+  // Step 4: Warning
+  popFade('pop-b-warn', 1);
+
+  btn.disabled = false;
+  btn.innerHTML = '&#9654; Play Attack Scenario';
+}
+
+function popMTLSReset() {
+  ['pop-m-s1','pop-m-s2','pop-m-s3','pop-m-s4'].forEach(id => afSetStep(id, ''));
+  document.getElementById('pop-mtls-steps').style.display = 'none';
+  document.getElementById('pop-mtls-result').style.display = 'none';
+  // Arrows and outcome boxes back to dim
+  ['pop-m-arr-legit','pop-m-arr-attack','pop-m-arr-allow','pop-m-arr-reject'].forEach(id => popFade(id, 0.25));
+  ['pop-m-allowed','pop-m-allowed-t1','pop-m-allowed-t2','pop-m-allowed-t3',
+   'pop-m-rejected','pop-m-rejected-t1','pop-m-rejected-t2','pop-m-rejected-t3'].forEach(id => popFade(id, 0.25));
+  ['pop-m-lbl-legit','pop-m-lbl-attack'].forEach(id => popFade(id, 0));
+  document.getElementById('pop-m-gateway').setAttribute('stroke', '#58a6ff');
+  document.getElementById('pop-m-legit').setAttribute('stroke', '#bc8cff');
+  document.getElementById('pop-m-attacker').setAttribute('stroke', '#f85149');
+}
+
+async function runMTLSBindingDemo(btn) {
+  if (btn.disabled) return;
+  if (!window.agentFabric || !agentFabric.setup) {
+    document.getElementById('pop-mtls-result').innerHTML = '<div class="callout danger">WASM not loaded yet \u2014 please wait a moment and try again.</div>';
+    document.getElementById('pop-mtls-result').style.display = 'block';
+    return;
+  }
+  btn.disabled = true;
+  btn.innerHTML = '&#9203; Running\u2026';
+  popMTLSReset();
+
+  agentFabric.setup();
+  agentFabric.issueOrchestratorToken();
+  const result = agentFabric.simulateMTLSBinding();
+
+  if (!result.ok) {
+    document.getElementById('pop-mtls-result').innerHTML = '<div class="callout danger"><strong>Error:</strong> ' + result.error + '</div>';
+    document.getElementById('pop-mtls-result').style.display = 'block';
+    btn.disabled = false;
+    btn.innerHTML = '&#9654; Run Token-Cert Binding Demo';
+    return;
+  }
+
+  document.getElementById('pop-mtls-steps').style.display = 'block';
+  await delay(400);
+
+  // Step 1: Legit agent → gateway
+  afSetStep('pop-m-s1', 'active');
+  popFade('pop-m-lbl-legit', 1);
+  popFade('pop-m-arr-legit', 1);
+  document.getElementById('pop-m-legit').setAttribute('stroke', '#3fb950');
+  document.getElementById('pop-m-gateway').setAttribute('stroke', '#58a6ff');
+  await delay(1000);
+
+  // Step 2: Gateway → ALLOWED
+  afSetStep('pop-m-s1', 'done'); afSetStep('pop-m-s2', 'active');
+  popFade('pop-m-arr-allow', 1);
+  ['pop-m-allowed','pop-m-allowed-t1','pop-m-allowed-t2','pop-m-allowed-t3'].forEach(id => popFade(id, 1));
+  await delay(1000);
+
+  // Step 3: Attacker → gateway
+  afSetStep('pop-m-s2', 'done'); afSetStep('pop-m-s3', 'active');
+  popFade('pop-m-lbl-attack', 1);
+  popFade('pop-m-arr-attack', 1);
+  document.getElementById('pop-m-gateway').setAttribute('stroke', '#f85149');
+  await delay(1000);
+
+  // Step 4: Gateway → REJECTED
+  afSetStep('pop-m-s3', 'done'); afSetStep('pop-m-s4', 'active');
+  popFade('pop-m-arr-reject', 1);
+  ['pop-m-rejected','pop-m-rejected-t1','pop-m-rejected-t2','pop-m-rejected-t3'].forEach(id => popFade(id, 1));
+  await delay(1000);
+  afSetStep('pop-m-s4', 'done');
+
+  btn.disabled = false;
+  btn.innerHTML = '&#9654; Run Token-Cert Binding Demo';
 }
 
 async function playSCAFlow() {

@@ -24,12 +24,18 @@ import (
 //
 // This makes delegation chains visible: any downstream service can read both
 // the human user's identity AND the agent's identity from a single token.
+//
+// If an SDUserValidator is configured (via WithSDUserValidator), Issue also
+// accepts SD-JWT user tokens (wire format: <JWT>~<disc1>~). In that case the
+// AS validates only the disclosures the agent chose to reveal; any email
+// disclosure is forwarded into the OBO token's email claim.
 type OBOIssuer struct {
-	issuerID       string
-	key            *ecdsa.PrivateKey
-	agentValidator *identity.AgentValidator
-	userValidator  *UserValidator
-	ttl            time.Duration
+	issuerID        string
+	key             *ecdsa.PrivateKey
+	agentValidator  *identity.AgentValidator
+	userValidator   *UserValidator
+	sdUserValidator *SDUserValidator // optional; enables SD-JWT user token path
+	ttl             time.Duration
 }
 
 // NewOBOIssuer creates an OBOIssuer.
@@ -58,6 +64,14 @@ func NewOBOIssuer(
 	}
 }
 
+// WithSDUserValidator attaches an SDUserValidator so that the OBOIssuer can
+// accept SD-JWT user tokens in addition to plain JWTs.
+// Call this after NewOBOIssuer to opt in to the SD-JWT path.
+func (o *OBOIssuer) WithSDUserValidator(v *SDUserValidator) *OBOIssuer {
+	o.sdUserValidator = v
+	return o
+}
+
 // Issue validates the agentToken and userToken, then issues an OBO token.
 //
 //   - agentToken: the agent's AgentToken (proves agent identity)
@@ -82,14 +96,31 @@ func (o *OBOIssuer) Issue(agentToken, userToken, targetAudience, requestedScope 
 		return "", fmt.Errorf("validate agent token: %w", err)
 	}
 
-	// Validate user identity (audience = this AS's issuerID).
-	userClaims, err := o.userValidator.Validate(userToken, o.issuerID)
-	if err != nil {
-		return "", fmt.Errorf("validate user token: %w", err)
+	// Validate user identity.
+	// SD-JWT user tokens contain a ~ separator; route them through SDUserValidator.
+	var userSubject, userScope, userEmail string
+	if strings.Contains(userToken, "~") {
+		if o.sdUserValidator == nil {
+			return "", errors.New("SD-JWT user token presented but no SDUserValidator configured")
+		}
+		sdResult, sdErr := o.sdUserValidator.Validate(userToken, o.issuerID)
+		if sdErr != nil {
+			return "", fmt.Errorf("validate SD-JWT user token: %w", sdErr)
+		}
+		userSubject = sdResult.Subject
+		userScope = sdResult.Scope
+		userEmail = sdResult.RevealedClaims["email"] // empty if not revealed
+	} else {
+		userClaims, plainErr := o.userValidator.Validate(userToken, o.issuerID)
+		if plainErr != nil {
+			return "", fmt.Errorf("validate user token: %w", plainErr)
+		}
+		userSubject = userClaims.Subject
+		userScope = userClaims.Scope
 	}
 
-	// Resolve granted scope.
-	grantedScope, err := resolveScope(userClaims.Scope, requestedScope)
+	// Resolve granted scope (intersection of user grant and request).
+	grantedScope, err := resolveScope(userScope, requestedScope)
 	if err != nil {
 		return "", err
 	}
@@ -103,7 +134,7 @@ func (o *OBOIssuer) Issue(agentToken, userToken, targetAudience, requestedScope 
 	claims := OBOClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    o.issuerID,
-			Subject:   userClaims.Subject, // sub = the human user
+			Subject:   userSubject, // sub = the human user
 			Audience:  jwt.ClaimStrings{targetAudience},
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(o.ttl)),
@@ -111,6 +142,7 @@ func (o *OBOIssuer) Issue(agentToken, userToken, targetAudience, requestedScope 
 		},
 		Act:   &ActorClaims{Subject: agentResult.Claims.Subject}, // act.sub = the agent
 		Scope: grantedScope,
+		Email: userEmail, // non-empty only when agent revealed the email SD disclosure
 	}
 
 	t := jwt.NewWithClaims(jwt.SigningMethodES256, claims)

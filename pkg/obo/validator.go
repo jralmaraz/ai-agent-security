@@ -17,13 +17,17 @@ type OBOValidator struct {
 
 // ValidateResult holds the validated claims from an OBO token plus convenience accessors.
 type ValidateResult struct {
-	Claims  *OBOClaims
+	Claims *OBOClaims
 	// UserID is the human user's identity (sub claim).
-	UserID  string
+	UserID string
 	// AgentID is the agent's identity (act.sub claim) — who is making the call.
 	AgentID string
 	// Scope is the granted scope string.
-	Scope   string
+	Scope string
+	// Email is the user's email, populated only when the OBO token was issued via
+	// an SD-JWT user token and the agent chose to reveal the email disclosure.
+	// Empty for plain-JWT OBO flows.
+	Email string
 }
 
 // NewOBOValidator creates an OBOValidator.
@@ -94,5 +98,6 @@ func (v *OBOValidator) Validate(token, audience string) (*ValidateResult, error)
 		UserID:  claims.Subject,
 		AgentID: claims.Act.Subject,
 		Scope:   claims.Scope,
+		Email:   claims.Email,
 	}, nil
 }

@@ -1259,7 +1259,13 @@ func oboSimulate(this js.Value, args []js.Value) any {
 
 	oboToken, err := oboIssuer.Issue(agentToken, userToken, resourceID, requestedScope)
 	if err != nil {
-		return errObj("issue OBO token: " + err.Error())
+		// Return partial steps so the JS animation can show the flow up to rejection.
+		return map[string]any{
+			"ok":       false,
+			"error":    err.Error(),
+			"steps":    steps,
+			"rejected": true,
+		}
 	}
 
 	// Step 4: AS validates and issues delegated token.
@@ -1292,6 +1298,158 @@ func oboSimulate(this js.Value, args []js.Value) any {
 	})
 }
 
+// oboSimulateSD runs the SD-JWT On-Behalf-Of flow and compares it to plain OBO.
+//
+// JS signature: agentFabric.oboSimulateSD(reveal) → {ok, plainSteps, sdSteps, …}
+// reveal: "email" | "both" | "none"   (which disclosures the agent reveals)
+func oboSimulateSD(_ js.Value, args []js.Value) any {
+	reveal := "email"
+	if len(args) > 0 && args[0].Type() == js.TypeString {
+		reveal = args[0].String()
+	}
+
+	const (
+		idpID      = "https://idp.example.com"
+		asID       = "https://as.example.com"
+		agentSubj  = "spiffe://example.com/agents/booking-assistant"
+		userSubj   = "user:alice@example.com"
+		userEmail  = "alice@example.com"
+		givenName  = "Alice"
+		userScope  = "read:calendar write:booking"
+		resourceID = "https://booking-service.example.com"
+	)
+
+	// Key pairs
+	idpKP, err := keys.GenerateECKeyPair()
+	if err != nil {
+		return errObj("generate IdP key: " + err.Error())
+	}
+	agentIdpKP, err := keys.GenerateECKeyPair()
+	if err != nil {
+		return errObj("generate agent IdP key: " + err.Error())
+	}
+	agentKP, err := keys.GenerateECKeyPair()
+	if err != nil {
+		return errObj("generate agent key: " + err.Error())
+	}
+	oboKP, err := keys.GenerateECKeyPair()
+	if err != nil {
+		return errObj("generate OBO AS key: " + err.Error())
+	}
+
+	agentIssuer := identity.NewAgentIssuer(asID, agentIdpKP.Private, time.Hour)
+	agentToken, err := agentIssuer.Issue(identity.IssueOptions{
+		Subject:     agentSubj,
+		Role:        identity.RoleOrchestrator,
+		WorkloadKey: agentKP.Public,
+	})
+	if err != nil {
+		return errObj("issue agent token: " + err.Error())
+	}
+	agentValidator := identity.NewAgentValidator(asID, agentIdpKP.Public)
+
+	// ── PLAIN OBO (reveals all user claims) ──────────────────────────────────
+	plainSteps := []any{}
+	addPlain := func(actor, label, detail string) {
+		plainSteps = append(plainSteps, map[string]any{
+			"actor": actor, "label": label, "detail": detail,
+		})
+	}
+
+	userIssuer := obo.NewUserIssuer(idpID, idpKP.Private, time.Hour)
+	plainUserToken, err := userIssuer.Issue(userSubj, userEmail, userScope, asID)
+	if err != nil {
+		return errObj("issue plain user token: " + err.Error())
+	}
+	addPlain("IdP", "Issue plain user+jwt",
+		"sub="+userSubj+"  email="+userEmail+"  scope=\""+userScope+"\"  typ=user+jwt")
+	addPlain("Agent", "Forward full user token to OBO AS",
+		"AS sees: email="+userEmail+"  given_name="+givenName+" (ALL PII visible)")
+
+	plainUserValidator := obo.NewUserValidator(idpID, idpKP.Public)
+	plainOBOIssuer := obo.NewOBOIssuer(asID, oboKP.Private, agentValidator, plainUserValidator, 5*time.Minute)
+	plainOBOToken, err := plainOBOIssuer.Issue(agentToken, plainUserToken, resourceID, "read:calendar")
+	if err != nil {
+		return errObj("plain OBO issue: " + err.Error())
+	}
+	addPlain("AS", "Issue obo+jwt (full PII in scope)",
+		"sub="+userSubj+"  act.sub="+agentSubj+"  scope=\"read:calendar\"")
+	_ = plainOBOToken
+
+	// ── SD-JWT OBO (selective disclosure) ────────────────────────────────────
+	sdSteps := []any{}
+	addSD := func(actor, label, detail string) {
+		sdSteps = append(sdSteps, map[string]any{
+			"actor": actor, "label": label, "detail": detail,
+		})
+	}
+
+	sdIssuer := obo.NewSDUserIssuer(idpID, idpKP.Private, time.Hour)
+	sdUserToken, err := sdIssuer.Issue(userSubj, userEmail, givenName, userScope, asID)
+	if err != nil {
+		return errObj("issue SD user token: " + err.Error())
+	}
+	addSD("IdP", "Issue user+sd-jwt (PII replaced by SHA-256 digests)",
+		"sub="+userSubj+"  _sd=[hash(email), hash(given_name)]  scope=\""+userScope+"\"  typ=user+sd-jwt")
+
+	// Determine which disclosures to reveal
+	var revealList []string
+	var revealDesc string
+	switch reveal {
+	case "both":
+		revealList = []string{"email", "given_name"}
+		revealDesc = "reveals email + given_name"
+	case "none":
+		revealList = nil
+		revealDesc = "reveals no PII — sub and scope only"
+	default: // "email"
+		revealList = []string{"email"}
+		revealDesc = "reveals only email — given_name stays private"
+	}
+
+	presentation := sdUserToken.Present(revealList)
+	addSD("Agent", "Present selective disclosure to OBO AS",
+		"Agent "+revealDesc+". Wire: <JWT>~<disclosed claims>~")
+
+	sdUserValidator := obo.NewSDUserValidator(idpID, idpKP.Public)
+	sdOBOIssuer := obo.NewOBOIssuer(asID, oboKP.Private, agentValidator, nil, 5*time.Minute).
+		WithSDUserValidator(sdUserValidator)
+
+	sdOBOToken, err := sdOBOIssuer.Issue(agentToken, presentation, resourceID, "read:calendar")
+	if err != nil {
+		return errObj("SD-JWT OBO issue: " + err.Error())
+	}
+
+	oboValidator := obo.NewOBOValidator(asID, oboKP.Public)
+	sdResult, err := oboValidator.Validate(sdOBOToken, resourceID)
+	if err != nil {
+		return errObj("validate SD OBO token: " + err.Error())
+	}
+
+	emailInToken := sdResult.Email
+	if emailInToken == "" {
+		emailInToken = "(not revealed)"
+	}
+	addSD("AS", "Validate SD-JWT — issue obo+jwt with only revealed claims",
+		"AS saw: email="+emailInToken+" | given_name=PRIVATE  sub="+userSubj+"  act.sub="+agentSubj)
+	addSD("Booking Service", "Validate OBO token — acts on behalf of user",
+		"sub (user)="+sdResult.UserID+"  act.sub (agent)="+sdResult.AgentID+"  email="+emailInToken)
+
+	return okObj(map[string]any{
+		"plainSteps": plainSteps,
+		"sdSteps":    sdSteps,
+		"revealMode": reveal,
+		"revealDesc": revealDesc,
+		"sdUserID":   sdResult.UserID,
+		"sdAgentID":  sdResult.AgentID,
+		"sdEmail":    emailInToken,
+		"sdScope":    sdResult.Scope,
+		// privacy summary
+		"plainPIIExposed": "email, given_name visible to AS and downstream",
+		"sdPIIExposed":    revealDesc,
+	})
+}
+
 // ── WASM registration ─────────────────────────────────────────────────────────
 
 func main() {
@@ -1320,7 +1478,8 @@ func main() {
 		"cb4aAPICall": js.FuncOf(cb4aAPICall),
 		"cb4aAudit":   js.FuncOf(cb4aAudit),
 		// OBO delegation flow
-		"oboSimulate": js.FuncOf(oboSimulate),
+		"oboSimulate":   js.FuncOf(oboSimulate),
+		"oboSimulateSD": js.FuncOf(oboSimulateSD),
 		// x402 payment flow
 		"x402Init":            js.FuncOf(x402Init),
 		"x402HitAPI":          js.FuncOf(x402HitAPI),
