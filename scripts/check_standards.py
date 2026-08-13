@@ -355,6 +355,18 @@ def main() -> None:
                 print(f" {len(found)} new draft(s) discovered")
                 for d in found:
                     print(f"        ↳ {d['id']}")
+                    # Register in baseline immediately so it is never re-discovered.
+                    # Status "discovered" = not yet triaged; the daily run won't
+                    # report it again. A human can update to "tracked" or "not-relevant".
+                    baseline["standards"].append({
+                        "id":              d["id"],
+                        "label":           d["title"] or d["id"],
+                        "status":          "discovered",
+                        "first_seen":      d["date"],
+                        "wg":              wf["name"],
+                        "datatracker_url": f"https://datatracker.ietf.org{d['link']}",
+                    })
+                    known_ids.add(d["id"])
                 discoveries.extend(
                     [{**d, "wg_name": wf["name"], "feed_url": wf["feed_url"]}
                      for d in found]
@@ -387,21 +399,23 @@ def main() -> None:
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     baseline["last_checked"] = today
 
-    # ── Nothing to report ─────────────────────────────────────────────────────
-    if not updates and not discoveries:
-        print("\nAll standards current. No new drafts discovered. Nothing to do.")
-        # Still write baseline to persist any last_rss_guid updates
-        with open(BASELINE_FILE, "w") as f:
-            json.dump(baseline, f, indent=2)
-            f.write("\n")
-        with open(GITHUB_OUTPUT, "a") as f:
-            f.write("updates_found=false\n")
-        return
-
-    # ── Persist updated baseline ──────────────────────────────────────────────
+    # ── Persist updated baseline (always, to record discoveries + guid cursors) ─
     with open(BASELINE_FILE, "w") as f:
         json.dump(baseline, f, indent=2)
         f.write("\n")
+
+    # ── Nothing requiring human triage ────────────────────────────────────────
+    # Discoveries are written to the baseline above and need no issue — they
+    # will not be re-reported on subsequent runs.  Only tracked-standard
+    # revision/RSS/page-hash changes require human review and a PR.
+    if not updates:
+        if discoveries:
+            print(f"\n{len(discoveries)} new draft(s) registered in baseline — no issue needed (first-and-only sighting).")
+        else:
+            print("\nAll standards current. No new drafts discovered. Nothing to do.")
+        with open(GITHUB_OUTPUT, "a") as f:
+            f.write("updates_found=false\n")
+        return
 
     # ── Build GitHub issue body ───────────────────────────────────────────────
     repo    = os.environ.get("GITHUB_REPOSITORY", "this repo")
@@ -548,15 +562,16 @@ def main() -> None:
         parts.append(f"{len(rss_updates)} RSS update(s)")
     if page_updates:
         parts.append(f"{len(page_updates)} spec page update(s)")
-    if discoveries:
-        parts.append(f"{len(discoveries)} new discovery(ies)")
+    # Discoveries are informational only — they appear in the issue body if
+    # there are also real updates, but don't drive the title.
     issue_title = f"[Standards Tracker] {', '.join(parts)}"
 
     with open(GITHUB_OUTPUT, "a") as f:
         f.write("updates_found=true\n")
         f.write(f"issue_title={issue_title[:200]}\n")
 
-    print(f"\n{len(updates)} update(s), {len(discoveries)} discovery(ies) — issue will be created.")
+    print(f"\n{len(updates)} tracked update(s) — issue will be created."
+          + (f" ({len(discoveries)} new draft(s) also registered in baseline.)" if discoveries else ""))
 
 
 if __name__ == "__main__":
