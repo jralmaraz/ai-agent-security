@@ -1,6 +1,6 @@
-# WIMSE Agent Fabric
+# AI Agent Security
 
-**Proof-of-concept: cryptographic identity for multi-hop AI agent workloads**
+**Proof-of-concept: cryptographic identity and authorization for multi-hop AI agent workloads**
 
 [![CI](https://github.com/jralmaraz/ai-agent-security/actions/workflows/ci.yml/badge.svg)](https://github.com/jralmaraz/ai-agent-security/actions/workflows/ci.yml)
 [![Go 1.26](https://img.shields.io/badge/go-1.26-00ADD8?logo=go)](https://go.dev)
@@ -17,7 +17,7 @@ Modern AI systems run as pipelines of collaborating agents: an **Orchestrator** 
 - *Is the full delegation path legitimate?*
 - *Can this request be proved fresh and bound to this specific target?*
 
-WIMSE Agent Fabric applies the [IETF WIMSE](https://datatracker.ietf.org/wg/wimse/documents/) workload-identity standard to AI agents. Each hop in a pipeline carries a signed **AgentToken** (`agent+jwt`) with a `chain_depth` counter. A per-request **AgentProofToken** (`application/agent-proof+jwt`) binds the call to the exact target URI and the full delegation chain, preventing replay and audience-confusion attacks. An **Agent Gateway** (MCP-compatible HTTP proxy) validates the entire chain before forwarding to any tool.
+This PoC implements cryptographic identity and authorization across a multi-hop agent pipeline, using emerging standards from the IETF (WIMSE WG, OAuth WG) and OpenID Foundation. Each hop carries a signed **AgentToken** (`agent+jwt`) with a `chain_depth` counter. A per-request **AgentProofToken** (`application/agent-proof+jwt`) binds the call to the exact target URI and the full delegation chain, preventing replay and audience-confusion attacks. An **Agent Gateway** (MCP-compatible HTTP proxy) validates the entire chain before forwarding to any tool.
 
 This is a research PoC — not production software. It is intended to illustrate the design space and serve as a concrete starting point for standardisation discussion.
 
@@ -43,7 +43,7 @@ make check
 Interactive browser demo (no server required beyond a static file server):
 
 ```bash
-make wasm          # builds demo/wimse-agent.wasm and copies wasm_exec.js
+make wasm          # builds demo/agent.wasm and copies wasm_exec.js
 cd demo && python3 -m http.server 8000
 # Open http://localhost:8000
 ```
@@ -267,7 +267,7 @@ func (i *AgentIssuer) Issue(opts IssueOptions) (string, error)
 
 // IssueOptions controls token content.
 type IssueOptions struct {
-    Subject     string          // SPIFFE or WIMSE URI
+    Subject     string          // SPIFFE URI (e.g. spiffe://trust-domain/workload)
     Audiences   []string
     Role        string          // RoleOrchestrator | RoleExecutor | RoleToolServer
     ChainDepth  int             // 0 = originating orchestrator
@@ -436,7 +436,7 @@ go build -o bin/gateway ./cmd/gateway
 make wasm
 
 # Docker (multi-stage, distroless runtime image)
-# docker build --build-arg BINARY=gateway -t wimse-gateway .
+# docker build --build-arg BINARY=gateway -t agent-gateway .
 ```
 
 ---
