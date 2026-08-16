@@ -275,6 +275,8 @@ main{max-width:960px;margin:0 auto;padding:2rem}
     <div class="tab" onclick="showTab('mtls',this)">mTLS Transport</div>
     <div class="tab" onclick="showTab('broker',this)">Credential Broker</div>
     <div class="tab" onclick="showTab('x402',this)">x402 Payments</div>
+    <div class="tab" onclick="showTab('ciba',this)">CIBA Approval</div>
+    <div class="tab" onclick="showTab('ssf',this)">SSF Monitoring</div>
     <div class="tab" onclick="showTab('agentmemory',this)">Agent Memory</div>
     <div class="tab" onclick="showTab('threat',this)">Threat Model</div>
     <div class="tab" onclick="showTab('replay',this)">Replay Attack</div>
@@ -1215,6 +1217,9 @@ main{max-width:960px;margin:0 auto;padding:2rem}
       <div class="info-box orange"><div class="ibt">sub</div><div class="ibv" id="orch-sub">—</div></div>
       <div class="info-box orange"><div class="ibt">role</div><div class="ibv" id="orch-role">—</div></div>
       <div class="info-box orange"><div class="ibt">chain_depth</div><div class="ibv" id="orch-depth">—</div></div>
+    </div>
+    <div class="info-grid c1" id="out-mission" style="display:none">
+      <div class="info-box blue"><div class="ibt">agent_mission <span style="font-size:9px;color:var(--muted);font-weight:400">(draft-klrc-aiagent-auth §4)</span></div><div class="ibv" id="orch-mission" style="font-style:italic">—</div></div>
     </div>
     <div class="callout ok">
       <strong>cnf.jwk</strong> — The token embeds the orchestrator's public key. When it later generates a proof token, any verifier can confirm the proof was signed by the matching private key — without a separate key lookup.
@@ -3164,6 +3169,217 @@ KER ═════════════════════════�
   </div>
 </div>
 
+<!-- ══ CIBA HUMAN-IN-THE-LOOP ══════════════════════════════════════════════════ -->
+<div class="scene" id="scene-ciba">
+  <h1 class="scene-title">CIBA — Human-in-the-Loop Approval Gates</h1>
+  <p class="scene-lead">AI agents acting autonomously on high-risk tasks — financial transactions, code deployments, data deletions — must sometimes pause and wait for a human decision before proceeding. <strong>Client-Initiated Backchannel Authentication (CIBA)</strong> is the OAuth 2.0 mechanism for this: the agent initiates an auth request to a backend channel and polls until a human approves or denies on their device. Defined in <em>draft-klrc-aiagent-auth §6</em> and OpenID CIBA Core.</p>
+
+  <div class="info-grid c3">
+    <div class="info-box blue">
+      <div class="ibt">Agent — Initiator</div>
+      <div class="ibv" style="font-size:11px;line-height:1.7">Detects Tier 2 gate (high-risk action). Sends CIBA <code>backchannel_authentication_request</code> with <code>login_hint</code> (SPIFFE URI) and <code>scope</code>. Polls <code>/token</code> with <code>auth_req_id</code> until approved or denied.</div>
+    </div>
+    <div class="info-box orange">
+      <div class="ibt">CIBA AS — Coordinator</div>
+      <div class="ibv" style="font-size:11px;line-height:1.7">Validates the agent's SPIFFE identity. Sends a push notification to the human's registered device. Waits for approval or denial, then issues a scoped <code>access_token</code> bound to the specific approved action.</div>
+    </div>
+    <div class="info-box green">
+      <div class="ibt">Human — Authorizer</div>
+      <div class="ibv" style="font-size:11px;line-height:1.7">Reviews the pending approval on their authenticator app: <em>"Agent X wants to transfer $2,400 to account Y — Approve?"</em> Denial is final; approval is bound to this specific request only.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="card-title" style="margin-bottom:0">CIBA Backchannel Flow</div>
+      <div class="btn-group" style="margin:0">
+        <button class="btn btn-primary" onclick="playCIBAFlow()">▶ Play Flow</button>
+        <button class="btn" onclick="resetCIBAFlow()">↺ Reset</button>
+      </div>
+    </div>
+    <div class="diagram">
+      <svg id="ciba-svg" viewBox="0 0 760 330" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+        <defs>
+          <marker id="ca"   markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#58a6ff"/></marker>
+          <marker id="ca-g" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#3fb950"/></marker>
+          <marker id="ca-o" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#ffa657"/></marker>
+          <marker id="ca-p" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#bc8cff"/></marker>
+        </defs>
+        <!-- Boxes -->
+        <rect id="cib-agent" x="10" y="10" width="130" height="55" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+        <text x="75" y="31" text-anchor="middle" font-size="10" fill="#58a6ff" font-family="monospace" font-weight="700">Agent</text>
+        <text x="75" y="44" text-anchor="middle" font-size="8" fill="#7d8590" font-family="monospace">spiffe://mesh/worker</text>
+        <text x="75" y="57" text-anchor="middle" font-size="8" fill="#d29922" font-family="monospace">Tier 2 action</text>
+
+        <rect id="cib-gw" x="190" y="10" width="140" height="55" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+        <text x="260" y="31" text-anchor="middle" font-size="10" fill="#ffa657" font-family="monospace" font-weight="700">Gateway</text>
+        <text x="260" y="44" text-anchor="middle" font-size="8" fill="#7d8590" font-family="monospace">CB4A Tier check</text>
+        <text x="260" y="57" text-anchor="middle" font-size="8" fill="#d29922" font-family="monospace">HITL required</text>
+
+        <rect id="cib-as" x="380" y="10" width="140" height="55" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+        <text x="450" y="31" text-anchor="middle" font-size="10" fill="#bc8cff" font-family="monospace" font-weight="700">CIBA AS</text>
+        <text x="450" y="44" text-anchor="middle" font-size="8" fill="#7d8590" font-family="monospace">Auth Server</text>
+        <text x="450" y="57" text-anchor="middle" font-size="8" fill="#bc8cff" font-family="monospace">push + polling</text>
+
+        <rect id="cib-human" x="580" y="10" width="170" height="55" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+        <text x="665" y="31" text-anchor="middle" font-size="10" fill="#3fb950" font-family="monospace" font-weight="700">Human Device</text>
+        <text x="665" y="44" text-anchor="middle" font-size="8" fill="#7d8590" font-family="monospace">Authenticator App</text>
+        <text x="665" y="57" text-anchor="middle" font-size="8" fill="#3fb950" font-family="monospace">Approve / Deny</text>
+
+        <!-- Timeline dashes -->
+        <line x1="75"  y1="65" x2="75"  y2="310" stroke="#30363d" stroke-width="1" stroke-dasharray="4,4"/>
+        <line x1="260" y1="65" x2="260" y2="310" stroke="#30363d" stroke-width="1" stroke-dasharray="4,4"/>
+        <line x1="450" y1="65" x2="450" y2="310" stroke="#30363d" stroke-width="1" stroke-dasharray="4,4"/>
+        <line x1="665" y1="65" x2="665" y2="310" stroke="#30363d" stroke-width="1" stroke-dasharray="4,4"/>
+
+        <!-- 1. Agent → Gateway -->
+        <line id="ca1" x1="140" y1="105" x2="183" y2="105" stroke="#58a6ff" stroke-width="2" marker-end="url(#ca)" opacity="0"/>
+        <text id="ca1t" x="162" y="99" text-anchor="middle" font-size="9" fill="#7d8590" font-family="monospace" opacity="0">1. request + AgentToken</text>
+        <!-- 2. Gateway → CIBA AS -->
+        <line id="ca2" x1="330" y1="143" x2="373" y2="143" stroke="#ffa657" stroke-width="2" marker-end="url(#ca-o)" opacity="0"/>
+        <text id="ca2t" x="352" y="136" text-anchor="middle" font-size="9" fill="#7d8590" font-family="monospace" opacity="0">2. CIBA auth_req (login_hint + scope)</text>
+        <!-- 3. CIBA AS → Human -->
+        <line id="ca3" x1="520" y1="181" x2="573" y2="181" stroke="#bc8cff" stroke-width="2" marker-end="url(#ca-p)" opacity="0"/>
+        <text id="ca3t" x="547" y="174" text-anchor="middle" font-size="9" fill="#7d8590" font-family="monospace" opacity="0">3. push notify</text>
+        <text id="ca3s" x="547" y="194" text-anchor="middle" font-size="8" fill="#bc8cff" font-family="monospace" opacity="0">"Approve transfer?"</text>
+        <!-- 4. Human → CIBA AS (left arrow) -->
+        <line id="ca4" x1="580" y1="218" x2="527" y2="218" stroke="#3fb950" stroke-width="2" marker-end="url(#ca-g)" opacity="0"/>
+        <text id="ca4t" x="554" y="212" text-anchor="middle" font-size="9" fill="#3fb950" font-family="monospace" font-weight="700" opacity="0">4. APPROVED</text>
+        <!-- 5. CIBA AS → Gateway (left arrow) -->
+        <line id="ca5" x1="380" y1="255" x2="337" y2="255" stroke="#3fb950" stroke-width="2" marker-end="url(#ca-g)" opacity="0"/>
+        <text id="ca5t" x="359" y="248" text-anchor="middle" font-size="9" fill="#7d8590" font-family="monospace" opacity="0">5. access_token (single-use)</text>
+        <!-- 6. Gateway → Agent (left arrow) -->
+        <line id="ca6" x1="190" y1="292" x2="147" y2="292" stroke="#3fb950" stroke-width="2" marker-end="url(#ca-g)" opacity="0"/>
+        <text id="ca6t" x="169" y="285" text-anchor="middle" font-size="9" fill="#3fb950" font-family="monospace" font-weight="700" opacity="0">6. 200 OK — agent resumes</text>
+        <!-- Success badge -->
+        <rect id="cib-ok" x="220" y="300" width="320" height="22" rx="4" fill="rgba(63,185,80,0.1)" stroke="rgba(63,185,80,0.4)" stroke-width="1" opacity="0"/>
+        <text id="cib-ok-t" x="380" y="315" text-anchor="middle" font-size="9" fill="#3fb950" font-family="monospace" font-weight="700" opacity="0">Human-approved — agent resumes with scoped credential</text>
+      </svg>
+    </div>
+    <div class="vsteps" style="margin-top:8px">
+      <div class="vstep" id="ciba-s1"><div class="vstep-icon">○</div>Agent detects Tier 2 gate — high-risk action (e.g. $2,400 transfer) requires human approval</div>
+      <div class="vstep" id="ciba-s2"><div class="vstep-icon">○</div>Gateway sends CIBA <code>backchannel_authentication_request</code> with <code>login_hint=spiffe://mesh/worker</code></div>
+      <div class="vstep" id="ciba-s3"><div class="vstep-icon">○</div>CIBA AS validates agent identity + sends push notification to human's registered device</div>
+      <div class="vstep" id="ciba-s4"><div class="vstep-icon">○</div>Human reviews: <em>"Agent wants to execute transfer — Approve?"</em> → taps Approve</div>
+      <div class="vstep" id="ciba-s5"><div class="vstep-icon">○</div>CIBA AS issues scoped <code>access_token</code> bound to this <code>auth_req_id</code> (single-use, short-lived)</div>
+      <div class="vstep" id="ciba-s6"><div class="vstep-icon">○</div>Gateway returns 200 OK — agent resumes with human-approved credential</div>
+    </div>
+  </div>
+
+  <div class="callout ok">
+    <strong>What CIBA adds beyond CB4A Tier 2.</strong> CB4A's Tier 2 flag already exists in this PoC — but it doesn't specify <em>how</em> the human approval is obtained. CIBA is the standardised OAuth 2.0 mechanism for that leg: the decoupled backchannel means the agent never needs to open a browser, and the human approval is cryptographically bound to the specific <code>auth_req_id</code>, preventing replay across different requests.
+  </div>
+  <div class="callout">
+    <strong>agent_mission in the approval UI.</strong> When the AgentToken carries an <code>agent_mission</code> claim (e.g. <em>"Summarise Q2 financial reports"</em>), the CIBA push notification can surface it to the human: <em>"Agent 'Summarise Q2 reports' wants to transfer $2,400 — does this match the approved mission?"</em> This gives the approver context to detect scope creep before approving.
+  </div>
+  <div class="spec-ref">Spec: <a href="https://datatracker.ietf.org/doc/html/draft-klrc-aiagent-auth" target="_blank">draft-klrc-aiagent-auth §6</a> · OpenID CIBA Core 1.0 · RFC 6749 backchannel extension</div>
+</div>
+
+<!-- ══ SSF / CAEP MONITORING ══════════════════════════════════════════════════ -->
+<div class="scene" id="scene-ssf">
+  <h1 class="scene-title">SSF / CAEP — Compromised Agent Detection &amp; Revocation</h1>
+  <p class="scene-lead">A valid AgentToken is accepted until it expires — even if the agent has been compromised. <strong>Shared Signals Framework (SSF)</strong> closes this gap: a SIEM or IdP acting as an SSF <em>Transmitter</em> monitors agent behaviour continuously and emits a signed <strong>Security Event Token (SET)</strong> the moment it detects an anomaly. The gateway (SSF Receiver) immediately revokes the agent's access — before the token expires. Defined in <em>draft-klrc-aiagent-auth §7</em> and draft-ietf-sharedsignals-framework.</p>
+
+  <div class="info-grid c3">
+    <div class="info-box red">
+      <div class="ibt">CAEP Events (Threat Signals)</div>
+      <div class="ibv" style="font-size:11px;line-height:1.7">
+        <code>session-revoked</code> — immediate termination<br>
+        <code>credential-change</code> — key compromise suspected<br>
+        <code>assurance-level-change</code> — integrity degraded<br>
+        <code>token-claims-change</code> — claims no longer trusted
+      </div>
+    </div>
+    <div class="info-box blue">
+      <div class="ibt">SSF Transmitter (SIEM/IdP)</div>
+      <div class="ibv" style="font-size:11px;line-height:1.7">Monitors API call rates, scope usage, timing patterns, lateral movement. When behaviour deviates, emits a CAEP SET signed with ES256 to registered receivers within seconds of detection.</div>
+    </div>
+    <div class="info-box orange">
+      <div class="ibt">SSF Receiver (Gateway)</div>
+      <div class="ibv" style="font-size:11px;line-height:1.7">Registered with the transmitter via the SSF Stream API. Validates SET's ES256 signature, extracts <code>sub</code> (SPIFFE URI), adds to revocation store. All subsequent requests from that agent return <code>401 Unauthorized</code> immediately.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="card-title" style="margin-bottom:0">SSF/CAEP Monitoring Flow</div>
+      <div class="btn-group" style="margin:0">
+        <button class="btn btn-danger" onclick="playSSFFlow()">▶ Play Attack + Revocation</button>
+        <button class="btn" onclick="resetSSFFlow()">↺ Reset</button>
+      </div>
+    </div>
+    <div class="diagram">
+      <svg id="ssf-svg" viewBox="0 0 700 290" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+        <defs>
+          <marker id="sa"   markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#3fb950"/></marker>
+          <marker id="sa-r" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#f85149"/></marker>
+          <marker id="sa-o" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#ffa657"/></marker>
+        </defs>
+        <!-- Boxes -->
+        <rect id="ssf-agent" x="10" y="10" width="140" height="55" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+        <text x="80" y="31" text-anchor="middle" font-size="10" fill="#58a6ff" font-family="monospace" font-weight="700">Agent</text>
+        <text x="80" y="44" text-anchor="middle" font-size="8" fill="#7d8590" font-family="monospace">spiffe://mesh/worker</text>
+        <text x="80" y="57" text-anchor="middle" font-size="8" fill="#7d8590" font-family="monospace">valid AgentToken</text>
+
+        <rect id="ssf-siem" x="265" y="10" width="170" height="55" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+        <text x="350" y="31" text-anchor="middle" font-size="10" fill="#f85149" font-family="monospace" font-weight="700">SIEM / IdP</text>
+        <text x="350" y="44" text-anchor="middle" font-size="8" fill="#7d8590" font-family="monospace">SSF Transmitter</text>
+        <text x="350" y="57" text-anchor="middle" font-size="8" fill="#f85149" font-family="monospace">anomaly detection</text>
+
+        <rect id="ssf-gw" x="540" y="10" width="150" height="55" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+        <text x="615" y="31" text-anchor="middle" font-size="10" fill="#ffa657" font-family="monospace" font-weight="700">Gateway</text>
+        <text x="615" y="44" text-anchor="middle" font-size="8" fill="#7d8590" font-family="monospace">SSF Receiver</text>
+        <text x="615" y="57" text-anchor="middle" font-size="8" fill="#ffa657" font-family="monospace">revocation store</text>
+
+        <!-- Timeline dashes -->
+        <line x1="80"  y1="65" x2="80"  y2="275" stroke="#30363d" stroke-width="1" stroke-dasharray="4,4"/>
+        <line x1="350" y1="65" x2="350" y2="275" stroke="#30363d" stroke-width="1" stroke-dasharray="4,4"/>
+        <line x1="615" y1="65" x2="615" y2="275" stroke="#30363d" stroke-width="1" stroke-dasharray="4,4"/>
+
+        <!-- 1. Normal API call → 200 OK -->
+        <line id="ss1" x1="150" y1="103" x2="533" y2="103" stroke="#3fb950" stroke-width="2" marker-end="url(#sa)" opacity="0"/>
+        <text id="ss1t" x="342" y="96" text-anchor="middle" font-size="9" fill="#3fb950" font-family="monospace" opacity="0">1. normal API call — 200 OK</text>
+
+        <!-- 2. SIEM detects anomaly -->
+        <rect id="ss2-bg" x="265" y="118" width="170" height="22" rx="3" fill="rgba(248,81,73,.12)" stroke="rgba(248,81,73,.35)" stroke-width="1" opacity="0"/>
+        <text id="ss2t" x="350" y="132" text-anchor="middle" font-size="9" fill="#f85149" font-family="monospace" font-weight="700" opacity="0">2. anomaly detected</text>
+
+        <!-- 3. CAEP SET → Gateway -->
+        <line id="ss3" x1="435" y1="155" x2="533" y2="155" stroke="#f85149" stroke-width="2" marker-end="url(#sa-r)" opacity="0"/>
+        <text id="ss3t" x="484" y="148" text-anchor="middle" font-size="9" fill="#7d8590" font-family="monospace" opacity="0">3. CAEP SET (session-revoked)</text>
+
+        <!-- 4. Gateway blocklist update -->
+        <rect id="ss4-bg" x="540" y="170" width="150" height="22" rx="3" fill="rgba(248,81,73,.12)" stroke="rgba(248,81,73,.35)" stroke-width="1" opacity="0"/>
+        <text id="ss4t" x="615" y="184" text-anchor="middle" font-size="9" fill="#f85149" font-family="monospace" font-weight="700" opacity="0">sub → blocklist</text>
+
+        <!-- 5. Agent next request (red, rejected) -->
+        <line id="ss5" x1="150" y1="218" x2="533" y2="218" stroke="#f85149" stroke-width="2" marker-end="url(#sa-r)" opacity="0"/>
+        <text id="ss5t" x="342" y="211" text-anchor="middle" font-size="9" fill="#7d8590" font-family="monospace" opacity="0">5. next request (token still valid)</text>
+
+        <!-- 6. Gateway 401 → Agent -->
+        <line id="ss6" x1="540" y1="248" x2="157" y2="248" stroke="#f85149" stroke-width="2" marker-end="url(#sa-r)" opacity="0"/>
+        <text id="ss6t" x="349" y="241" text-anchor="middle" font-size="9" fill="#f85149" font-family="monospace" font-weight="700" opacity="0">6. 401 Unauthorized — session revoked</text>
+      </svg>
+    </div>
+    <div class="vsteps" style="margin-top:8px">
+      <div class="vstep" id="ssf-s1"><div class="vstep-icon">○</div>Agent calls Gateway normally — valid AgentToken, within expiry, request succeeds</div>
+      <div class="vstep" id="ssf-s2"><div class="vstep-icon">○</div>SIEM detects anomaly — unusual API call rate, unexpected scopes, or lateral movement pattern</div>
+      <div class="vstep" id="ssf-s3"><div class="vstep-icon">○</div>SSF Transmitter emits signed CAEP <code>session-revoked</code> SET (ES256) to registered gateway receiver</div>
+      <div class="vstep" id="ssf-s4"><div class="vstep-icon">○</div>Gateway validates SET signature, extracts SPIFFE URI, adds <code>spiffe://mesh/worker</code> to revocation store</div>
+      <div class="vstep" id="ssf-s5"><div class="vstep-icon">○</div>Agent's next request arrives — AgentToken is still cryptographically valid and within expiry window</div>
+      <div class="vstep" id="ssf-s6"><div class="vstep-icon">○</div>Gateway checks revocation store first → sub is blocked → <code>401 Unauthorized</code> — token rejected despite being valid</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Why this matters.</strong> Standard token revocation (RFC 7009) requires the compromised agent to call a revocation endpoint — it won't. SSF/CAEP flips this: revocation is <em>pushed</em> to the gateway, making it independent of the agent's cooperation. Even with a valid unexpired AgentToken, the agent is blocked the moment the SET arrives.
+  </div>
+  <div class="callout ok">
+    <strong>Integration with AgentChain.</strong> The CAEP SET's <code>sub</code> is the agent's SPIFFE URI — the same value in every AgentToken's <code>sub</code> claim and every AgentChain hop. The revocation check is a single set lookup in <code>internal/gateway/server.go</code>: if <code>revokedSubs.Contains(claims.Subject)</code> → 401. No per-token tracking needed.
+  </div>
+  <div class="spec-ref">Spec: <a href="https://datatracker.ietf.org/doc/html/draft-klrc-aiagent-auth" target="_blank">draft-klrc-aiagent-auth §7</a> · <a href="https://datatracker.ietf.org/doc/html/draft-ietf-sharedsignals-framework" target="_blank">draft-ietf-sharedsignals-framework</a> · CAEP 1.0</div>
+</div>
+
 <!-- ══ AGENT MEMORY SECURITY ══════════════════════════════════════════════════ -->
 <div class="scene" id="scene-agentmemory">
   <h1 class="scene-title">Agent Memory Security</h1>
@@ -3723,7 +3939,7 @@ CREATE POLICY agent_isolation ON agent_memories
   <div class="card">
     <div class="card-title">Standards Tracker</div>
     <p class="spec-ref">
-      This PoC implements thirteen IETF and OpenID standards — most of them active drafts still evolving toward production readiness.
+      This PoC implements fourteen IETF and OpenID standards (plus two new patterns from draft-klrc-aiagent-auth) — most of them active drafts still evolving toward production readiness.
       A GitHub Actions workflow checks the IETF Datatracker API daily and opens a labelled issue when any revision changes.
       The <strong>Impl. commit</strong> column links to the exact commit that last implemented or verified compatibility with that draft revision.
     </p>
@@ -3836,6 +4052,16 @@ CREATE POLICY agent_isolation ON agent_memories
         <td style="font-size:10px;color:var(--muted)"><code>pkg/identity/chain.go</code>, <code>internal/gateway</code></td>
         <td style="font-size:11px">Token exchange, trust domain boundaries, delegation chain semantics</td>
         <td style="text-align:center;font-size:10px;white-space:nowrap"><a href="https://github.com/jralmaraz/ai-agent-security/commit/018b9d8" target="_blank" style="color:var(--blue)"><code>018b9d8</code></a></td>
+      </tr>
+      <tr>
+        <td><a href="https://datatracker.ietf.org/doc/draft-klrc-aiagent-auth/" target="_blank" style="color:var(--blue)">AI Agent Auth &amp; Authz</a> <span style="font-size:9px;color:var(--muted)">draft-klrc-aiagent-auth</span></td>
+        <td style="white-space:nowrap;font-size:11px">Individual (Kasselman, Parecki, Steele…)</td>
+        <td><span style="color:var(--muted);white-space:nowrap">● Individual draft</span></td>
+        <td><span style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(107,114,128,.15);color:var(--muted)">◌ Monitoring</span></td>
+        <td style="text-align:center"><code>-03</code></td>
+        <td style="font-size:10px;color:var(--muted)"><code>pkg/identity/token.go</code> (<code>agent_mission</code>), demo CIBA + SSF tabs</td>
+        <td style="font-size:11px">Validates WIMSE WPT/WIT design; introduces <code>agent_mission</code> claim, CIBA human-in-the-loop approval gates, SSF/CAEP agent revocation signals. Missed by wg_feeds (individual submission — no <code>ietf-</code> prefix); keyword-search feed added to tracker.</td>
+        <td style="text-align:center;font-size:10px;white-space:nowrap">—</td>
       </tr>
       <tr>
         <td><a href="https://datatracker.ietf.org/doc/draft-hartman-credential-broker-4-agents/" target="_blank" style="color:var(--blue)">CB4A — Credential Broker for Agents</a></td>
@@ -4252,6 +4478,12 @@ async function doIssueOrch() {
     setText('orch-sub',   p.sub || '—');
     setText('orch-role',  p.role || '—');
     setText('orch-depth', String(p.chain_depth ?? '—'));
+    const missionBox = document.getElementById('out-mission');
+    const missionVal = p.agent_mission || r.mission || '';
+    if (missionVal && missionBox) {
+      setText('orch-mission', missionVal);
+      missionBox.style.display = '';
+    }
   }
   reveal('out-orch');
   advanceStep('btn-orch', 'btn-exec');
@@ -5896,6 +6128,173 @@ function playMemAttack() {
   fadeIn('mem-badge',   4800);
   fadeIn('mem-badge-t1', 4900);
   fadeIn('mem-badge-t2', 5000);
+}
+
+// ── CIBA animation ────────────────────────────────────────────────────────────
+function playCIBAFlow() {
+  resetCIBAFlow();
+
+  function drawArrow(id, len, forward, delay) {
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.style.transition = 'none';
+      el.style.strokeDasharray = len;
+      el.style.strokeDashoffset = forward ? len : -len;
+      el.style.opacity = '1';
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        el.style.transition = 'stroke-dashoffset 0.55s cubic-bezier(.4,0,.2,1)';
+        el.style.strokeDashoffset = '0';
+      }));
+    }, delay);
+  }
+  function fadeIn(id, delay) {
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.style.transition = 'opacity 0.35s';
+      el.style.opacity = '1';
+    }, delay);
+  }
+  function cibaStep(id, delay) {
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.add('pass');
+      el.querySelector('.vstep-icon').textContent = '✓';
+    }, delay);
+  }
+
+  cibaStep('ciba-s1', 300);
+  drawArrow('ca1', 43, true, 400);  fadeIn('ca1t', 400);
+
+  cibaStep('ciba-s2', 1100);
+  drawArrow('ca2', 43, true, 1200); fadeIn('ca2t', 1200);
+
+  cibaStep('ciba-s3', 2100);
+  drawArrow('ca3', 53, true, 2200); fadeIn('ca3t', 2200); fadeIn('ca3s', 2200);
+
+  cibaStep('ciba-s4', 3100);
+  drawArrow('ca4', 53, false, 3200); fadeIn('ca4t', 3200);
+
+  cibaStep('ciba-s5', 4100);
+  drawArrow('ca5', 43, false, 4200); fadeIn('ca5t', 4200);
+
+  cibaStep('ciba-s6', 5100);
+  drawArrow('ca6', 43, false, 5200); fadeIn('ca6t', 5200);
+
+  fadeIn('cib-ok', 5900); fadeIn('cib-ok-t', 5900);
+}
+
+function resetCIBAFlow() {
+  ['ca1','ca1t','ca2','ca2t','ca3','ca3t','ca3s','ca4','ca4t','ca5','ca5t','ca6','ca6t','cib-ok','cib-ok-t'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.transition = 'none';
+    el.style.opacity = '0';
+    el.style.strokeDasharray = '';
+    el.style.strokeDashoffset = '';
+  });
+  ['ciba-s1','ciba-s2','ciba-s3','ciba-s4','ciba-s5','ciba-s6'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('pass','fail');
+    el.querySelector('.vstep-icon').textContent = '○';
+  });
+}
+
+// ── SSF animation ──────────────────────────────────────────────────────────────
+function playSSFFlow() {
+  resetSSFFlow();
+
+  function drawArrow(id, len, forward, delay) {
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.style.transition = 'none';
+      el.style.strokeDasharray = len;
+      el.style.strokeDashoffset = forward ? len : -len;
+      el.style.opacity = '1';
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        el.style.transition = 'stroke-dashoffset 0.55s cubic-bezier(.4,0,.2,1)';
+        el.style.strokeDashoffset = '0';
+      }));
+    }, delay);
+  }
+  function fadeIn(id, delay) {
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.style.transition = 'opacity 0.35s';
+      el.style.opacity = '1';
+    }, delay);
+  }
+  function ssfStep(id, cls, delay) {
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.add(cls);
+      el.querySelector('.vstep-icon').textContent = cls === 'pass' ? '✓' : '✗';
+    }, delay);
+  }
+  function hiBox(id, color, delay) {
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.setAttribute('stroke', color);
+      el.setAttribute('stroke-width', '2');
+    }, delay);
+  }
+
+  // Step 1: normal request
+  ssfStep('ssf-s1', 'pass', 300);
+  drawArrow('ss1', 383, true, 400); fadeIn('ss1t', 400);
+
+  // Step 2: anomaly detected
+  ssfStep('ssf-s2', 'fail', 1400);
+  fadeIn('ss2-bg', 1500); fadeIn('ss2t', 1500);
+  hiBox('ssf-siem', '#f85149', 1600);
+
+  // Step 3: CAEP SET to gateway
+  ssfStep('ssf-s3', 'fail', 2500);
+  drawArrow('ss3', 98, true, 2600); fadeIn('ss3t', 2600);
+
+  // Step 4: gateway revokes
+  ssfStep('ssf-s4', 'fail', 3500);
+  fadeIn('ss4-bg', 3600); fadeIn('ss4t', 3600);
+  hiBox('ssf-gw', '#f85149', 3700);
+
+  // Step 5: agent next request (still valid token)
+  ssfStep('ssf-s5', 'fail', 4500);
+  drawArrow('ss5', 383, true, 4600); fadeIn('ss5t', 4600);
+  hiBox('ssf-agent', '#f85149', 4600);
+
+  // Step 6: 401 back
+  ssfStep('ssf-s6', 'fail', 5500);
+  drawArrow('ss6', 383, false, 5600); fadeIn('ss6t', 5600);
+}
+
+function resetSSFFlow() {
+  ['ss1','ss1t','ss2-bg','ss2t','ss3','ss3t','ss4-bg','ss4t','ss5','ss5t','ss6','ss6t'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.transition = 'none';
+    el.style.opacity = '0';
+    el.style.strokeDasharray = '';
+    el.style.strokeDashoffset = '';
+  });
+  ['ssf-agent','ssf-siem','ssf-gw'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.setAttribute('stroke', '#30363d');
+    el.setAttribute('stroke-width', '1.5');
+  });
+  ['ssf-s1','ssf-s2','ssf-s3','ssf-s4','ssf-s5','ssf-s6'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('pass','fail');
+    el.querySelector('.vstep-icon').textContent = '○';
+  });
 }
 
 function runMemWrite(scenario) {

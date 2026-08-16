@@ -18,15 +18,38 @@ OIDF rather than IETF) are tracked via the OpenID Foundation RSS feed
 (`https://openid.net/feed/`). The checker matches items by keyword and records the
 latest GUID so reruns don't re-alert.
 
-### 3. WG-level Atom Feeds (discovery — unknown drafts)
+### 3a. WG-level Atom Feeds (discovery — WG-assigned drafts only)
 
-The checker also polls the IETF WG-level Atom feeds:
+The checker polls the IETF WG-level Atom feeds:
 - WIMSE WG: `https://datatracker.ietf.org/group/wimse/documents/feed/`
 - OAuth WG: `https://datatracker.ietf.org/group/oauth/documents/feed/`
 
 Any draft ID found in the feed that is **not already in `standards-baseline.json`** is
-reported as a "new draft discovered" in the GitHub issue. This prevents missing a
-newly-chartered draft that is immediately relevant.
+registered as a `"status": "discovered"` entry. This catches newly-chartered WG drafts.
+
+**Limitation**: WG Atom feeds only contain WG-assigned drafts (names starting with
+`draft-ietf-`). Individual submissions (`draft-klrc-`, `draft-hardt-`, `draft-parecki-`,
+etc.) are **invisible to these feeds** — they have no WG affiliation. This is why
+`draft-klrc-aiagent-auth` (v03, Jul 2026) was not auto-discovered despite its high
+relevance. It was identified manually on 2026-08-16.
+
+### 3b. IETF Datatracker Keyword Search (discovery — individual submissions)
+
+To close the individual-submission gap, the checker also queries:
+
+```
+https://datatracker.ietf.org/api/v1/doc/document/?format=json&name__icontains=<keyword>&type=draft&limit=100
+```
+
+Current keywords: `agent`, `agentic`.
+
+Any draft ID returned whose name is not already in `standards-baseline.json` is
+registered as `"status": "discovered"`. This catches individual submissions from
+key industry authors (Kasselman, Parecki, Steele, Hardt, etc.) that WG feeds miss.
+
+**Tuning guidance:**
+- If false positives accumulate, add more specific keywords or use `name__startswith` variants.
+- If a relevant author is prolific, add their name as an additional keyword.
 
 ### 4. GitHub Repository Watching (precision supplement — human-driven)
 
@@ -66,6 +89,7 @@ a new `-xx` revision, giving early warning for any structural impact on this PoC
 | mTLS binding | Transport-layer agent authentication — cert/token binding |
 | WIMSE Architecture | Defines token exchange model and trust domain semantics |
 | CB4A | Credential broker for AI agents — PDP/CDP/Tier model |
+| draft-klrc-aiagent-auth | Comprehensive AI agent auth framework — validates existing design; CIBA, SSF, Agent Mission patterns tracked for implementation |
 | DPoP (RFC 9449) | Proof-of-possession for CB4A minted tokens |
 | OpenID Federation 1.0 | Cross-org trust chain resolution |
 | Txn-Token | User context through multi-agent chains; AgentProofToken tth binding |

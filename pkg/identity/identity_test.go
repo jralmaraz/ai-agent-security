@@ -61,6 +61,53 @@ func TestAgentToken_HappyPath(t *testing.T) {
 	}
 }
 
+func TestAgentToken_MissionClaim(t *testing.T) {
+	issuer, validator, _ := newIssuerValidator(t)
+	_, wlPub := mustKeyPair(t)
+
+	mission := "Summarise Q2 financial reports and file expense claims"
+	tok, err := issuer.Issue(identity.IssueOptions{
+		Subject:     "spiffe://cloud-a.example/agent/orchestrator",
+		Role:        identity.RoleOrchestrator,
+		WorkloadKey: wlPub,
+		Mission:     mission,
+	})
+	if err != nil {
+		t.Fatalf("Issue: %v", err)
+	}
+
+	va, err := validator.Validate(tok)
+	if err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+	if va.Claims.Mission != mission {
+		t.Errorf("agent_mission: want %q got %q", mission, va.Claims.Mission)
+	}
+}
+
+func TestAgentToken_MissionOptional(t *testing.T) {
+	issuer, validator, _ := newIssuerValidator(t)
+	_, wlPub := mustKeyPair(t)
+
+	tok, err := issuer.Issue(identity.IssueOptions{
+		Subject:     "spiffe://cloud-a.example/agent/orchestrator",
+		Role:        identity.RoleOrchestrator,
+		WorkloadKey: wlPub,
+		// Mission omitted — must not be required
+	})
+	if err != nil {
+		t.Fatalf("Issue: %v", err)
+	}
+
+	va, err := validator.Validate(tok)
+	if err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+	if va.Claims.Mission != "" {
+		t.Errorf("agent_mission: want empty, got %q", va.Claims.Mission)
+	}
+}
+
 func TestAgentToken_TypHeader(t *testing.T) {
 	issuer, _, _ := newIssuerValidator(t)
 	_, wlPub := mustKeyPair(t)

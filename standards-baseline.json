@@ -27,6 +27,12 @@
       ],
       "last_guid": "https://openid.net/?p=71950",
       "note": "Catches OIDF spec publications, errata, and public review periods"
+    },
+    {
+      "name": "IETF Datatracker — AI Agent keyword search",
+      "type": "ietf-keyword-search",
+      "keywords": ["agent", "agentic"],
+      "note": "Discovers individual submissions (draft-klrc-, draft-hardt-, etc.) not appearing in WG feeds. Queries /api/v1/doc/document/?name__icontains=<keyword>&type=draft. Root cause of draft-klrc-aiagent-auth being missed: it is an individual submission (no ietf- prefix) and therefore absent from all WG Atom feeds."
     }
   ],
   "standards": [
@@ -321,20 +327,6 @@
       "_triage": "2026-08-07: monitored. Companion to authzen-token-exchange. Defines the canonical PDP evaluation API that our InMemoryPDP loosely follows."
     },
     {
-      "id": "draft-sweeney-wimse-credential-delegation",
-      "label": "Credential Delegation Protocol for AI Agents in Multi-System Environments",
-      "short": "CredDelegation",
-      "wg": "IETF WIMSE WG",
-      "last_known_rev": "00",
-      "implemented_rev": null,
-      "status": "individual-draft",
-      "datatracker_url": "https://datatracker.ietf.org/doc/draft-sweeney-wimse-credential-delegation/",
-      "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-sweeney-wimse-credential-delegation/",
-      "source_repo": null,
-      "impact": "Competing/complementary approach to CB4A for agent credential delegation. Introduces typed delegation tokens that may differ from CB4A's TRE+PDP+CDP model. Noted in Credential Broker demo tab.",
-      "used_in": []
-    },
-    {
       "id": "draft-reece-wimse-cross-org-delegation",
       "label": "Cross-Organizational Delegation for Workload and Agent Identity",
       "short": "CrossOrgDelegation",
@@ -566,6 +558,22 @@
       "used_in": [
         "demo/index.html (scene-protocol-map)"
       ]
+    },
+    {
+      "id": "draft-klrc-aiagent-auth",
+      "label": "AI Agent Authentication and Authorization",
+      "short": "AI-Agent-Auth",
+      "wg": "Individual Draft (Kasselman/Lombardo/Rosomakho/Campbell/Steele/Parecki)",
+      "last_known_rev": "03",
+      "implemented_rev": null,
+      "status": "individual-draft",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-klrc-aiagent-auth/",
+      "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-klrc-aiagent-auth/",
+      "source_repo": null,
+      "impact": "HIGH — Comprehensive AI agent auth framework (v03, July 2026) by authors from Okta, OpenAI, AWS, Zscaler, Ping, Defakto. Cites and builds on WIMSE WPT/WIT, OAuth 2.0 Token Exchange (RFC 8693), Transaction Tokens, and HTTP Message Signatures (RFC 9421). Three new patterns beyond current PoC: (1) CIBA backchannel for human-in-the-loop approval gates — agent pauses execution and waits for human decision before performing high-risk actions; (2) SSF/CAEP signals for compromised-agent remediation — continuous monitoring with revocation signals if agent behaviour deviates; (3) Agent Mission claim binding approved scope-of-action to the token. Existing AgentToken+AgentProofToken+AgentChain design is validated by this draft.",
+      "used_in": [],
+      "_triage": "2026-08-16: individual draft v03. MISSED by wg_feeds — individual submission (draft-klrc- prefix, no ietf- prefix), absent from all WG Atom feeds. Added ietf-keyword-search feed to wg_feeds to prevent future misses. HIGH relevance: validates current design, three implementable new patterns (CIBA, SSF, Agent Mission). Implementing: CIBA Human-in-the-Loop demo tab, SSF monitoring tab, agent_mission claim in pkg/identity.",
+      "_discovery_gap": "Not discovered by automated tracker. Individual submissions (no ietf- prefix) are invisible to WG Atom feeds. Fix: ietf-keyword-search feed type added to wg_feeds; check_standards.py updated to query /api/v1/doc/document/?name__icontains=agent&type=draft daily."
     },
     {
       "id": "draft-jia-oauth-scope-aggregation",

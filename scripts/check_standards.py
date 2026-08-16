@@ -147,7 +147,49 @@ def check_rss_feed(
     return new_items, latest_guid
 
 
-# ── Check method 3: IETF WG Atom feed — discover new drafts ──────────────────
+# ── Check method 3a: IETF Datatracker keyword search — discover individual drafts ─
+
+def check_ietf_keyword_search(keywords: list[str], known_ids: set[str]) -> list[dict]:
+    """
+    Query IETF Datatracker API for drafts whose name contains any keyword.
+    Returns new draft records not already in known_ids.
+
+    This catches individual submissions (draft-klrc-, draft-hardt-, etc.) that
+    never appear in WG Atom feeds because they have no ietf- prefix.
+    """
+    seen: set[str] = set()
+    discoveries: list[dict] = []
+
+    for keyword in keywords:
+        url = (
+            "https://datatracker.ietf.org/api/v1/doc/document/"
+            f"?format=json&name__icontains={keyword}&type=draft&limit=100"
+        )
+        raw = http_get(url, accept="application/json")
+        if raw is None:
+            continue
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError as e:
+            print(f"    JSON error ({keyword}): {e}", file=sys.stderr)
+            continue
+
+        for doc in data.get("objects", []):
+            name = doc.get("name", "")
+            if not name or name in known_ids or name in seen:
+                continue
+            seen.add(name)
+            discoveries.append({
+                "id":    name,
+                "title": doc.get("title", name),
+                "link":  f"https://datatracker.ietf.org/doc/{name}/",
+                "date":  (doc.get("time") or "")[:10],
+            })
+
+    return discoveries
+
+
+# ── Check method 3b: IETF WG Atom feed — discover WG-assigned drafts ─────────
 
 def check_wg_atom_feed(feed_url: str, known_ids: set[str]) -> list[dict]:
     """
@@ -349,7 +391,31 @@ def main() -> None:
         feed_type = wf.get("type", "ietf-wg")
         print(f"  FEED  {wf['name']:<58}", end="", flush=True)
 
-        if feed_type == "ietf-wg":
+        if feed_type == "ietf-keyword-search":
+            keywords = wf.get("keywords", [])
+            print(f" (keywords: {', '.join(keywords)})", end="", flush=True)
+            found = check_ietf_keyword_search(keywords, known_ids)
+            if found:
+                print(f" {len(found)} new draft(s) discovered")
+                for d in found:
+                    print(f"        ↳ {d['id']}")
+                    baseline["standards"].append({
+                        "id":              d["id"],
+                        "label":           d["title"] or d["id"],
+                        "status":          "discovered",
+                        "first_seen":      d["date"],
+                        "wg":              wf["name"],
+                        "datatracker_url": d["link"],
+                    })
+                    known_ids.add(d["id"])
+                discoveries.extend(
+                    [{**d, "wg_name": wf["name"], "feed_url": wf.get("note", "")}
+                     for d in found]
+                )
+            else:
+                print(" OK — no unknown drafts")
+
+        elif feed_type == "ietf-wg":
             found = check_wg_atom_feed(wf["feed_url"], known_ids)
             if found:
                 print(f" {len(found)} new draft(s) discovered")
