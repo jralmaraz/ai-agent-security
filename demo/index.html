@@ -63,7 +63,7 @@ main{max-width:960px;margin:0 auto;padding:2rem}
 .btn-group{display:flex;gap:.5rem;flex-wrap:wrap;margin:.75rem 0}
 
 /* ── SVG diagram ── */
-.diagram{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px;margin-bottom:1rem;overflow:hidden}
+.diagram{background:radial-gradient(ellipse 80% 60% at 50% 50%,rgba(56,139,253,.08) 0%,transparent 70%),var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px;margin-bottom:1rem;overflow:hidden}
 .diagram svg{width:100%;height:auto;display:block}
 .node-box{fill:var(--surface2);stroke:var(--border);stroke-width:1.5;transition:stroke .3s,fill .3s}
 .node-box.hi{stroke:var(--blue);stroke-width:2}
@@ -76,6 +76,7 @@ main{max-width:960px;margin:0 auto;padding:2rem}
 .wire.done{stroke:var(--green);stroke-width:2.5}
 .pkt-circle{visibility:hidden}
 @keyframes dashscroll{to{stroke-dashoffset:-12}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 
 /* ── Status bar ── */
 .status-bar{display:flex;align-items:center;gap:.5rem;padding:.6rem 1rem;background:#010409;border-radius:6px;font-size:.8rem;margin-bottom:.75rem;border:1px solid var(--border)}
@@ -4351,16 +4352,22 @@ function wireState(id, state) {
 function animPkt(id, x1, x2, dur = 700) {
   const c = document.getElementById(id);
   if (!c) return Promise.resolve();
+  const y0 = parseFloat(c.getAttribute('cy')) || 77;
+  const cpX = (x1 + x2) / 2;
+  const cpY = y0 - 22; // bezier arc control point
   c.setAttribute('cx', x1);
+  c.setAttribute('cy', y0);
   c.style.visibility = 'visible';
   const t0 = performance.now();
   return new Promise(res => {
     function f(t) {
       const p = Math.min((t - t0) / dur, 1);
       const e = p < 0.5 ? 2*p*p : 1 - (-2*p+2)**2/2; // ease-in-out
-      c.setAttribute('cx', x1 + (x2 - x1) * e);
+      const mt = 1 - e;
+      c.setAttribute('cx', mt*mt*x1 + 2*mt*e*cpX + e*e*x2);
+      c.setAttribute('cy', mt*mt*y0 + 2*mt*e*cpY + e*e*y0);
       if (p < 1) requestAnimationFrame(f);
-      else { c.style.visibility = 'hidden'; res(); }
+      else { c.style.visibility = 'hidden'; c.setAttribute('cy', y0); res(); }
     }
     requestAnimationFrame(f);
   });
