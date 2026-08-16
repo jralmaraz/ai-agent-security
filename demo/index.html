@@ -275,6 +275,7 @@ main{max-width:960px;margin:0 auto;padding:2rem}
     <div class="tab" onclick="showTab('mtls',this)">mTLS Transport</div>
     <div class="tab" onclick="showTab('broker',this)">Credential Broker</div>
     <div class="tab" onclick="showTab('x402',this)">x402 Payments</div>
+    <div class="tab" onclick="showTab('agentmemory',this)">Agent Memory</div>
     <div class="tab" onclick="showTab('threat',this)">Threat Model</div>
     <div class="tab" onclick="showTab('replay',this)">Replay Attack</div>
     <div class="tab" onclick="showTab('tamper',this)">Token Tampering</div>
@@ -3163,6 +3164,116 @@ KER ═════════════════════════�
   </div>
 </div>
 
+<!-- ══ AGENT MEMORY SECURITY ══════════════════════════════════════════════════ -->
+<div class="scene" id="scene-agentmemory">
+  <h1 class="scene-title">Agent Memory Security</h1>
+  <p class="scene-lead">AI agents accumulate persistent memory — saved preferences, conversation history, RAG context, and episodic summaries — often backed by a vector database like pgvector. This memory is a high-value attack surface: poison it, and every future decision the agent makes is compromised. <strong>MITRE ATLAS AML.M0031 (Memory Hardening)</strong> and <strong>OWASP ASI06</strong> define the controls needed to protect it.</p>
+
+  <div class="card" style="margin-bottom:18px;">
+    <div style="font-weight:700;font-size:13px;margin-bottom:14px;color:var(--blue)">Architecture: pgvector-backed Agent Memory with Identity-Scoped Isolation</div>
+    <!-- Animated SVG flow -->
+    <svg id="mem-svg" viewBox="0 0 800 320" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;display:block;margin:0 auto 8px;">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#58a6ff"/></marker>
+        <marker id="arr-r" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#f85149"/></marker>
+        <marker id="arr-g" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#3fb950"/></marker>
+      </defs>
+      <!-- Agent -->
+      <rect x="20" y="120" width="130" height="60" rx="8" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+      <text x="85" y="145" text-anchor="middle" fill="#58a6ff" font-weight="700" font-size="12">AI Agent</text>
+      <text x="85" y="162" text-anchor="middle" fill="#8b949e" font-size="10">sub: spiffe://.../agent-A</text>
+
+      <!-- Gateway/Auth layer -->
+      <rect x="215" y="100" width="140" height="100" rx="8" fill="#161b22" stroke="#d29922" stroke-width="1.5"/>
+      <text x="285" y="128" text-anchor="middle" fill="#d29922" font-weight="700" font-size="12">Memory Store</text>
+      <text x="285" y="148" text-anchor="middle" fill="#8b949e" font-size="10">Write validation</text>
+      <text x="285" y="163" text-anchor="middle" fill="#8b949e" font-size="10">SHA-256 integrity</text>
+      <text x="285" y="178" text-anchor="middle" fill="#8b949e" font-size="10">AgentSub isolation</text>
+
+      <!-- pgvector -->
+      <rect x="430" y="80" width="160" height="140" rx="8" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
+      <text x="510" y="108" text-anchor="middle" fill="#3fb950" font-weight="700" font-size="12">PostgreSQL + pgvector</text>
+      <text x="510" y="128" text-anchor="middle" fill="#8b949e" font-size="10">agent_memories table</text>
+      <rect x="448" y="138" width="122" height="22" rx="4" fill="#1a2a1a"/>
+      <text x="509" y="153" text-anchor="middle" fill="#3fb950" font-size="10">agent_sub = 'spiffe://.../A'</text>
+      <rect x="448" y="166" width="122" height="22" rx="4" fill="#2a1a1a"/>
+      <text x="509" y="181" text-anchor="middle" fill="#f85149" font-size="10">agent_sub = 'spiffe://.../B'</text>
+      <text x="510" y="208" text-anchor="middle" fill="#8b949e" font-size="10">RLS: current_setting('app.agent_sub')</text>
+
+      <!-- Attacker -->
+      <rect x="430" y="250" width="160" height="50" rx="8" fill="#2a1010" stroke="#f85149" stroke-width="1.5" stroke-dasharray="5,3"/>
+      <text x="510" y="270" text-anchor="middle" fill="#f85149" font-weight="700" font-size="11">Attacker</text>
+      <text x="510" y="287" text-anchor="middle" fill="#8b949e" font-size="10">Direct DB write / cross-agent query</text>
+
+      <!-- Arrows -->
+      <line x1="150" y1="150" x2="213" y2="150" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text x="182" y="143" text-anchor="middle" fill="#58a6ff" font-size="9">Write(sub, content)</text>
+
+      <line x1="355" y1="150" x2="428" y2="150" stroke="#3fb950" stroke-width="1.5" marker-end="url(#arr-g)"/>
+      <text x="392" y="143" text-anchor="middle" fill="#3fb950" font-size="9">Validated + hashed</text>
+
+      <line x1="510" y1="250" x2="510" y2="222" stroke="#f85149" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arr-r)"/>
+      <text x="548" y="238" fill="#f85149" font-size="9">Tamper</text>
+
+      <!-- Read path -->
+      <line x1="213" y1="165" x2="150" y2="165" stroke="#3fb950" stroke-width="1.5" stroke-dasharray="3,2" marker-end="url(#arr-g)"/>
+      <text x="182" y="175" text-anchor="middle" fill="#3fb950" font-size="9">Integrity checked</text>
+    </svg>
+    <p style="font-size:12px;color:var(--muted);text-align:center;margin:0;">Every write is validated and hashed. Every read verifies the hash. pgvector RLS enforces per-agent row isolation.</p>
+  </div>
+
+  <!-- Write validation demo -->
+  <div class="card" style="margin-bottom:16px;">
+    <div style="font-weight:700;font-size:13px;margin-bottom:10px;">OWASP ASI06 — Write Validation Demo</div>
+    <p style="font-size:13px;">Try writing different content to the memory store. The write-time detectors run on every entry before persistence.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+      <button class="scene-cta" onclick="runMemWrite('clean')">Clean Memory</button>
+      <button class="scene-cta" style="background:#f85149;color:#fff;" onclick="runMemWrite('injection')">Prompt Injection</button>
+      <button class="scene-cta" style="background:#d29922;color:#000;" onclick="runMemWrite('size')">Size Anomaly</button>
+    </div>
+    <div id="mem-write-result" class="output-block" style="min-height:120px;">Click a scenario above...</div>
+  </div>
+
+  <!-- Isolation demo -->
+  <div class="card" style="margin-bottom:16px;">
+    <div style="font-weight:700;font-size:13px;margin-bottom:10px;">AML.M0031 — Cross-Agent Isolation Demo</div>
+    <p style="font-size:13px;">Agent A writes sensitive banking data to its memory namespace. Agent B (different SPIFFE sub) attempts to read it.</p>
+    <button class="scene-cta" onclick="runMemIsolation()">Run Isolation Demo</button>
+    <div id="mem-isolation-result" class="output-block" style="min-height:100px;margin-top:12px;">Click to run...</div>
+  </div>
+
+  <!-- Integrity demo -->
+  <div class="card" style="margin-bottom:16px;">
+    <div style="font-weight:700;font-size:13px;margin-bottom:10px;">AML.M0031 — SHA-256 Tamper Detection</div>
+    <p style="font-size:13px;">An attacker modifies a memory entry directly in the database (bypassing the store API). The integrity check catches it on the next read.</p>
+    <button class="scene-cta" onclick="runMemIntegrity()">Simulate Tamper Attack</button>
+    <div id="mem-integrity-result" class="output-block" style="min-height:120px;margin-top:12px;">Click to run...</div>
+  </div>
+
+  <!-- Controls table -->
+  <div class="card">
+    <div style="font-weight:700;font-size:13px;margin-bottom:12px;">AML.M0031 Controls → Implementation Mapping</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <thead><tr style="background:#21262d;"><th style="padding:8px;text-align:left;border-bottom:1px solid #30363d;">AML.M0031 Control</th><th style="padding:8px;text-align:left;border-bottom:1px solid #30363d;">OWASP ASI06</th><th style="padding:8px;text-align:left;border-bottom:1px solid #30363d;">Implementation</th></tr></thead>
+      <tbody>
+        <tr><td style="padding:8px;border-bottom:1px solid #30363d;"><strong>Created</strong> — validate at write time</td><td style="padding:8px;border-bottom:1px solid #30363d;">Prompt injection detector, size anomaly</td><td style="padding:8px;border-bottom:1px solid #30363d;"><code>validateContent()</code> in <code>pkg/memory</code></td></tr>
+        <tr><td style="padding:8px;border-bottom:1px solid #30363d;"><strong>Modified</strong> — detect post-write changes</td><td style="padding:8px;border-bottom:1px solid #30363d;">Key tampering detector</td><td style="padding:8px;border-bottom:1px solid #30363d;"><code>ComputeIntegrity()</code> SHA-256 on read</td></tr>
+        <tr><td style="padding:8px;border-bottom:1px solid #30363d;"><strong>Isolated</strong> — per-agent namespace</td><td style="padding:8px;border-bottom:1px solid #30363d;">Cross-agent retrieval prevention</td><td style="padding:8px;border-bottom:1px solid #30363d;">AgentSub key + pgvector RLS policy</td></tr>
+        <tr><td style="padding:8px;border-bottom:1px solid #30363d;"><strong>Audited</strong> — immutable op log</td><td style="padding:8px;border-bottom:1px solid #30363d;">Forensic record of all writes</td><td style="padding:8px;border-bottom:1px solid #30363d;"><code>AuditRecord</code> per AgentSub</td></tr>
+        <tr><td style="padding:8px;"><strong>Recovered</strong> — rollback on integrity failure</td><td style="padding:8px;">Snapshot &amp; rollback</td><td style="padding:8px;">Roadmap: snapshot before write, restore on <code>IntegrityError</code></td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:12px;padding:10px;background:#1a2a1a;border-radius:6px;font-size:12px;">
+      <strong style="color:#3fb950;">pgvector RLS (production pattern):</strong>
+      <pre style="margin:6px 0 0;font-size:11px;background:transparent;border:none;padding:0;color:#c9d1d9;">ALTER TABLE agent_memories ENABLE ROW LEVEL SECURITY;
+CREATE POLICY agent_isolation ON agent_memories
+  USING (agent_sub = current_setting('app.agent_sub'));
+-- Gateway sets before every query:
+-- SET LOCAL app.agent_sub = '&lt;AgentToken.sub&gt;'</pre>
+    </div>
+  </div>
+</div>
+
 <!-- ══ AGENT AUTH LANDSCAPE ══════════════════════════════════════════════════ -->
 <div class="scene" id="scene-landscape">
   <div class="card">
@@ -5671,6 +5782,75 @@ async function playSCAFlow() {
 
   scaFlowStatus('✓ Full OAuth client_credentials flow — zero pre-shared secrets in the entire chain.');
   scaFlowRunning = false;
+}
+
+// ── Agent Memory Security ────────────────────────────────────────────────────
+function memOutput(id, html) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = html;
+}
+
+function stepRow(s) {
+  return `<div style="display:flex;gap:10px;padding:5px 0;border-bottom:1px solid #30363d;font-size:12px;">
+    <span style="background:#21262d;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:700;">${s.step}</span>
+    <span style="color:#8b949e;width:80px;flex-shrink:0;">${s.actor}</span>
+    <span>${s.action}</span>
+  </div>`;
+}
+
+function runMemWrite(scenario) {
+  if (!window.agentFabric) { memOutput('mem-write-result','<span style="color:#f85149;">WASM not loaded</span>'); return; }
+  const r = agentFabric.memoryWriteDemo(scenario);
+  const verdictColor = r.ok ? '#3fb950' : '#f85149';
+  const icon = r.ok ? '✓' : '✗';
+  const steps = (r.steps || []).map(stepRow).join('');
+  const auditHtml = r.audit ? r.audit.map(a =>
+    `<span style="color:#8b949e;font-size:11px;">[${a.op}] ${a.detail}</span>`
+  ).join('<br>') : '';
+  memOutput('mem-write-result', `
+    <div style="margin-bottom:10px;"><strong>${r.label}</strong></div>
+    ${steps}
+    ${auditHtml ? `<div style="margin-top:8px;">${auditHtml}</div>` : ''}
+    <div style="margin-top:10px;padding:8px;background:#161b22;border-radius:6px;font-weight:600;color:${verdictColor};">${icon} ${r.verdict}</div>
+  `);
+}
+
+function runMemIsolation() {
+  if (!window.agentFabric) { memOutput('mem-isolation-result','<span style="color:#f85149;">WASM not loaded</span>'); return; }
+  const r = agentFabric.memoryIsolationDemo();
+  const steps = (r.steps || []).map(stepRow).join('');
+  const a = r.agents;
+  memOutput('mem-isolation-result', `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div style="background:#1a2a1a;padding:10px;border-radius:6px;font-size:12px;">
+        <div style="font-weight:600;color:#3fb950;margin-bottom:4px;">Agent A</div>
+        <div style="color:#8b949e;">${a.agent_a.sub}</div>
+        <div>Entries written: <strong>${a.agent_a.entries_written}</strong></div>
+        <div>Entries readable: <strong>${a.agent_a.entries_readable}</strong></div>
+      </div>
+      <div style="background:#2a1a1a;padding:10px;border-radius:6px;font-size:12px;">
+        <div style="font-weight:600;color:#f85149;margin-bottom:4px;">Agent B (attacker)</div>
+        <div style="color:#8b949e;">${a.agent_b.sub}</div>
+        <div>Attack result: <strong style="color:#3fb950;">${a.agent_b.attack_result}</strong></div>
+      </div>
+    </div>
+    ${steps}
+    <div style="margin-top:8px;padding:8px;background:#1a2233;border-radius:6px;font-size:11px;color:#8b949e;">${r.pgvector_rls_note}</div>
+  `);
+}
+
+function runMemIntegrity() {
+  if (!window.agentFabric) { memOutput('mem-integrity-result','<span style="color:#f85149;">WASM not loaded</span>'); return; }
+  const r = agentFabric.memoryIntegrityDemo();
+  const steps = (r.steps || []).map(stepRow).join('');
+  const resultColor = r.integrity_error ? '#3fb950' : '#f85149';
+  memOutput('mem-integrity-result', `
+    <div style="margin-bottom:10px;font-size:12px;">Integrity hash before tamper: <code style="font-size:11px;">${r.integrity_before.slice(0,16)}...</code></div>
+    ${steps}
+    <div style="margin-top:10px;padding:8px;background:#161b22;border-radius:6px;font-weight:600;color:${resultColor};">
+      ${r.integrity_error ? '✓' : '✗'} ${r.result} — ${r.verdict}
+    </div>
+  `);
 }
 </script>
 </body>

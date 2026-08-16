@@ -143,6 +143,41 @@ func verifyMTLSBinding(r *http.Request, wantSub string) error {
 
 ---
 
+### T9 — Agent Memory Poisoning
+
+**Scenario:** An adversary injects malicious content into an agent's persistent memory store — a shared pgvector table, a RAG store, or a conversation history buffer. In future sessions the agent retrieves the poisoned entry and acts on it: exfiltrating data, changing behaviour, or relaying instructions from the attacker.
+
+**Reference:** OWASP ASI06 (Memory and Context Poisoning); MITRE ATLAS AML.M0031 (Memory Hardening, created 29 Oct 2025).
+
+**Attack vectors:**
+- **Write-path injection:** A compromised upstream agent or an API caller with write access embeds a prompt injection string (`"Ignore previous instructions..."`) inside a memory entry. The downstream agent reads and follows it.
+- **Cross-agent retrieval (pgvector):** A multi-tenant pgvector table without row-level security (RLS) allows `SELECT ... ORDER BY embedding <-> $1 LIMIT N` to return rows owned by other agents. Agent B retrieves Agent A's sensitive context.
+- **Direct-DB tampering:** An attacker with database access modifies a memory row after it was written, bypassing application-layer validation. Without integrity checking, the agent cannot detect the change.
+
+**Why it fails (with `pkg/memory`):**
+- **Write validation:** `InMemoryStore.Write` runs prompt-injection and size-anomaly detectors on every entry before persistence. Entries matching known injection patterns are rejected with a `ValidationError`.
+- **SHA-256 integrity:** `MemoryEntry.Integrity = SHA-256(AgentSub ‖ Content ‖ CreatedAt)` is computed at write time. `Read` recomputes the hash and returns `IntegrityError` if it does not match, detecting any post-write modification.
+- **AgentSub isolation:** The store is keyed by SPIFFE URI (`AgentToken.sub`). `Read(agentB)` cannot return entries written by `agentA`. Cross-agent deletes are silently denied.
+- **Audit trail:** Every write, rejection, and integrity failure is appended to an immutable `AuditRecord` log per agent sub.
+
+**pgvector RLS pattern (production):**
+
+```sql
+-- Enable RLS on the memory table
+ALTER TABLE agent_memories ENABLE ROW LEVEL SECURITY;
+
+-- Policy: each session can only see its own rows
+CREATE POLICY agent_isolation ON agent_memories
+  USING (agent_sub = current_setting('app.agent_sub'));
+
+-- Gateway middleware sets the session variable before every query:
+-- SET LOCAL app.agent_sub = '<AgentToken.sub>'
+```
+
+**Controls:** `pkg/memory/memory.go` (`InMemoryStore`, `validateContent`, `ComputeIntegrity`, `AuditRecord`).
+
+---
+
 ## Cryptographic primitives
 
 | Primitive | Usage | Parameters |
