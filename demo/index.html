@@ -243,6 +243,26 @@ main{max-width:960px;margin:0 auto;padding:2rem}
 .scenario-card .tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-bottom:8px}
 /* ── x402 output areas ── */
 .output-box{background:var(--surface);border:1px solid var(--green);border-radius:6px;padding:10px;font-family:var(--mono);font-size:11px;white-space:pre-wrap;line-height:1.6;color:var(--text);word-break:break-all}
+
+/* ── Overview / card landing ── */
+.lab-section-hdr{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:1.5rem 0 .6rem;display:flex;align-items:center;gap:.55rem}
+.lab-section-hdr span{display:block;width:3px;height:14px;border-radius:2px;flex-shrink:0}
+.lab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:.65rem}
+.lab-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.95rem 1rem;cursor:pointer;transition:border-color .2s,background .15s;display:flex;flex-direction:column;gap:.25rem;text-align:left;font-family:inherit}
+.lab-card:hover{border-color:var(--blue);background:var(--surface2)}
+.lab-card:hover .lab-card-cta{color:var(--blue)}
+.lab-card.featured{border-color:rgba(88,166,255,.35)}
+.lab-card-icon{font-size:1.25rem;line-height:1}
+.lab-tag{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:10px;display:inline-block;margin-top:.05rem}
+.lab-tag-id{background:rgba(88,166,255,.15);color:var(--blue)}
+.lab-tag-access{background:rgba(63,185,80,.15);color:var(--green)}
+.lab-tag-human{background:rgba(255,166,87,.15);color:var(--orange)}
+.lab-tag-security{background:rgba(248,81,73,.15);color:var(--red)}
+.lab-tag-ref{background:rgba(125,133,144,.15);color:var(--muted)}
+.lab-card-title{font-size:.87rem;font-weight:700;color:var(--text)}
+.lab-card-desc{font-size:.76rem;color:var(--muted);line-height:1.55;flex:1}
+.lab-card-cta{font-size:.73rem;color:var(--muted);font-weight:600;transition:color .15s;margin-top:.15rem}
+@media(max-width:520px){.lab-grid{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
@@ -265,7 +285,7 @@ main{max-width:960px;margin:0 auto;padding:2rem}
 <div class="nav-wrapper">
   <button class="nav-arrow nav-arrow-left" id="nav-prev" onclick="navScroll(-1)" aria-label="Scroll tabs left">&#8249;</button>
   <nav id="main-nav">
-    <div class="tab active" onclick="showTab('problem',this)" style="border-bottom-color:var(--blue);color:var(--blue)">The Problem</div>
+    <div class="tab active" onclick="showTab('problem',this)" style="border-bottom-color:var(--blue);color:var(--blue)">Overview</div>
     <div class="tab" onclick="showTab('obo',this)">On-Behalf-Of ⭐</div>
     <div class="tab" onclick="showTab('pop',this)">Proof of Possession</div>
     <div class="tab" onclick="showTab('happy',this)">Agent Identity</div>
@@ -292,15 +312,180 @@ main{max-width:960px;margin:0 auto;padding:2rem}
 
 <main>
 
-<!-- ══ THE PROBLEM ════════════════════════════════════════════════════════ -->
+<!-- ══ OVERVIEW (HOME) ════════════════════════════════════════════════════ -->
 <div class="scene active" id="scene-problem">
-  <h2 style="font-size:1.5rem;font-weight:700;margin-bottom:.5rem">Why Agent Identity Matters</h2>
-  <p style="color:var(--muted);margin-bottom:1.5rem;font-size:.95rem;line-height:1.7">
-    As AI agents proliferate — spawning sub-agents, calling external APIs, acting on behalf of humans —
-    the industry is hitting a wall: <strong style="color:var(--text)">no standard way to prove which agent
-    did what, on whose behalf, and with what authority.</strong> Existing identity primitives were designed
-    for services, not for autonomous reasoning processes that delegate to one another at runtime.
-  </p>
+  <!-- Hero -->
+  <div style="margin-bottom:1.5rem">
+    <h1 style="font-size:1.45rem;font-weight:700;margin-bottom:.5rem;line-height:1.3">AI Agent Security — Interactive Lab</h1>
+    <p style="color:var(--muted);font-size:.93rem;line-height:1.75;max-width:760px">
+      As AI agents proliferate — spawning sub-agents, calling external APIs, acting on behalf of humans — the industry is hitting a wall:
+      <strong style="color:var(--text)">no standard way to prove which agent did what, on whose behalf, and with what authority.</strong>
+      This lab implements fourteen IETF and OpenID standards that, together, close every gap. Pick a scenario below.
+    </p>
+  </div>
+
+  <!-- ── Identity Layer ── -->
+  <div class="lab-section-hdr"><span style="background:var(--blue)"></span>Identity Layer</div>
+  <div class="lab-grid">
+    <button class="lab-card featured" onclick="goToTab('happy')">
+      <div class="lab-card-icon">🆔</div>
+      <span class="lab-tag lab-tag-id">Identity</span>
+      <div class="lab-card-title">Agent Identity <span style="font-size:.68rem;color:var(--orange)">⭐ Start here</span></div>
+      <div class="lab-card-desc">Mint short-lived AgentTokens (agent+jwt) with SPIFFE URI, role, chain depth, and EC key binding. See the full issue → validate → proof cycle live.</div>
+      <div class="lab-card-cta">Open demo →</div>
+    </button>
+    <button class="lab-card" onclick="goToTab('pop')">
+      <div class="lab-card-icon">🔑</div>
+      <span class="lab-tag lab-tag-id">Identity</span>
+      <div class="lab-card-title">Proof of Possession</div>
+      <div class="lab-card-desc">Per-request AgentProofTokens (agent-proof+jwt) binding each API call to the agent's private key — replay-proof even if the bearer token is intercepted.</div>
+      <div class="lab-card-cta">Open demo →</div>
+    </button>
+    <button class="lab-card featured" onclick="goToTab('obo')">
+      <div class="lab-card-icon">👤</div>
+      <span class="lab-tag lab-tag-id">Identity</span>
+      <div class="lab-card-title">On-Behalf-Of ⭐</div>
+      <div class="lab-card-desc">RFC 8693 OBO tokens with SD-JWT selective disclosure. The booking agent proves it's acting on alice@corp's behalf — without exposing her raw credentials.</div>
+      <div class="lab-card-cta">Open demo →</div>
+    </button>
+    <button class="lab-card" onclick="goToTab('rfc8693')">
+      <div class="lab-card-icon">🔗</div>
+      <span class="lab-tag lab-tag-id">Identity</span>
+      <div class="lab-card-title">Token Delegation</div>
+      <div class="lab-card-desc">Chain delegation across trust domains with RFC 8693 token exchange. The <code style="font-size:9px">act</code> claim records the full delegation path at each hop.</div>
+      <div class="lab-card-cta">Open demo →</div>
+    </button>
+    <button class="lab-card" onclick="goToTab('identitychaining')">
+      <div class="lab-card-icon">⛓</div>
+      <span class="lab-tag lab-tag-id">Identity</span>
+      <div class="lab-card-title">Identity Chaining</div>
+      <div class="lab-card-desc">Cross-domain RFC 8693 exchange with JWT authorization grants — preserving the delegation chain even when tokens cross organizational boundaries.</div>
+      <div class="lab-card-cta">Open demo →</div>
+    </button>
+    <button class="lab-card" onclick="goToTab('txntoken')">
+      <div class="lab-card-icon">🧾</div>
+      <span class="lab-tag lab-tag-id">Identity</span>
+      <div class="lab-card-title">Txn-Token</div>
+      <div class="lab-card-desc">Propagate authenticated user context through multi-agent pipelines using IETF Transaction Tokens bound to each hop with a cryptographic hash.</div>
+      <div class="lab-card-cta">Open demo →</div>
+    </button>
+    <button class="lab-card" onclick="goToTab('spiffeclientauth')">
+      <div class="lab-card-icon">🏛</div>
+      <span class="lab-tag lab-tag-id">Identity</span>
+      <div class="lab-card-title">SPIFFE Client Auth</div>
+      <div class="lab-card-desc">Authenticate agents to OAuth AS using SPIFFE X.509 SVIDs — no shared secrets, no client passwords. The certificate is the credential.</div>
+      <div class="lab-card-cta">Open demo →</div>
+    </button>
+  </div>
+
+  <!-- ── Access & Authorization ── -->
+  <div class="lab-section-hdr"><span style="background:var(--green)"></span>Access &amp; Authorization</div>
+  <div class="lab-grid">
+    <button class="lab-card" onclick="goToTab('broker')">
+      <div class="lab-card-icon">🏦</div>
+      <span class="lab-tag lab-tag-access">Access</span>
+      <div class="lab-card-title">Credential Broker (CB4A)</div>
+      <div class="lab-card-desc">Tier-based credential governance: automated Tier 1, human-approved Tier 2, hardware-attested Tier 3. PDP mints short-lived DPoP-bound tokens per request.</div>
+      <div class="lab-card-cta">Open demo →</div>
+    </button>
+    <button class="lab-card" onclick="goToTab('mtls')">
+      <div class="lab-card-icon">🔒</div>
+      <span class="lab-tag lab-tag-access">Access</span>
+      <div class="lab-card-title">mTLS Transport</div>
+      <div class="lab-card-desc">Mutual TLS binding that ties certificate identity to AgentToken at the wire level — certs prove the TLS session; tokens prove the agent within the workload.</div>
+      <div class="lab-card-cta">Open demo →</div>
+    </button>
+    <button class="lab-card" onclick="goToTab('x402')">
+      <div class="lab-card-icon">💳</div>
+      <span class="lab-tag lab-tag-access">Access</span>
+      <div class="lab-card-title">x402 Payments</div>
+      <div class="lab-card-desc">HTTP 402 micropayment flow for tool-calling agents. The agent discovers the price, mints a DPoP-bound payment token, and the tool server validates before serving.</div>
+      <div class="lab-card-cta">Open demo →</div>
+    </button>
+  </div>
+
+  <!-- ── Human Controls & Monitoring ── -->
+  <div class="lab-section-hdr"><span style="background:var(--orange)"></span>Human Controls &amp; Monitoring</div>
+  <div class="lab-grid">
+    <button class="lab-card" onclick="goToTab('ciba')">
+      <div class="lab-card-icon">📱</div>
+      <span class="lab-tag lab-tag-human">Human-in-the-Loop</span>
+      <div class="lab-card-title">CIBA Approval</div>
+      <div class="lab-card-desc">OAuth 2.0 CIBA backchannel auth: the gateway pauses an agent action and pushes a notification to the human's device for explicit approval before proceeding.</div>
+      <div class="lab-card-cta">Open demo →</div>
+    </button>
+    <button class="lab-card" onclick="goToTab('ssf')">
+      <div class="lab-card-icon">🚨</div>
+      <span class="lab-tag lab-tag-human">Human-in-the-Loop</span>
+      <div class="lab-card-title">SSF Monitoring</div>
+      <div class="lab-card-desc">CAEP/SSF: a SIEM detects anomalous agent behaviour and pushes a signed revocation SET to the gateway — revoking the agent in real time without its cooperation.</div>
+      <div class="lab-card-cta">Open demo →</div>
+    </button>
+    <button class="lab-card" onclick="goToTab('agentmemory')">
+      <div class="lab-card-icon">🧠</div>
+      <span class="lab-tag lab-tag-human">Observability</span>
+      <div class="lab-card-title">Agent Memory Security</div>
+      <div class="lab-card-desc">Memory injection attack and defense. Unsigned memory is poisoned; HMAC-signed, scoped memory tokens prevent injection while preserving recall fidelity.</div>
+      <div class="lab-card-cta">Open demo →</div>
+    </button>
+  </div>
+
+  <!-- ── Security Scenarios ── -->
+  <div class="lab-section-hdr"><span style="background:var(--red)"></span>Security Scenarios</div>
+  <div class="lab-grid">
+    <button class="lab-card" onclick="goToTab('threat')">
+      <div class="lab-card-icon">⚔️</div>
+      <span class="lab-tag lab-tag-security">Security</span>
+      <div class="lab-card-title">Threat Model</div>
+      <div class="lab-card-desc">Survey of the attack surface: token theft, replay, privilege escalation, confused deputy, prompt injection, and multi-tenant isolation failures — with mitigations.</div>
+      <div class="lab-card-cta">Open demo →</div>
+    </button>
+    <button class="lab-card" onclick="goToTab('replay')">
+      <div class="lab-card-icon">♻️</div>
+      <span class="lab-tag lab-tag-security">Security</span>
+      <div class="lab-card-title">Replay Attack</div>
+      <div class="lab-card-desc">Live JTI-based replay prevention. The same AgentProofToken submitted twice — accepted on first use, rejected with a clear error on the second attempt.</div>
+      <div class="lab-card-cta">Open demo →</div>
+    </button>
+    <button class="lab-card" onclick="goToTab('tamper')">
+      <div class="lab-card-icon">🔨</div>
+      <span class="lab-tag lab-tag-security">Security</span>
+      <div class="lab-card-title">Token Tampering</div>
+      <div class="lab-card-desc">Signature verification in action. Flip a byte in the JWT payload — the agent's EC key-pair catches it instantly, regardless of what the payload claims.</div>
+      <div class="lab-card-cta">Open demo →</div>
+    </button>
+  </div>
+
+  <!-- ── Reference ── -->
+  <div class="lab-section-hdr"><span style="background:var(--muted)"></span>Reference</div>
+  <div class="lab-grid">
+    <button class="lab-card" onclick="goToTab('landscape')">
+      <div class="lab-card-icon">🗺️</div>
+      <span class="lab-tag lab-tag-ref">Reference</span>
+      <div class="lab-card-title">Auth Landscape</div>
+      <div class="lab-card-desc">How WIMSE-based agent auth compares to CyberArk SWA, PingFederate, Aembit, and Okta AI — where each fits and where the gaps remain.</div>
+      <div class="lab-card-cta">Open demo →</div>
+    </button>
+    <button class="lab-card" onclick="goToTab('standards')">
+      <div class="lab-card-icon">📋</div>
+      <span class="lab-tag lab-tag-ref">Reference</span>
+      <div class="lab-card-title">Standards Tracker</div>
+      <div class="lab-card-desc">All 14 tracked IETF and OpenID standards: implementation status, spec references, revision history, and implementing commit SHAs.</div>
+      <div class="lab-card-cta">Open demo →</div>
+    </button>
+  </div>
+
+  <!-- ── Collapsible: root causes & background ── -->
+  <div style="margin-top:2rem;border-top:1px solid var(--border);padding-top:1.25rem">
+    <button class="btn" style="font-size:.8rem" onclick="var r=this.nextElementSibling;r.classList.toggle('show');this.textContent=r.classList.contains('show')?'▾ Why agent identity matters — root causes &amp; background':'▸ Why agent identity matters — root causes &amp; background'">▸ Why agent identity matters — root causes &amp; background</button>
+    <div class="reveal" style="margin-top:1.25rem">
+      <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:.75rem">Why Agent Identity Matters</h2>
+      <p style="color:var(--muted);margin-bottom:1.25rem;font-size:.93rem;line-height:1.7">
+        As AI agents proliferate — spawning sub-agents, calling external APIs, acting on behalf of humans —
+        the industry is hitting a wall: <strong style="color:var(--text)">no standard way to prove which agent
+        did what, on whose behalf, and with what authority.</strong> Existing identity primitives were designed
+        for services, not for autonomous reasoning processes that delegate to one another at runtime.
+      </p>
 
   <div class="diagram">
     <svg viewBox="0 0 730 168" xmlns="http://www.w3.org/2000/svg">
@@ -543,12 +728,14 @@ main{max-width:960px;margin:0 auto;padding:2rem}
     </div>
   </div>
 
-  <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1rem">
-    <button class="btn btn-primary" onclick="goToTab('obo')">On-Behalf-Of: tie agent calls to user consent &#8594;</button>
-    <button class="btn" onclick="goToTab('happy')">Agent Identity: AgentToken &amp; proof chain &#8594;</button>
-    <button class="btn" onclick="goToTab('broker')">Credential Broker (CB4A) &#8594;</button>
-  </div>
-</div>
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1rem">
+        <button class="btn btn-primary" onclick="goToTab('obo')">On-Behalf-Of: tie agent calls to user consent &#8594;</button>
+        <button class="btn" onclick="goToTab('happy')">Agent Identity: AgentToken &amp; proof chain &#8594;</button>
+        <button class="btn" onclick="goToTab('broker')">Credential Broker (CB4A) &#8594;</button>
+      </div>
+    </div><!-- /.reveal -->
+  </div><!-- /collapsible wrapper -->
+</div><!-- /#scene-problem -->
 
 <!-- ══ ON-BEHALF-OF ════════════════════════════════════════════════════════ -->
 <div class="scene" id="scene-obo">
