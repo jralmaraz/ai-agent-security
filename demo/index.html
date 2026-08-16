@@ -275,6 +275,7 @@ main{max-width:960px;margin:0 auto;padding:2rem}
     <div class="tab" onclick="showTab('mtls',this)">mTLS Transport</div>
     <div class="tab" onclick="showTab('broker',this)">Credential Broker</div>
     <div class="tab" onclick="showTab('x402',this)">x402 Payments</div>
+    <div class="tab" onclick="showTab('agentmemory',this)">Agent Memory</div>
     <div class="tab" onclick="showTab('threat',this)">Threat Model</div>
     <div class="tab" onclick="showTab('replay',this)">Replay Attack</div>
     <div class="tab" onclick="showTab('tamper',this)">Token Tampering</div>
@@ -3163,6 +3164,143 @@ KER ═════════════════════════�
   </div>
 </div>
 
+<!-- ══ AGENT MEMORY SECURITY ══════════════════════════════════════════════════ -->
+<div class="scene" id="scene-agentmemory">
+  <h1 class="scene-title">Agent Memory Security</h1>
+  <p class="scene-lead">AI agents accumulate persistent memory — saved preferences, conversation history, RAG context, and episodic summaries — often backed by a vector database (pgvector, Weaviate, Chroma, Qdrant, and others). This memory is a high-value attack surface: poison it, and every future decision the agent makes is compromised. <strong>MITRE ATLAS AML.M0031 (Memory Hardening)</strong> and <strong>OWASP ASI06</strong> define the controls needed to protect it.</p>
+
+  <div class="card" style="margin-bottom:18px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div style="font-weight:700;font-size:13px;color:var(--blue)">Architecture: Vector-Database-backed Agent Memory with Identity-Scoped Isolation</div>
+      <button class="btn btn-secondary" style="font-size:12px;padding:5px 12px;flex-shrink:0;" onclick="playMemAttack()">▶ Play Attack</button>
+    </div>
+    <!-- SVG: boxes at precise coordinates, arrows connect edge-to-edge -->
+    <!-- Agent: x=20–150, y=110–190  |  Store: x=220–365, y=90–210  |  VectorDB: x=440–600, y=70–230  |  Attacker: x=440–600, y=260–315 -->
+    <svg id="mem-svg" viewBox="0 0 700 330" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;display:block;margin:0 auto 8px;">
+      <defs>
+        <marker id="marr"   markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#58a6ff"/></marker>
+        <marker id="marr-r" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#f85149"/></marker>
+        <marker id="marr-g" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#3fb950"/></marker>
+        <marker id="marr-y" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#d29922"/></marker>
+      </defs>
+
+      <!-- AI Agent: right edge x=150 -->
+      <rect x="20" y="110" width="130" height="80" rx="8" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+      <text x="85" y="146" text-anchor="middle" fill="#58a6ff" font-weight="700" font-size="12">AI Agent</text>
+      <text x="85" y="162" text-anchor="middle" fill="#8b949e" font-size="10">spiffe://.../agent-A</text>
+
+      <!-- Memory Store: left edge x=220, right edge x=365 -->
+      <rect x="220" y="90" width="145" height="120" rx="8" fill="#161b22" stroke="#d29922" stroke-width="1.5"/>
+      <text x="292" y="115" text-anchor="middle" fill="#d29922" font-weight="700" font-size="12">Memory Store</text>
+      <text x="292" y="135" text-anchor="middle" fill="#8b949e" font-size="10">Write validation</text>
+      <text x="292" y="150" text-anchor="middle" fill="#8b949e" font-size="10">SHA-256 integrity</text>
+      <text x="292" y="165" text-anchor="middle" fill="#8b949e" font-size="10">AgentSub isolation</text>
+      <text x="292" y="200" text-anchor="middle" fill="#8b949e" font-size="9">pkg/memory</text>
+
+      <!-- Vector Database: left edge x=440, bottom edge y=230 -->
+      <rect x="440" y="70" width="160" height="160" rx="8" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
+      <text x="520" y="98" text-anchor="middle" fill="#3fb950" font-weight="700" font-size="12">Vector Database</text>
+      <text x="520" y="115" text-anchor="middle" fill="#8b949e" font-size="10">agent_memories</text>
+      <rect x="454" y="124" width="132" height="22" rx="4" fill="#1a2a1a"/>
+      <text x="520" y="139" text-anchor="middle" fill="#3fb950" font-size="10">agent_sub = '.../agent-A'</text>
+      <rect x="454" y="152" width="132" height="22" rx="4" fill="#2a1a1a"/>
+      <text x="520" y="167" text-anchor="middle" fill="#f85149" font-size="10">agent_sub = '.../agent-B'</text>
+      <text x="520" y="218" text-anchor="middle" fill="#8b949e" font-size="9">row isolation per agent</text>
+
+      <!-- Attacker: top edge y=260 -->
+      <rect x="440" y="260" width="160" height="50" rx="8" fill="#2a1010" stroke="#f85149" stroke-width="1.5" stroke-dasharray="5,3"/>
+      <text x="520" y="281" text-anchor="middle" fill="#f85149" font-weight="700" font-size="11">Attacker</text>
+      <text x="520" y="298" text-anchor="middle" fill="#8b949e" font-size="10">Direct DB write (bypass store)</text>
+
+      <!-- Phase label at top -->
+      <text id="mem-phase" x="350" y="24" text-anchor="middle" fill="#8b949e" font-size="11" font-style="italic"></text>
+
+      <!-- Arrow 1: Agent(x=150) → Store(x=220), y=150 — initially hidden -->
+      <line id="mem-a1" x1="150" y1="150" x2="220" y2="150" stroke="#58a6ff" stroke-width="1.5" opacity="0" marker-end="url(#marr)"/>
+      <text id="mem-l1" x="185" y="142" text-anchor="middle" fill="#58a6ff" font-size="9" opacity="0">Write(sub, content)</text>
+
+      <!-- Arrow 2: Store(x=365) → VectorDB(x=440), y=150 — initially hidden -->
+      <line id="mem-a2" x1="365" y1="150" x2="440" y2="150" stroke="#3fb950" stroke-width="1.5" opacity="0" marker-end="url(#marr-g)"/>
+      <text id="mem-l2" x="402" y="142" text-anchor="middle" fill="#3fb950" font-size="9" opacity="0">Validated + hashed</text>
+
+      <!-- Arrow 3: Attacker(y=260) ↑ VectorDB bottom(y=230) — dashed bypass path, hidden -->
+      <line id="mem-a3" x1="520" y1="260" x2="520" y2="230" stroke="#f85149" stroke-width="2" stroke-dasharray="5,3" opacity="0" marker-end="url(#marr-r)"/>
+      <text id="mem-l3" x="556" y="248" fill="#f85149" font-size="9" opacity="0">Tamper ⚠</text>
+
+      <!-- Arrow 4: VectorDB(x=440) ← Store(x=365), y=165, leftward read — hidden -->
+      <line id="mem-a4" x1="440" y1="165" x2="365" y2="165" stroke="#d29922" stroke-width="1.5" opacity="0" marker-end="url(#marr-y)"/>
+      <text id="mem-l4" x="402" y="178" text-anchor="middle" fill="#d29922" font-size="9" opacity="0">Read → hash mismatch!</text>
+
+      <!-- Arrow 5: Store(x=220) ← Agent(x=150), y=168, leftward error — hidden -->
+      <line id="mem-a5" x1="220" y1="168" x2="150" y2="168" stroke="#f85149" stroke-width="1.5" opacity="0" marker-end="url(#marr-r)"/>
+      <text id="mem-l5" x="185" y="180" text-anchor="middle" fill="#f85149" font-size="9" opacity="0">IntegrityError ✗</text>
+
+      <!-- Detection badge — hidden until phase 3 -->
+      <rect id="mem-badge" x="165" y="42" width="235" height="40" rx="6" fill="#2a1010" stroke="#f85149" stroke-width="1.5" opacity="0"/>
+      <text id="mem-badge-t1" x="282" y="62" text-anchor="middle" fill="#f85149" font-weight="700" font-size="12" opacity="0">SHA-256 mismatch detected</text>
+      <text id="mem-badge-t2" x="282" y="76" text-anchor="middle" fill="#8b949e" font-size="10" opacity="0">Tamper caught — entry rejected</text>
+    </svg>
+    <p style="font-size:12px;color:var(--muted);text-align:center;margin:0;">Every write is validated and hashed. Every read verifies the hash. Vector DB row isolation enforces per-agent namespace separation.</p>
+  </div>
+
+  <!-- Write validation demo -->
+  <div class="card" style="margin-bottom:16px;">
+    <div style="font-weight:700;font-size:13px;margin-bottom:6px;">OWASP ASI06 — Write Validation Demo</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Try writing different content to the memory store. Write-time detectors run on every entry before persistence.</p>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="runMemWrite('clean')">&#9654; Clean Memory</button>
+      <button class="btn btn-danger"  onclick="runMemWrite('injection')">&#9888; Prompt Injection</button>
+      <button class="btn btn-warning" onclick="runMemWrite('size')">&#9888; Size Anomaly</button>
+    </div>
+    <div id="mem-write-result" style="margin-top:12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px;min-height:120px;font-family:var(--mono);font-size:12px;color:var(--muted);">Click a scenario above…</div>
+  </div>
+
+  <!-- Isolation demo -->
+  <div class="card" style="margin-bottom:16px;">
+    <div style="font-weight:700;font-size:13px;margin-bottom:6px;">AML.M0031 — Cross-Agent Isolation Demo</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Agent A writes sensitive data to its memory namespace. Agent B (different SPIFFE sub) attempts to read it.</p>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="runMemIsolation()">&#9654; Run Isolation Demo</button>
+    </div>
+    <div id="mem-isolation-result" style="margin-top:12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px;min-height:100px;font-family:var(--mono);font-size:12px;color:var(--muted);">Click to run…</div>
+  </div>
+
+  <!-- Integrity demo -->
+  <div class="card" style="margin-bottom:16px;">
+    <div style="font-weight:700;font-size:13px;margin-bottom:6px;">AML.M0031 — SHA-256 Tamper Detection</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">An attacker modifies a memory entry directly in the database, bypassing the store API. The integrity check catches it on the next read.</p>
+    <div class="btn-group">
+      <button class="btn btn-danger" onclick="runMemIntegrity()">&#9888; Simulate Tamper Attack</button>
+    </div>
+    <div id="mem-integrity-result" style="margin-top:12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px;min-height:120px;font-family:var(--mono);font-size:12px;color:var(--muted);">Click to run…</div>
+  </div>
+
+  <!-- Controls table -->
+  <div class="card">
+    <div style="font-weight:700;font-size:13px;margin-bottom:12px;">AML.M0031 Controls → Implementation Mapping</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <thead><tr style="background:#21262d;"><th style="padding:8px;text-align:left;border-bottom:1px solid #30363d;">AML.M0031 Control</th><th style="padding:8px;text-align:left;border-bottom:1px solid #30363d;">OWASP ASI06</th><th style="padding:8px;text-align:left;border-bottom:1px solid #30363d;">Implementation</th></tr></thead>
+      <tbody>
+        <tr><td style="padding:8px;border-bottom:1px solid #30363d;"><strong>Created</strong> — validate at write time</td><td style="padding:8px;border-bottom:1px solid #30363d;">Prompt injection detector, size anomaly</td><td style="padding:8px;border-bottom:1px solid #30363d;"><code>validateContent()</code> in <code>pkg/memory</code></td></tr>
+        <tr><td style="padding:8px;border-bottom:1px solid #30363d;"><strong>Modified</strong> — detect post-write changes</td><td style="padding:8px;border-bottom:1px solid #30363d;">Key tampering detector</td><td style="padding:8px;border-bottom:1px solid #30363d;"><code>ComputeIntegrity()</code> SHA-256 on read</td></tr>
+        <tr><td style="padding:8px;border-bottom:1px solid #30363d;"><strong>Isolated</strong> — per-agent namespace</td><td style="padding:8px;border-bottom:1px solid #30363d;">Cross-agent retrieval prevention</td><td style="padding:8px;border-bottom:1px solid #30363d;">AgentSub key + vector DB row isolation policy</td></tr>
+        <tr><td style="padding:8px;border-bottom:1px solid #30363d;"><strong>Audited</strong> — immutable op log</td><td style="padding:8px;border-bottom:1px solid #30363d;">Forensic record of all writes</td><td style="padding:8px;border-bottom:1px solid #30363d;"><code>AuditRecord</code> per AgentSub</td></tr>
+        <tr><td style="padding:8px;"><strong>Recovered</strong> — rollback on integrity failure</td><td style="padding:8px;">Snapshot &amp; rollback</td><td style="padding:8px;">Roadmap: snapshot before write, restore on <code>IntegrityError</code></td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:12px;padding:10px;background:#1a2a1a;border-radius:6px;font-size:12px;">
+      <strong style="color:#3fb950;">Vector DB Row Isolation — pgvector example (PostgreSQL):</strong>
+      <pre style="margin:6px 0 0;font-size:11px;background:transparent;border:none;padding:0;color:#c9d1d9;">-- PostgreSQL + pgvector: enforce per-agent isolation at the DB layer
+ALTER TABLE agent_memories ENABLE ROW LEVEL SECURITY;
+CREATE POLICY agent_isolation ON agent_memories
+  USING (agent_sub = current_setting('app.agent_sub'));
+-- Gateway middleware sets session variable before every query:
+-- SET LOCAL app.agent_sub = '&lt;AgentToken.sub&gt;'
+-- Equivalent patterns exist for Weaviate (tenants), Qdrant (payload filtering), Chroma (metadata filters)</pre>
+    </div>
+  </div>
+</div>
+
 <!-- ══ AGENT AUTH LANDSCAPE ══════════════════════════════════════════════════ -->
 <div class="scene" id="scene-landscape">
   <div class="card">
@@ -5671,6 +5809,148 @@ async function playSCAFlow() {
 
   scaFlowStatus('✓ Full OAuth client_credentials flow — zero pre-shared secrets in the entire chain.');
   scaFlowRunning = false;
+}
+
+// ── Agent Memory Security ────────────────────────────────────────────────────
+function memOutput(id, html) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = html;
+}
+
+function stepRow(s) {
+  return `<div style="display:flex;gap:10px;padding:5px 0;border-bottom:1px solid #30363d;font-size:12px;">
+    <span style="background:#21262d;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:700;">${s.step}</span>
+    <span style="color:#8b949e;width:80px;flex-shrink:0;">${s.actor}</span>
+    <span>${s.action}</span>
+  </div>`;
+}
+
+// ── Agent Memory animated attack scenario ─────────────────────────────────
+function playMemAttack() {
+  // Reset: hide all arrows and labels
+  ['mem-a1','mem-a2','mem-a3','mem-a4','mem-a5',
+   'mem-l1','mem-l2','mem-l3','mem-l4','mem-l5',
+   'mem-badge','mem-badge-t1','mem-badge-t2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.transition = 'none';
+    el.style.opacity = '0';
+    el.style.strokeDasharray = '';
+    el.style.strokeDashoffset = '';
+  });
+  const phase = document.getElementById('mem-phase');
+  if (phase) phase.textContent = '';
+
+  // draw a solid arrow in by animating stroke-dashoffset via inline CSS transitions
+  function drawArrow(id, len, forward, delay) {
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.style.transition = 'none';
+      el.style.strokeDasharray = len;
+      el.style.strokeDashoffset = forward ? len : -len;
+      el.style.opacity = '1';
+      // double rAF ensures the browser commits the initial state before transitioning
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        el.style.transition = 'stroke-dashoffset 0.55s cubic-bezier(.4,0,.2,1)';
+        el.style.strokeDashoffset = '0';
+      }));
+    }, delay);
+  }
+
+  // fade in a label or badge element
+  function fadeIn(id, delay) {
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.style.transition = 'opacity 0.4s';
+      el.style.opacity = '1';
+    }, delay);
+  }
+
+  function setPhase(text, delay) {
+    setTimeout(() => {
+      const el = document.getElementById('mem-phase');
+      if (el) el.textContent = text;
+    }, delay);
+  }
+
+  // Phase 1 — Clean write: Agent → Store → VectorDB
+  setPhase('Phase 1: Agent writes clean memory entry', 0);
+  drawArrow('mem-a1', 70, true, 300);   fadeIn('mem-l1', 300);
+  drawArrow('mem-a2', 75, true, 1000);  fadeIn('mem-l2', 1000);
+
+  // Phase 2 — Attacker bypasses store and tampers with DB directly
+  setPhase('Phase 2: Attacker tampers with DB record — bypasses Memory Store', 2000);
+  // dashed arrow: fade in only (dasharray stays as SVG attribute "5,3")
+  setTimeout(() => {
+    const el = document.getElementById('mem-a3');
+    if (el) { el.style.transition = 'opacity 0.5s'; el.style.opacity = '1'; }
+  }, 2200);
+  fadeIn('mem-l3', 2200);
+
+  // Phase 3 — Agent reads → hash mismatch → IntegrityError
+  setPhase('Phase 3: Agent reads → SHA-256 mismatch — tamper caught!', 3400);
+  drawArrow('mem-a4', 75, false, 3600); fadeIn('mem-l4', 3600);
+  drawArrow('mem-a5', 70, false, 4300); fadeIn('mem-l5', 4300);
+  fadeIn('mem-badge',   4800);
+  fadeIn('mem-badge-t1', 4900);
+  fadeIn('mem-badge-t2', 5000);
+}
+
+function runMemWrite(scenario) {
+  if (!window.agentFabric) { memOutput('mem-write-result','<span style="color:#f85149;">WASM not loaded</span>'); return; }
+  const r = agentFabric.memoryWriteDemo(scenario);
+  const verdictColor = r.ok ? '#3fb950' : '#f85149';
+  const icon = r.ok ? '✓' : '✗';
+  const steps = (r.steps || []).map(stepRow).join('');
+  const auditHtml = r.audit ? r.audit.map(a =>
+    `<span style="color:#8b949e;font-size:11px;">[${a.op}] ${a.detail}</span>`
+  ).join('<br>') : '';
+  memOutput('mem-write-result', `
+    <div style="margin-bottom:10px;"><strong>${r.label}</strong></div>
+    ${steps}
+    ${auditHtml ? `<div style="margin-top:8px;">${auditHtml}</div>` : ''}
+    <div style="margin-top:10px;padding:8px;background:#161b22;border-radius:6px;font-weight:600;color:${verdictColor};">${icon} ${r.verdict}</div>
+  `);
+}
+
+function runMemIsolation() {
+  if (!window.agentFabric) { memOutput('mem-isolation-result','<span style="color:#f85149;">WASM not loaded</span>'); return; }
+  const r = agentFabric.memoryIsolationDemo();
+  const steps = (r.steps || []).map(stepRow).join('');
+  const a = r.agents;
+  memOutput('mem-isolation-result', `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div style="background:#1a2a1a;padding:10px;border-radius:6px;font-size:12px;">
+        <div style="font-weight:600;color:#3fb950;margin-bottom:4px;">Agent A</div>
+        <div style="color:#8b949e;">${a.agent_a.sub}</div>
+        <div>Entries written: <strong>${a.agent_a.entries_written}</strong></div>
+        <div>Entries readable: <strong>${a.agent_a.entries_readable}</strong></div>
+      </div>
+      <div style="background:#2a1a1a;padding:10px;border-radius:6px;font-size:12px;">
+        <div style="font-weight:600;color:#f85149;margin-bottom:4px;">Agent B (attacker)</div>
+        <div style="color:#8b949e;">${a.agent_b.sub}</div>
+        <div>Attack result: <strong style="color:#3fb950;">${a.agent_b.attack_result}</strong></div>
+      </div>
+    </div>
+    ${steps}
+    <div style="margin-top:8px;padding:8px;background:#1a2233;border-radius:6px;font-size:11px;color:#8b949e;">${r.vector_db_note || r.pgvector_rls_note}</div>
+  `);
+}
+
+function runMemIntegrity() {
+  if (!window.agentFabric) { memOutput('mem-integrity-result','<span style="color:#f85149;">WASM not loaded</span>'); return; }
+  const r = agentFabric.memoryIntegrityDemo();
+  const steps = (r.steps || []).map(stepRow).join('');
+  const resultColor = r.integrity_error ? '#3fb950' : '#f85149';
+  memOutput('mem-integrity-result', `
+    <div style="margin-bottom:10px;font-size:12px;">Integrity hash before tamper: <code style="font-size:11px;">${r.integrity_before.slice(0,16)}...</code></div>
+    ${steps}
+    <div style="margin-top:10px;padding:8px;background:#161b22;border-radius:6px;font-weight:600;color:${resultColor};">
+      ${r.integrity_error ? '✓' : '✗'} ${r.result} — ${r.verdict}
+    </div>
+  `);
 }
 </script>
 </body>
