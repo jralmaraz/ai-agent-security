@@ -1617,8 +1617,10 @@ func memoryIsolationDemo(_ js.Value, _ []js.Value) any {
 				"attack_result":   "0 entries returned — isolation enforced",
 			},
 		},
-		"pgvector_rls_note": "In PostgreSQL+pgvector: SET LOCAL app.agent_sub='<token.sub>' before each query; " +
-			"RLS policy USING (agent_sub = current_setting('app.agent_sub')) enforces this at DB layer.",
+		"vector_db_note": "Vector DB isolation: each agent's memories are scoped to its SPIFFE sub. " +
+			"In PostgreSQL+pgvector, RLS (USING agent_sub = current_setting('app.agent_sub')) enforces this at the DB layer. " +
+			"Equivalent patterns: Weaviate tenants, Qdrant payload filters, Chroma metadata filters.",
+		"pgvector_rls_note": "Vector DB isolation: each agent's memories are scoped to its SPIFFE sub (pgvector, Weaviate, Qdrant, Chroma all support per-tenant isolation).",
 		"steps": []any{
 			map[string]any{"step": "1", "actor": "Agent A", "action": "Writes 2 memory entries (SWIFT config, user prefs)"},
 			map[string]any{"step": "2", "actor": "Agent B", "action": "Calls Read('spiffe://.../agent-reporting')"},
