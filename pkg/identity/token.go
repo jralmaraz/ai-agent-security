@@ -44,6 +44,13 @@ type AgentClaims struct {
 
 	// Cnf binds the token to the agent's public key (for proof-of-possession).
 	Cnf ConfirmationKey `json:"cnf"`
+
+	// Mission is an optional human-readable description of the approved
+	// scope of action for this agent — e.g. "Summarise Q2 financial reports".
+	// Defined in draft-klrc-aiagent-auth §4 (Agent Mission claim).
+	// Gateways MAY use this to verify that downstream tool calls are plausibly
+	// within the stated mission.
+	Mission string `json:"agent_mission,omitempty"`
 }
 
 // ValidatedAgent is returned by AgentValidator.Validate on success.
@@ -60,6 +67,7 @@ type IssueOptions struct {
 	ChainDepth int               // 0 for originating orchestrator
 	KeyID      string            // kid header (optional)
 	WorkloadKey *ecdsa.PublicKey // agent's own public key → cnf.jwk
+	Mission    string            // optional: approved scope of action (agent_mission claim)
 }
 
 // AgentIssuer issues AgentTokens signed with an IdP EC P-256 key.
@@ -110,6 +118,7 @@ func (i *AgentIssuer) Issue(opts IssueOptions) (string, error) {
 		Role:       opts.Role,
 		ChainDepth: opts.ChainDepth,
 		Cnf:        ConfirmationKey{JWK: json.RawMessage(jwkRaw)},
+		Mission:    opts.Mission,
 	}
 
 	t := jwt.NewWithClaims(jwt.SigningMethodES256, claims)

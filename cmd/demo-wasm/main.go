@@ -77,11 +77,13 @@ func issueOrchestratorToken(_ js.Value, _ []js.Value) any {
 	if issuer == nil {
 		return errObj("call setup() first")
 	}
+	const mission = "Summarise Q2 financial reports and file expense claims"
 	tok, err := issuer.Issue(identity.IssueOptions{
 		Subject:     "spiffe://agent-fabric.example/orchestrator",
 		Role:        identity.RoleOrchestrator,
 		ChainDepth:  0,
 		WorkloadKey: orchestratorPub,
+		Mission:     mission,
 	})
 	if err != nil {
 		return errObj("issue orchestrator token: " + err.Error())
@@ -96,6 +98,7 @@ func issueOrchestratorToken(_ js.Value, _ []js.Value) any {
 		"chainHash":  chain.Hash(),
 		"chainDepth": 0,
 		"role":       identity.RoleOrchestrator,
+		"mission":    mission,
 	})
 }
 
