@@ -1,7 +1,7 @@
 {
   "_comment": "Tracks IETF/OpenID drafts implemented in this PoC. Updated daily by the standards-tracker GitHub Actions workflow. Set implemented_rev when the PoC code is updated to match a new revision.",
   "_tracking_policy": "docs/standards-tracking.md",
-  "last_checked": "2026-08-16",
+  "last_checked": "2026-08-17",
   "wg_feeds": [
     {
       "name": "IETF WIMSE WG",
@@ -29,9 +29,12 @@
       "note": "Catches OIDF spec publications, errata, and public review periods"
     },
     {
-      "name": "IETF Datatracker — AI Agent keyword search",
+      "name": "IETF Datatracker \u2014 AI Agent keyword search",
       "type": "ietf-keyword-search",
-      "keywords": ["agent", "agentic"],
+      "keywords": [
+        "agent",
+        "agentic"
+      ],
       "note": "Discovers individual submissions (draft-klrc-, draft-hardt-, etc.) not appearing in WG feeds. Queries /api/v1/doc/document/?name__icontains=<keyword>&type=draft. Root cause of draft-klrc-aiagent-auth being missed: it is an individual submission (no ietf- prefix) and therefore absent from all WG Atom feeds."
     }
   ],
@@ -570,9 +573,9 @@
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-klrc-aiagent-auth/",
       "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-klrc-aiagent-auth/",
       "source_repo": null,
-      "impact": "HIGH — Comprehensive AI agent auth framework (v03, July 2026) by authors from Okta, OpenAI, AWS, Zscaler, Ping, Defakto. Cites and builds on WIMSE WPT/WIT, OAuth 2.0 Token Exchange (RFC 8693), Transaction Tokens, and HTTP Message Signatures (RFC 9421). Three new patterns beyond current PoC: (1) CIBA backchannel for human-in-the-loop approval gates — agent pauses execution and waits for human decision before performing high-risk actions; (2) SSF/CAEP signals for compromised-agent remediation — continuous monitoring with revocation signals if agent behaviour deviates; (3) Agent Mission claim binding approved scope-of-action to the token. Existing AgentToken+AgentProofToken+AgentChain design is validated by this draft.",
+      "impact": "HIGH \u2014 Comprehensive AI agent auth framework (v03, July 2026) by authors from Okta, OpenAI, AWS, Zscaler, Ping, Defakto. Cites and builds on WIMSE WPT/WIT, OAuth 2.0 Token Exchange (RFC 8693), Transaction Tokens, and HTTP Message Signatures (RFC 9421). Three new patterns beyond current PoC: (1) CIBA backchannel for human-in-the-loop approval gates \u2014 agent pauses execution and waits for human decision before performing high-risk actions; (2) SSF/CAEP signals for compromised-agent remediation \u2014 continuous monitoring with revocation signals if agent behaviour deviates; (3) Agent Mission claim binding approved scope-of-action to the token. Existing AgentToken+AgentProofToken+AgentChain design is validated by this draft.",
       "used_in": [],
-      "_triage": "2026-08-16: individual draft v03. MISSED by wg_feeds — individual submission (draft-klrc- prefix, no ietf- prefix), absent from all WG Atom feeds. Added ietf-keyword-search feed to wg_feeds to prevent future misses. HIGH relevance: validates current design, three implementable new patterns (CIBA, SSF, Agent Mission). Implementing: CIBA Human-in-the-Loop demo tab, SSF monitoring tab, agent_mission claim in pkg/identity.",
+      "_triage": "2026-08-16: individual draft v03. MISSED by wg_feeds \u2014 individual submission (draft-klrc- prefix, no ietf- prefix), absent from all WG Atom feeds. Added ietf-keyword-search feed to wg_feeds to prevent future misses. HIGH relevance: validates current design, three implementable new patterns (CIBA, SSF, Agent Mission). Implementing: CIBA Human-in-the-Loop demo tab, SSF monitoring tab, agent_mission claim in pkg/identity.",
       "_discovery_gap": "Not discovered by automated tracker. Individual submissions (no ietf- prefix) are invisible to WG Atom feeds. Fix: ietf-keyword-search feed type added to wg_feeds; check_standards.py updated to query /api/v1/doc/document/?name__icontains=agent&type=draft daily."
     },
     {
@@ -646,6 +649,918 @@
       "first_seen": "2026-08-14",
       "wg": "IETF OAuth WG",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-gazitt-oauth-authzen-claims/"
+    },
+    {
+      "id": "draft-zhang-agent-gap-network",
+      "label": "Problem Statement and Gap Analysis for Agent-enabled Mobile Core Network",
+      "status": "discovered",
+      "first_seen": "2026-01-09",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-zhang-agent-gap-network/"
+    },
+    {
+      "id": "draft-cui-ai-agent-task",
+      "label": "Task-oriented Coordination Requirements for AI Agent Protocols",
+      "status": "discovered",
+      "first_seen": "2026-07-03",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-cui-ai-agent-task/"
+    },
+    {
+      "id": "draft-liu-agent-context-protocol",
+      "label": "Agent Context Protocol",
+      "status": "discovered",
+      "first_seen": "2026-01-26",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-liu-agent-context-protocol/"
+    },
+    {
+      "id": "draft-howe-vcon-agent-session",
+      "label": "vCon Agent Session",
+      "status": "discovered",
+      "first_seen": "2026-05-20",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-howe-vcon-agent-session/"
+    },
+    {
+      "id": "draft-ietf-agentx-ext-pro",
+      "label": "Agent Extensibility (AgentX) Protocol Version 1",
+      "status": "discovered",
+      "first_seen": "2013-03-02",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-agentx-ext-pro/"
+    },
+    {
+      "id": "draft-ietf-dhc-agent-options",
+      "label": "DHCP Relay Agent Information Option",
+      "status": "discovered",
+      "first_seen": "2013-03-02",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-dhc-agent-options/"
+    },
+    {
+      "id": "draft-ietf-agentx-mib",
+      "label": "Definitions of Managed Objects for Extensible SNMP Agents",
+      "status": "discovered",
+      "first_seen": "2013-03-02",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-agentx-mib/"
+    },
+    {
+      "id": "draft-ietf-agentx-rfc-update",
+      "label": "Agent Extensibility (AgentX) Protocol Version 1",
+      "status": "discovered",
+      "first_seen": "2013-03-02",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-agentx-rfc-update/"
+    },
+    {
+      "id": "draft-kinnear-agent-vpn-id",
+      "label": "VPN Identifier sub-option for Relay Agent Information Option",
+      "status": "discovered",
+      "first_seen": "2001-03-08",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-kinnear-agent-vpn-id/"
+    },
+    {
+      "id": "draft-glass-mobileip-agent-dhcp-proxy",
+      "label": "Mobile IP Agents as DHCP Proxies",
+      "status": "discovered",
+      "first_seen": "2001-03-02",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-glass-mobileip-agent-dhcp-proxy/"
+    },
+    {
+      "id": "draft-kinnear-agent-subnet-selection",
+      "label": "Subnet Selection sub-option for Relay Agent Information Option",
+      "status": "discovered",
+      "first_seen": "2001-03-08",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-kinnear-agent-subnet-selection/"
+    },
+    {
+      "id": "draft-ietf-dhc-agentoptions-device-class",
+      "label": "The DOCSIS (Data-Over-Cable Service Interface Specifications) Device Class DHCP (Dynamic Host Configuration Protocol) Relay Agent Information Sub-option",
+      "status": "discovered",
+      "first_seen": "2013-03-02",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-dhc-agentoptions-device-class/"
+    },
+    {
+      "id": "draft-chowdhury-dhc-mip6-agentop",
+      "label": "DHCP Relay Agent Option to Support Mobile IPv6 bootstrapping",
+      "status": "discovered",
+      "first_seen": "2004-10-18",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-chowdhury-dhc-mip6-agentop/"
+    },
+    {
+      "id": "draft-ietf-dhc-agent-subnet-selection",
+      "label": "Link Selection sub-option for the Relay Agent Information Option for DHCPv4",
+      "status": "discovered",
+      "first_seen": "2013-03-02",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-dhc-agent-subnet-selection/"
+    },
+    {
+      "id": "draft-ietf-dhc-agent-vpn-id",
+      "label": "Virtual Subnet Selection Sub-Option for the Relay Agent Information Option for DHCPv4",
+      "status": "discovered",
+      "first_seen": "2007-12-18",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-dhc-agent-vpn-id/"
+    },
+    {
+      "id": "draft-aoun-midcom-agent-information",
+      "label": "Required Information in Midcom Agents",
+      "status": "discovered",
+      "first_seen": "2001-08-31",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-aoun-midcom-agent-information/"
+    },
+    {
+      "id": "draft-ietf-ipoib-subnet-mgmt-agent-mib",
+      "label": "Definitions of Managed Objects for the InfiniBand Subnet Management Agent (SMA)",
+      "status": "discovered",
+      "first_seen": "2005-09-13",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-ipoib-subnet-mgmt-agent-mib/"
+    },
+    {
+      "id": "draft-swortwood-mib-ib-device-agent",
+      "label": "InfiniBand Device Management Agent Management Information Base",
+      "status": "discovered",
+      "first_seen": "2001-11-07",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-swortwood-mib-ib-device-agent/"
+    },
+    {
+      "id": "draft-droms-agentopt-8021x",
+      "label": "802.1X Credentials Sub-option for the DHCP Relay Agent Information Option",
+      "status": "discovered",
+      "first_seen": "2001-11-16",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-droms-agentopt-8021x/"
+    },
+    {
+      "id": "draft-ietf-dhc-agentopt-radius",
+      "label": "Remote Authentication Dial-In User Service (RADIUS) Attributes Suboption for the Dynamic Host Configuration Protocol (DHCP) Relay Agent Information Option",
+      "status": "discovered",
+      "first_seen": "2013-03-02",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-dhc-agentopt-radius/"
+    },
+    {
+      "id": "draft-le-pana-agent-discovery",
+      "label": "An efficient method to dicover an agent in the network",
+      "status": "discovered",
+      "first_seen": "2002-02-22",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-le-pana-agent-discovery/"
+    },
+    {
+      "id": "draft-ietf-secsh-agent",
+      "label": "Secure Shell Authentication Agent Protocol",
+      "status": "discovered",
+      "first_seen": "2004-02-02",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-secsh-agent/"
+    },
+    {
+      "id": "draft-ietf-ipoib-baseboard-mgmt-agent-mib",
+      "label": "Definitions of Managed Objects for the InfiniBand Baseboard Management Agent (BMA)",
+      "status": "discovered",
+      "first_seen": "2005-09-13",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-ipoib-baseboard-mgmt-agent-mib/"
+    },
+    {
+      "id": "draft-ietf-ipoib-perf-mgmt-agent-mib",
+      "label": "Definitions of Managed Objects for the InfiniBand Performance Management Agent (PMA)",
+      "status": "discovered",
+      "first_seen": "2005-09-13",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-ipoib-perf-mgmt-agent-mib/"
+    },
+    {
+      "id": "draft-droms-dhcp-relay-agent-ipsec",
+      "label": "Use of IPsec for Securing DHCPv4 Messages Exchanged Between Relay Agents and Servers",
+      "status": "discovered",
+      "first_seen": "2002-10-25",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-droms-dhcp-relay-agent-ipsec/"
+    },
+    {
+      "id": "draft-park-fasthandover-agent-fmipv6",
+      "label": "Fast Handover Agent (FHA) for Fast Router Discovery in FMIPv6",
+      "status": "discovered",
+      "first_seen": "2003-04-14",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-park-fasthandover-agent-fmipv6/"
+    },
+    {
+      "id": "draft-ietf-dhc-relay-agent-auth",
+      "label": "The Authentication Suboption for the DHCP Relay Agent Option",
+      "status": "discovered",
+      "first_seen": "2015-10-14",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-dhc-relay-agent-auth/"
+    },
+    {
+      "id": "draft-ietf-dhc-relay-agent-ipsec",
+      "label": "Authentication of DHCP Relay Agent Options Using IPsec",
+      "status": "discovered",
+      "first_seen": "2005-11-09",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-dhc-relay-agent-ipsec/"
+    },
+    {
+      "id": "draft-ietf-idr-bgp-mibagent-survey",
+      "label": "BGP-4 MIB Implementation Survey",
+      "status": "discovered",
+      "first_seen": "2013-03-02",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-idr-bgp-mibagent-survey/"
+    },
+    {
+      "id": "draft-deng-mip6-vrrp-homeagent-reliability",
+      "label": "Reliability and Load Balance among multiple Home Agents",
+      "status": "discovered",
+      "first_seen": "2005-07-12",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-deng-mip6-vrrp-homeagent-reliability/"
+    },
+    {
+      "id": "draft-zhang-mobopts-agent-mip4rr",
+      "label": "Agent-Based Return Routability Test for Mobile IPv4 Route Optimization",
+      "status": "discovered",
+      "first_seen": "2005-08-12",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-zhang-mobopts-agent-mip4rr/"
+    },
+    {
+      "id": "draft-yuchi-dhc-homeagent-option",
+      "label": "Home Agent Configuration Option for DHCPv6",
+      "status": "discovered",
+      "first_seen": "2005-10-14",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-yuchi-dhc-homeagent-option/"
+    },
+    {
+      "id": "draft-zi-dhc-agent-request-multi-pool",
+      "label": "DHCP Relay agent Request from Multi Address Pool",
+      "status": "discovered",
+      "first_seen": "2005-10-20",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-zi-dhc-agent-request-multi-pool/"
+    },
+    {
+      "id": "draft-droms-dhc-dhcpv6-agentopt-delegate",
+      "label": "DHCP Relay Agent Assignment Notification Option",
+      "status": "discovered",
+      "first_seen": "2005-11-08",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-droms-dhc-dhcpv6-agentopt-delegate/"
+    },
+    {
+      "id": "draft-ietf-dhc-dhcpv6-agentopt-delegate",
+      "label": "DHCPv6 Relay Agent Assignment Notification (RAAN) Option",
+      "status": "discovered",
+      "first_seen": "2017-10-03",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-dhc-dhcpv6-agentopt-delegate/"
+    },
+    {
+      "id": "draft-kinnear-dhc-relay-agent-flags",
+      "label": "DHCPv4 Relay Agent Flags Suboption",
+      "status": "discovered",
+      "first_seen": "2008-03-03",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-kinnear-dhc-relay-agent-flags/"
+    },
+    {
+      "id": "draft-ietf-dhc-relay-agent-flags",
+      "label": "The Dynamic Host Configuration Protocol Version 4 (DHCPv4) Relay Agent Flags Suboption",
+      "status": "discovered",
+      "first_seen": "2015-10-14",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-dhc-relay-agent-flags/"
+    },
+    {
+      "id": "draft-zheng-mpls-p2mp-topology-agent-reqs",
+      "label": "MPLS P2MP Topology Agent Requirements",
+      "status": "discovered",
+      "first_seen": "2006-06-19",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-zheng-mpls-p2mp-topology-agent-reqs/"
+    },
+    {
+      "id": "draft-kulkarni-netconf-subagent-prot",
+      "label": "NETCONF Master-agent Sub-agent Communication Protocol",
+      "status": "discovered",
+      "first_seen": "2006-10-02",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-kulkarni-netconf-subagent-prot/"
+    },
+    {
+      "id": "draft-sarikaya-dhc-proxyagent",
+      "label": "DHCP v4/v6 Proxy",
+      "status": "discovered",
+      "first_seen": "2006-10-13",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-sarikaya-dhc-proxyagent/"
+    },
+    {
+      "id": "draft-joshi-dhc-layer2-relay-agent",
+      "label": "Layer 2 Relay Agent",
+      "status": "discovered",
+      "first_seen": "2007-06-15",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-joshi-dhc-layer2-relay-agent/"
+    },
+    {
+      "id": "draft-von-hugo-multimob-agents",
+      "label": "Agent-based multicast support for moving networks (NEMO)",
+      "status": "discovered",
+      "first_seen": "2009-02-04",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-von-hugo-multimob-agents/"
+    },
+    {
+      "id": "draft-yao-mip4-mobile-agent-proxy",
+      "label": "Mobile Agent Discovery Proxy (MADP) in IPv4 Mobility Management",
+      "status": "discovered",
+      "first_seen": "2008-10-27",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-yao-mip4-mobile-agent-proxy/"
+    },
+    {
+      "id": "draft-cui-netext-route-optimization-agent-ext",
+      "label": "Reflector Extension for Route Optimization Agent",
+      "status": "discovered",
+      "first_seen": "2009-12-13",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-cui-netext-route-optimization-agent-ext/"
+    },
+    {
+      "id": "draft-zheng-dhc-relay-agent-stacking",
+      "label": "DHCP Relay Agent Stacking",
+      "status": "discovered",
+      "first_seen": "2009-10-19",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-zheng-dhc-relay-agent-stacking/"
+    },
+    {
+      "id": "draft-huang-dhc-multiple-relay-agents-option",
+      "label": "DHCP option including Multiple Relay Agents' Information",
+      "status": "discovered",
+      "first_seen": "2010-03-04",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-huang-dhc-multiple-relay-agents-option/"
+    },
+    {
+      "id": "draft-lawrence-sipforum-user-agent-config",
+      "label": "Session Initiation Protocol (SIP) User Agent Configuration",
+      "status": "discovered",
+      "first_seen": "2020-01-21",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-lawrence-sipforum-user-agent-config/"
+    },
+    {
+      "id": "draft-asati-dhc-relay-agent-config",
+      "label": "DHCP Relay Agent Configuration Option",
+      "status": "discovered",
+      "first_seen": "2010-09-30",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-asati-dhc-relay-agent-config/"
+    },
+    {
+      "id": "draft-melnikov-email-user-agent",
+      "label": "User-Agent and X-Mailer Header Field registration for Email",
+      "status": "discovered",
+      "first_seen": "2014-04-24",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-melnikov-email-user-agent/"
+    },
+    {
+      "id": "draft-donovan-dime-agent-overload",
+      "label": "Diameter Agent Overload",
+      "status": "discovered",
+      "first_seen": "2014-11-10",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-donovan-dime-agent-overload/"
+    },
+    {
+      "id": "draft-donovan-doic-agent-cases",
+      "label": "Analysis of Agent Use Cases for Diameter Overload Information Conveyance (DOIC)",
+      "status": "discovered",
+      "first_seen": "2015-01-04",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-donovan-doic-agent-cases/"
+    },
+    {
+      "id": "draft-ietf-dime-agent-overload",
+      "label": "Diameter Agent Overload and the Peer Overload Report",
+      "status": "discovered",
+      "first_seen": "2019-08-15",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-dime-agent-overload/"
+    },
+    {
+      "id": "draft-birrane-dtn-adm-agent",
+      "label": "Asynchronous Management Protocol Agent Application Data Model",
+      "status": "discovered",
+      "first_seen": "2019-09-12",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-birrane-dtn-adm-agent/"
+    },
+    {
+      "id": "draft-zheng-dispatch-agent-identity-management",
+      "label": "Agent Identity Managenment",
+      "status": "discovered",
+      "first_seen": "2026-05-07",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-zheng-dispatch-agent-identity-management/"
+    },
+    {
+      "id": "draft-miller-ssh-agent",
+      "label": "SSH Agent Protocol",
+      "status": "discovered",
+      "first_seen": "2024-11-07",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-miller-ssh-agent/"
+    },
+    {
+      "id": "draft-zhang-rtgwg-ai-agents-troubleshooting",
+      "label": "Use Cases and Requirements of Communication Protocol for Troubleshooting Agents on Network Devices",
+      "status": "discovered",
+      "first_seen": "2026-05-06",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-zhang-rtgwg-ai-agents-troubleshooting/"
+    },
+    {
+      "id": "draft-zl-agents-networking-framework",
+      "label": "Agents Networking Framework for Enterprise and Broadband",
+      "status": "discovered",
+      "first_seen": "2025-11-02",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-zl-agents-networking-framework/"
+    },
+    {
+      "id": "draft-narvaneni-agent-uri",
+      "label": "The agent:// Protocol -- A URI-Based Framework for Interoperable Agents",
+      "status": "discovered",
+      "first_seen": "2026-04-18",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-narvaneni-agent-uri/"
+    },
+    {
+      "id": "draft-chen-agent-decoupled-authorization-model",
+      "label": "A Decoupled Authorization Model for Agent2Agent",
+      "status": "discovered",
+      "first_seen": "2026-02-14",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-chen-agent-decoupled-authorization-model/"
+    },
+    {
+      "id": "draft-huang-acme-scalable-agent-enrollment",
+      "label": "Extending Certificate Enrollment Protocols for Scalable Agentic AI Identity",
+      "status": "discovered",
+      "first_seen": "2025-12-16",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-huang-acme-scalable-agent-enrollment/"
+    },
+    {
+      "id": "draft-zhao-nmrg-ai-agent-for-ndt",
+      "label": "AI Agent Architecture for Network Digital Twin",
+      "status": "discovered",
+      "first_seen": "2026-03-02",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-zhao-nmrg-ai-agent-for-ndt/"
+    },
+    {
+      "id": "draft-du-ai-agent-communication-6g-aspect",
+      "label": "Use Cases and Requirements of AI Agent Communication from 6G Aspect",
+      "status": "discovered",
+      "first_seen": "2026-01-02",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-du-ai-agent-communication-6g-aspect/"
+    },
+    {
+      "id": "draft-yl-agent-id-requirements",
+      "label": "Digital Identity Management for AI Agent Communication Protocols",
+      "status": "discovered",
+      "first_seen": "2026-01-03",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-yl-agent-id-requirements/"
+    },
+    {
+      "id": "draft-song-oauth-ai-agent-authorization",
+      "label": "OAuth2.0 Extention for AI Agent: Authorization on Target",
+      "status": "discovered",
+      "first_seen": "2026-01-06",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-song-oauth-ai-agent-authorization/"
+    },
+    {
+      "id": "draft-wang-nmrg-magent-im",
+      "label": "A Protocol-agnostic Multiple Agents Interaction Model for Autonomous Network",
+      "status": "discovered",
+      "first_seen": "2026-01-09",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-wang-nmrg-magent-im/"
+    },
+    {
+      "id": "draft-yu-ai-agent-use-cases-in-6g",
+      "label": "AI Agent Use Cases and Requirements in 6G Network",
+      "status": "discovered",
+      "first_seen": "2026-01-05",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-yu-ai-agent-use-cases-in-6g/"
+    },
+    {
+      "id": "draft-xie-ai-agent-multimodal",
+      "label": "Multimodal Management Requirements for AI Agent Protocols",
+      "status": "discovered",
+      "first_seen": "2026-01-09",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-xie-ai-agent-multimodal/"
+    },
+    {
+      "id": "draft-hw-ai-agent-6g",
+      "label": "Requirements and Enabling Technologies of Agent Protocols for 6G Networks",
+      "status": "discovered",
+      "first_seen": "2026-01-21",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-hw-ai-agent-6g/"
+    },
+    {
+      "id": "draft-nandakumar-agent-sd-jwt",
+      "label": "SD Agent: Selective Disclosure for Agent Discovery and Identity Management",
+      "status": "discovered",
+      "first_seen": "2026-03-02",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-nandakumar-agent-sd-jwt/"
+    },
+    {
+      "id": "draft-campbell-agentic-http",
+      "label": "A Best Current Practice for Agentic Interactions over HTTP",
+      "status": "discovered",
+      "first_seen": "2026-02-09",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-campbell-agentic-http/"
+    },
+    {
+      "id": "draft-liu-agent-protocol-over-moq",
+      "label": "Agent Protocol over MoQ",
+      "status": "discovered",
+      "first_seen": "2026-03-03",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-liu-agent-protocol-over-moq/"
+    },
+    {
+      "id": "draft-wahl-scim-agent-schema",
+      "label": "System for Cross-domain Identity Management: Agentic Identity Schema",
+      "status": "discovered",
+      "first_seen": "2026-02-20",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-wahl-scim-agent-schema/"
+    },
+    {
+      "id": "draft-ietf-sshm-ssh-agent",
+      "label": "SSH Agent Protocol",
+      "status": "discovered",
+      "first_seen": "2026-05-28",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-sshm-ssh-agent/"
+    },
+    {
+      "id": "draft-oauth-ai-agents-on-behalf-of-user",
+      "label": "OAuth 2.0 Extension: On-Behalf-Of User Authorization for AI Agents",
+      "status": "discovered",
+      "first_seen": "2026-02-27",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-oauth-ai-agents-on-behalf-of-user/"
+    },
+    {
+      "id": "draft-sarischo-6gip-aiagent-requirements",
+      "label": "AI Agents for 6G Requirements and Implementation Approaches",
+      "status": "discovered",
+      "first_seen": "2026-03-16",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-sarischo-6gip-aiagent-requirements/"
+    },
+    {
+      "id": "draft-zhao-nmrg-ai-agent-for-dtn",
+      "label": "AI Agent Architecture for DTN Digital Twin Network",
+      "status": "discovered",
+      "first_seen": "2025-10-20",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-zhao-nmrg-ai-agent-for-dtn/"
+    },
+    {
+      "id": "draft-zyyhl-agent-networks-framework",
+      "label": "Framework for AI Agent Networks",
+      "status": "discovered",
+      "first_seen": "2026-04-23",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-zyyhl-agent-networks-framework/"
+    },
+    {
+      "id": "draft-srijal-agents-policy",
+      "label": "AGENTS.TXT: Strict Policy File for Automated Clients",
+      "status": "discovered",
+      "first_seen": "2026-04-10",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-srijal-agents-policy/"
+    },
+    {
+      "id": "draft-liang-agentdns",
+      "label": "AgentDNS: A Root Domain Naming System for LLM Agents",
+      "status": "discovered",
+      "first_seen": "2026-04-11",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-liang-agentdns/"
+    },
+    {
+      "id": "draft-scim-agent-extension",
+      "label": "SCIM Agents and Agentic Applications Extension",
+      "status": "discovered",
+      "first_seen": "2026-04-14",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-scim-agent-extension/"
+    },
+    {
+      "id": "draft-kotecha-agentic-dispute-protocol",
+      "label": "Agentic Dispute Protocol",
+      "status": "discovered",
+      "first_seen": "2026-04-16",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-kotecha-agentic-dispute-protocol/"
+    },
+    {
+      "id": "draft-cui-ai-agent-discovery-invocation",
+      "label": "AI Agent Discovery and Invocation Protocol",
+      "status": "discovered",
+      "first_seen": "2026-07-06",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-cui-ai-agent-discovery-invocation/"
+    },
+    {
+      "id": "draft-liu-access-collaboration-agent",
+      "label": "Ubiquitous Access Collaboration Requirements for AI Agent Protocols",
+      "status": "discovered",
+      "first_seen": "2026-04-19",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-liu-access-collaboration-agent/"
+    },
+    {
+      "id": "draft-abbey-scim-agent-extension",
+      "label": "SCIM Agents and Agentic Applications Extension",
+      "status": "discovered",
+      "first_seen": "2026-04-19",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-abbey-scim-agent-extension/"
+    },
+    {
+      "id": "draft-zhao-nmop-network-management-agent",
+      "label": "AI based Network Management Agent(NMA): Concepts and Architecture",
+      "status": "discovered",
+      "first_seen": "2026-07-06",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-zhao-nmop-network-management-agent/"
+    },
+    {
+      "id": "draft-yao-agent-auth-considerations",
+      "label": "Further considerations on AI Agent Authentication and Authorization Based on OAuth Extension",
+      "status": "discovered",
+      "first_seen": "2026-04-23",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-yao-agent-auth-considerations/"
+    },
+    {
+      "id": "draft-zhao-ccamp-actn-optical-network-agent",
+      "label": "Integration of Network Management Agent (NMA) into ACTN-Based Optical Network",
+      "status": "discovered",
+      "first_seen": "2026-07-06",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-zhao-ccamp-actn-optical-network-agent/"
+    },
+    {
+      "id": "draft-mzsg-rtgwg-agent-cross-device-comm-framework",
+      "label": "Cross-device Communication Framework for AI Agents in Network Devices",
+      "status": "discovered",
+      "first_seen": "2026-05-05",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-mzsg-rtgwg-agent-cross-device-comm-framework/"
+    },
+    {
+      "id": "draft-zl-agents-networking-architecture",
+      "label": "Agents Networking Architecture for Enterprise and Broadband",
+      "status": "discovered",
+      "first_seen": "2025-10-20",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-zl-agents-networking-architecture/"
+    },
+    {
+      "id": "draft-chuyi-nmrg-ai-agent-network",
+      "label": "Large Model based Agents for Network Operation and Maintenance",
+      "status": "discovered",
+      "first_seen": "2026-04-23",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-chuyi-nmrg-ai-agent-network/"
+    },
+    {
+      "id": "draft-zl-agents-networking-scenarios",
+      "label": "Agents Networking Scenarios in Enterprise and Broadband Networks",
+      "status": "discovered",
+      "first_seen": "2025-10-20",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-zl-agents-networking-scenarios/"
+    },
+    {
+      "id": "draft-stephan-ai-agent-6g",
+      "label": "AI Agent protocols for 6G systems",
+      "status": "discovered",
+      "first_seen": "2026-04-23",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-stephan-ai-agent-6g/"
+    },
+    {
+      "id": "draft-ni-wimse-ai-agent-identity",
+      "label": "WIMSE Applicability for AI Agents",
+      "status": "discovered",
+      "first_seen": "2026-02-28",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ni-wimse-ai-agent-identity/"
+    },
+    {
+      "id": "draft-mao-rtgwg-agent-comm-protocol-gap-analysis",
+      "label": "Gap Analysis for the Cross-device Communication Protocol for AI Agents in Network Devices",
+      "status": "discovered",
+      "first_seen": "2026-05-05",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-mao-rtgwg-agent-comm-protocol-gap-analysis/"
+    },
+    {
+      "id": "draft-zheng-agent-identity-management",
+      "label": "Agent Identity Managenment",
+      "status": "discovered",
+      "first_seen": "2025-11-02",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-zheng-agent-identity-management/"
+    },
+    {
+      "id": "draft-ni-a2a-ai-agent-security-requirements",
+      "label": "Security Requirements for AI Agents",
+      "status": "discovered",
+      "first_seen": "2026-02-28",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ni-a2a-ai-agent-security-requirements/"
+    },
+    {
+      "id": "draft-yuan-rtgwg-traffic-agent-usecase",
+      "label": "Use cases of the AI Network Traffic Optimization Agent",
+      "status": "discovered",
+      "first_seen": "2026-05-05",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-yuan-rtgwg-traffic-agent-usecase/"
+    },
+    {
+      "id": "draft-yuan-rtgwg-security-agent-usecase",
+      "label": "Use cases of the AI Network Security Agent",
+      "status": "discovered",
+      "first_seen": "2026-05-05",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-yuan-rtgwg-security-agent-usecase/"
+    },
+    {
+      "id": "draft-men-rtgwg-agent-networking-digibank-scenario",
+      "label": "Agents Networking Scenarios in Enterprise and Broadband Networks",
+      "status": "discovered",
+      "first_seen": "2025-11-02",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-men-rtgwg-agent-networking-digibank-scenario/"
+    },
+    {
+      "id": "draft-tong-network-agent-use-cases-in-6g",
+      "label": "Network AI Agent Use Cases and Requirements in 6G",
+      "status": "discovered",
+      "first_seen": "2026-05-06",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-tong-network-agent-use-cases-in-6g/"
+    },
+    {
+      "id": "draft-huang-rats-agentic-eat-cap-attest",
+      "label": "Capability Attestation Extensions for the Entity Attestation Token (EAT) in Agentic AI Systems",
+      "status": "discovered",
+      "first_seen": "2025-12-16",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-huang-rats-agentic-eat-cap-attest/"
+    },
+    {
+      "id": "draft-goswami-agentic-jwt",
+      "label": "Secure Intent Protocol: JWT Compatible Agentic Identity and Workflow Management",
+      "status": "discovered",
+      "first_seen": "2026-07-01",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-goswami-agentic-jwt/"
+    },
+    {
+      "id": "draft-hong-nmrg-agenticai-ps",
+      "label": "Motivations and Problem Statement of Agentic AI for network management",
+      "status": "discovered",
+      "first_seen": "2026-07-06",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-hong-nmrg-agenticai-ps/"
+    },
+    {
+      "id": "draft-chuyi-nmrg-agentic-network-inference",
+      "label": "Agentic Network Architecture and Protocol for Supporting Agent Interconnection Communication and Multi-level Inference",
+      "status": "discovered",
+      "first_seen": "2026-07-06",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-chuyi-nmrg-agentic-network-inference/"
+    },
+    {
+      "id": "draft-bernardos-nmrg-agentic-network-optimization",
+      "label": "Solutions for enabling agentic sensing with network optimization",
+      "status": "discovered",
+      "first_seen": "2026-03-02",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-bernardos-nmrg-agentic-network-optimization/"
+    },
+    {
+      "id": "draft-jadoon-nmrg-agentic-ai-autonomous-networks",
+      "label": "Agentic AI Architectural Principles for Autonomous Computer Networks",
+      "status": "discovered",
+      "first_seen": "2026-03-02",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-jadoon-nmrg-agentic-ai-autonomous-networks/"
+    },
+    {
+      "id": "draft-xu-agentic-overlay-network-architecture",
+      "label": "Architecture for Agentic Overlay Networks",
+      "status": "discovered",
+      "first_seen": "2026-05-18",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-xu-agentic-overlay-network-architecture/"
+    },
+    {
+      "id": "draft-janz-nmrg-naas-agentic-negotiation",
+      "label": "Dynamic Network-as-a-Service Life-Cycle Automation Using End-to-End Agent Negotiation",
+      "status": "discovered",
+      "first_seen": "2026-06-10",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-janz-nmrg-naas-agentic-negotiation/"
+    },
+    {
+      "id": "draft-raskar-agentic-web-federated-resolution",
+      "label": "Registry-Assisted Discovery for AI Agents and Workloads Without DNS Discovery Anchors",
+      "status": "discovered",
+      "first_seen": "2026-07-20",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-raskar-agentic-web-federated-resolution/"
+    },
+    {
+      "id": "draft-king-yew-choo-agentic-payments",
+      "label": "A Server-Side Model for Gating Agent-Initiated Human-Sourced Asynchronous HTTP Tasks on Payment or Entitlement",
+      "status": "discovered",
+      "first_seen": "2026-07-23",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-king-yew-choo-agentic-payments/"
+    },
+    {
+      "id": "draft-jurkovikj-httpapi-agentic-state",
+      "label": "HTTP Profile for Conditional Updates to Shared Resource State (Agentic State Transfer)",
+      "status": "discovered",
+      "first_seen": "2026-08-05",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-jurkovikj-httpapi-agentic-state/"
+    },
+    {
+      "id": "draft-helixar-hdp-agentic-delegation",
+      "label": "Human Delegation Provenance Protocol (HDP): Cryptographic Chain-of-Custody for Agentic AI Systems",
+      "status": "discovered",
+      "first_seen": "2026-08-03",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-helixar-hdp-agentic-delegation/"
+    },
+    {
+      "id": "draft-agentic-ai-usecases-requirements",
+      "label": "Agentic AI Use Cases and Requirements",
+      "status": "discovered",
+      "first_seen": "2026-08-07",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-agentic-ai-usecases-requirements/"
+    },
+    {
+      "id": "draft-kroehl-agentic-trust-aae",
+      "label": "Agent Authorization Envelope (AAE): A Machine-Evaluable Authorization Structure for Autonomous AI Agents",
+      "status": "discovered",
+      "first_seen": "2026-08-11",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-kroehl-agentic-trust-aae/"
     }
   ]
 }
