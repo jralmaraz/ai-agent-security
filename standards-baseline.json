@@ -1,7 +1,7 @@
 {
   "_comment": "Tracks IETF/OpenID drafts implemented in this PoC. Updated daily by the standards-tracker GitHub Actions workflow. Set implemented_rev when the PoC code is updated to match a new revision.",
   "_tracking_policy": "docs/standards-tracking.md",
-  "last_checked": "2026-08-21",
+  "last_checked": "2026-08-22",
   "wg_feeds": [
     {
       "name": "IETF WIMSE WG",
@@ -250,7 +250,7 @@
       "label": "JSON Web Token Best Current Practices",
       "short": "JWT-BCP",
       "wg": "IETF OAuth WG",
-      "last_known_rev": "09",
+      "last_known_rev": "10",
       "implemented_rev": "09",
       "status": "active-draft",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-oauth-rfc8725bis/",
