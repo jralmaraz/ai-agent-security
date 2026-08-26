@@ -1,7 +1,7 @@
 {
   "_comment": "Tracks IETF/OpenID drafts implemented in this PoC. Updated daily by the standards-tracker GitHub Actions workflow. Set implemented_rev when the PoC code is updated to match a new revision.",
   "_tracking_policy": "docs/standards-tracking.md",
-  "last_checked": "2026-08-25",
+  "last_checked": "2026-08-26",
   "wg_feeds": [
     {
       "name": "IETF WIMSE WG",
@@ -518,7 +518,7 @@
       "label": "Identity Continuation Assertion for OAuth 2.0 Token Exchange",
       "short": "IDContinuation",
       "wg": "IETF OAuth WG",
-      "last_known_rev": "00",
+      "last_known_rev": "01",
       "implemented_rev": null,
       "status": "individual-draft",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-mcguinness-oauth-id-continuation-assertion/",
