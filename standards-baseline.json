@@ -1,7 +1,7 @@
 {
   "_comment": "Tracks IETF/OpenID drafts implemented in this PoC. Updated daily by the standards-tracker GitHub Actions workflow. Set implemented_rev when the PoC code is updated to match a new revision.",
   "_tracking_policy": "docs/standards-tracking.md",
-  "last_checked": "2026-08-26",
+  "last_checked": "2026-08-27",
   "wg_feeds": [
     {
       "name": "IETF WIMSE WG",
@@ -61,7 +61,7 @@
       "label": "WIMSE Workload Proof Token (AgentProofToken base)",
       "short": "WPT",
       "wg": "IETF WIMSE WG",
-      "last_known_rev": "01",
+      "last_known_rev": "02",
       "implemented_rev": "01",
       "status": "active-draft",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-wimse-wpt/",
@@ -1577,6 +1577,46 @@
       "first_seen": "2026-08-23",
       "wg": "IETF OAuth WG",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-oauth-rar-metadata-remediation/"
+    },
+    {
+      "id": "draft-asor-wimse-agent-delegation-chain",
+      "label": "Verifiable Attenuated Delegation for AI Agent Chains",
+      "status": "discovered",
+      "first_seen": "2026-08-27",
+      "wg": "IETF WIMSE WG",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-asor-wimse-agent-delegation-chain/"
+    },
+    {
+      "id": "draft-ietf-oauth-first-party-apps",
+      "label": "OAuth 2.0 for First-Party Applications",
+      "status": "discovered",
+      "first_seen": "2026-08-26",
+      "wg": "IETF OAuth WG",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-oauth-first-party-apps/"
+    },
+    {
+      "id": "draft-li-oauth-policy-based-anonymous-tokens",
+      "label": "OAuth 2.0 Policy-Based Anonymous Access Tokens",
+      "status": "discovered",
+      "first_seen": "2026-08-26",
+      "wg": "IETF OAuth WG",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-li-oauth-policy-based-anonymous-tokens/"
+    },
+    {
+      "id": "draft-das-agentic-execution-finality",
+      "label": "Tool Selection Is Not Execution: Finality for Agentic Tool Dispatch",
+      "status": "discovered",
+      "first_seen": "2026-08-27",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-das-agentic-execution-finality/"
+    },
+    {
+      "id": "draft-das-agentic-tool-binding",
+      "label": "tool_use Is Not invoke(): Binding Execution-Finality to Claude, ChatGPT, and MCP",
+      "status": "discovered",
+      "first_seen": "2026-08-27",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-das-agentic-tool-binding/"
     }
   ]
 }
