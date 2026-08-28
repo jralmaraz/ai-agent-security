@@ -71,7 +71,8 @@
       "used_in": [
         "pkg/identity/proof.go",
         "internal/gateway"
-      ]
+      ],
+      "_triage": "2026-08-28: assessed WPT-02 breaking changes against agent-fabric. Three -02 changes: (1) transport header changed from Workload-Proof-Token to Authorization: WPT \u2014 NOT applicable, AgentProofToken uses its own Agent-Proof-Token header; (2) ath claim removed \u2014 NOT applicable, ath was never in AgentProofToken; (3) WWW-Authenticate: WPT on 401 \u2014 NOT applicable, agent-fabric uses its own auth scheme. No code changes required. implemented_rev intentionally left at 01 because the AgentProofToken is a distinct token type that tracks WPT structurally but not mechanically."
     },
     {
       "id": "draft-ietf-wimse-identifier",
@@ -251,7 +252,7 @@
       "short": "JWT-BCP",
       "wg": "IETF OAuth WG",
       "last_known_rev": "10",
-      "implemented_rev": "09",
+      "implemented_rev": "10",
       "status": "active-draft",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-oauth-rfc8725bis/",
       "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-ietf-oauth-rfc8725bis/",
@@ -262,7 +263,8 @@
         "pkg/identitychaining/validator.go",
         "pkg/txntoken/validator.go",
         "pkg/x402/gateway.go"
-      ]
+      ],
+      "_triage": "2026-08-28: -10 is editorial only (no normative changes). No code changes required. implemented_rev updated to 10."
     },
     {
       "id": "draft-ietf-wimse-http-signature",
@@ -1581,42 +1583,73 @@
     {
       "id": "draft-asor-wimse-agent-delegation-chain",
       "label": "Verifiable Attenuated Delegation for AI Agent Chains",
-      "status": "discovered",
-      "first_seen": "2026-08-27",
+      "short": "AgentDelegationChain",
       "wg": "IETF WIMSE WG",
-      "datatracker_url": "https://datatracker.ietf.org/doc/draft-asor-wimse-agent-delegation-chain/"
+      "last_known_rev": "00",
+      "implemented_rev": null,
+      "status": "individual-draft",
+      "first_seen": "2026-08-27",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-asor-wimse-agent-delegation-chain/",
+      "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-asor-wimse-agent-delegation-chain/",
+      "source_repo": null,
+      "impact": "HIGH \u2014 Defines offline-verifiable monotonic authority attenuation for AI agent delegation chains via three JWT claims: del_depth (position in chain, non-negative int), del_max_depth (max permitted length, MUST NOT be increased by children), par_hash (base64url SHA-256 of parent token's JWS Signing Input, cryptographically binds each child to its parent). Verification is deterministic and offline-capable \u2014 no authorization server call needed per hop. MUST support Ed25519, MAY support ES256 and ML-DSA. Directly formalises AgentChain (pkg/identity/chain.go) delegation semantics; implementing would add del_depth/del_max_depth/par_hash to AgentChain JWT claims and enforce monotonic attenuation in gateway chain validator.",
+      "used_in": [
+        "pkg/identity/chain.go",
+        "internal/gateway"
+      ],
+      "_triage": "2026-08-28: assessed from issue #43. WIMSE WG individual draft, rev-00. HIGHEST relevance of the three new drafts \u2014 directly formalises what AgentChain already does. ML-DSA listed as MAY support, relevant to future PQC migration. Implementation would require: (1) add del_depth, del_max_depth, par_hash to AgentChainClaims struct; (2) enforce del_depth < del_max_depth at each hop in chain validator; (3) compute par_hash from parent token in chain.go Issue(). Monitor for WG adoption."
     },
     {
       "id": "draft-ietf-oauth-first-party-apps",
       "label": "OAuth 2.0 for First-Party Applications",
-      "status": "discovered",
+      "status": "not-applicable",
       "first_seen": "2026-08-26",
       "wg": "IETF OAuth WG",
-      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-oauth-first-party-apps/"
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-oauth-first-party-apps/",
+      "used_in": [],
+      "_triage": "2026-08-28: human-facing OAuth flows for first-party apps (native/SPA). Not applicable \u2014 agent-fabric focuses on M2M identity, not human authentication flows."
     },
     {
       "id": "draft-li-oauth-policy-based-anonymous-tokens",
       "label": "OAuth 2.0 Policy-Based Anonymous Access Tokens",
-      "status": "discovered",
+      "status": "not-applicable",
       "first_seen": "2026-08-26",
       "wg": "IETF OAuth WG",
-      "datatracker_url": "https://datatracker.ietf.org/doc/draft-li-oauth-policy-based-anonymous-tokens/"
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-li-oauth-policy-based-anonymous-tokens/",
+      "used_in": [],
+      "_triage": "2026-08-28: anonymous access tokens for privacy-preserving OAuth. Not applicable \u2014 agent-fabric requires cryptographically identified workloads (SPIFFE URIs); anonymity is antithetical to the accountability model."
     },
     {
       "id": "draft-das-agentic-execution-finality",
       "label": "Tool Selection Is Not Execution: Finality for Agentic Tool Dispatch",
-      "status": "discovered",
+      "short": "ExecutionFinality",
+      "wg": "Individual Draft",
+      "last_known_rev": "01",
+      "implemented_rev": null,
+      "status": "individual-draft",
       "first_seen": "2026-08-27",
-      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
-      "datatracker_url": "https://datatracker.ietf.org/doc/draft-das-agentic-execution-finality/"
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-das-agentic-execution-finality/",
+      "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-das-agentic-execution-finality/",
+      "source_repo": null,
+      "impact": "HIGH \u2014 Defines a dispatch-time verification gate (Protected Enforcement Domain / PED) that ensures model-selected tool invocations remain non-binding until scoped authority is verified at the execution boundary. Key concepts: AgentCandidateAct (proposed invocation: agent identity, tool ref, arguments_digest, purpose, provenance metadata), Arguments Digest (SHA-256/384/512 over canonicalized JCS parameters \u2014 changing any load-bearing argument MUST invalidate prior authority), Instruction Provenance (origin: user intent / system directives / tool responses / retrieval / memory / delegation), Tool-Dispatch Finality Sink (irreplaceable execution boundary that consumes single-use authority before invoke()). Threat model covers 17 attacks including prompt injection, MCP server substitution, stale authority replay, and cross-sink reuse. Addresses a gap in current agent-fabric gateway: the gateway validates AgentToken+AgentProofToken but does not bind per-tool authority to exact argument digests.",
+      "used_in": [],
+      "_triage": "2026-08-28: assessed from issue #43. Individual draft, rev-01. HIGH relevance: the gateway currently validates identity (who is calling) but not per-tool invocation authority (what exactly is being called with which arguments). This draft adds argument-digest binding and single-use authority that would significantly harden the tool dispatch path in internal/gateway. Not implemented yet \u2014 would require new middleware layer between gateway auth and tool proxy."
     },
     {
       "id": "draft-das-agentic-tool-binding",
       "label": "tool_use Is Not invoke(): Binding Execution-Finality to Claude, ChatGPT, and MCP",
-      "status": "discovered",
+      "short": "ToolBinding",
+      "wg": "Individual Draft",
+      "last_known_rev": "00",
+      "implemented_rev": null,
+      "status": "individual-draft",
       "first_seen": "2026-08-27",
-      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
-      "datatracker_url": "https://datatracker.ietf.org/doc/draft-das-agentic-tool-binding/"
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-das-agentic-tool-binding/",
+      "api_url": "https://datatracker.ietf.org/api/v1/doc/document/draft-das-agentic-tool-binding/",
+      "source_repo": null,
+      "impact": "HIGH (companion to draft-das-agentic-execution-finality) \u2014 Maps Claude tool_use (id, name, input), OpenAI tool_calls (id, function.name, function.arguments), and MCP tools/call (name, arguments) to a unified AgentCandidateAct. Each mapping produces an arguments_digest over canonical JSON (JCS). enforce(act, live_args) contract: host must call before any invocation, verifying digest matches live args, authority exists and is unconsumed, then consumes single-use authority before returning allow=true. Parallel tool_calls are independent acts \u2014 one ALLOW does not authorize siblings. No model changes required \u2014 binding is host-side only. Directly applicable to the MCP proxy path in internal/gateway/server.go, which currently forwards tool calls without argument-level authority binding.",
+      "used_in": [],
+      "_triage": "2026-08-28: assessed from issue #43. Individual draft, rev-00. HIGH relevance as companion to agentic-execution-finality. The MCP proxy in internal/gateway/server.go is exactly the enforcement point this draft targets. Implementing would add enforce() call before each tool proxy request, binding it to the argument digest from the AgentCandidateAct. Monitor alongside execution-finality \u2014 likely implemented together."
     },
     {
       "id": "draft-agentic-ai-tool-execution-finality",
