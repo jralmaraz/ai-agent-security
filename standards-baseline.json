@@ -1,7 +1,7 @@
 {
   "_comment": "Tracks IETF/OpenID drafts implemented in this PoC. Updated daily by the standards-tracker GitHub Actions workflow. Set implemented_rev when the PoC code is updated to match a new revision.",
   "_tracking_policy": "docs/standards-tracking.md",
-  "last_checked": "2026-08-27",
+  "last_checked": "2026-08-28",
   "wg_feeds": [
     {
       "name": "IETF WIMSE WG",
@@ -1617,6 +1617,14 @@
       "first_seen": "2026-08-27",
       "wg": "IETF Datatracker \u2014 AI Agent keyword search",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-das-agentic-tool-binding/"
+    },
+    {
+      "id": "draft-agentic-ai-tool-execution-finality",
+      "label": "Execution Finality for Agentic AI: Stopping Unauthorized Tool Calls, Memory Writes, and Real-World Consequences Before They Happen (DAS -- Decoupled Authorisation System)",
+      "status": "discovered",
+      "first_seen": "2026-08-28",
+      "wg": "IETF Datatracker \u2014 AI Agent keyword search",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-agentic-ai-tool-execution-finality/"
     }
   ]
 }
