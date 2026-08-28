@@ -3,10 +3,13 @@
 package gateway
 
 import (
+	"bytes"
 	"context"
 	"crypto/x509"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -148,14 +151,28 @@ func (s *Server) agentAuthMiddleware(toolName string) gin.HandlerFunc {
 			return
 		}
 
-		// 5. Authorization.
+		// 5. Authorization — COAZ-MCP Binding 1.0.
+		// Read and restore the request body so both the authz check and the upstream
+		// proxy can consume it. The tool parameters form the COAZ-MCP context element.
+		toolParams := extractToolParams(c.Request)
 		decision, err := s.cfg.Authz.Authorize(c.Request.Context(), authz.Request{
-			Subject: va.Claims.Subject,
-			Object:  toolName,
-			Action:  authz.ActionCall,
+			Subject:    va.Claims.Subject,
+			Object:     toolName,
+			Action:     authz.ActionCall,
+			ToolParams: toolParams, // parameter-level authorization context (COAZ-MCP §3.2)
 		})
 		if err != nil {
 			abort(c, http.StatusInternalServerError, "authz error: "+err.Error())
+			return
+		}
+		if decision.Pending {
+			// AARP 1.0 §4 — deny but requestable: return 403 with approval endpoint.
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+				"error":             "access denied — requestable",
+				"pending":           true,
+				"approval_endpoint": decision.ApprovalEndpoint,
+				"reason":            decision.Reason,
+			})
 			return
 		}
 		if !decision.Allowed {
@@ -216,6 +233,25 @@ func verifyMTLSBinding(r *http.Request, wantSub string) error {
 
 func abort(c *gin.Context, code int, msg string) {
 	c.AbortWithStatusJSON(code, gin.H{"error": msg})
+}
+
+// extractToolParams reads the JSON request body as MCP tool call parameters for
+// COAZ-MCP Binding 1.0 §3.2 context element, then restores the body so the
+// upstream proxy can also read it.
+func extractToolParams(r *http.Request) map[string]any {
+	if r.Body == nil || r.ContentLength == 0 {
+		return nil
+	}
+	body, err := io.ReadAll(io.LimitReader(r.Body, 1<<20)) // 1 MB cap
+	if err != nil || len(body) == 0 {
+		return nil
+	}
+	r.Body = io.NopCloser(bytes.NewReader(body)) // restore for upstream proxy
+	var params map[string]any
+	if json.Unmarshal(body, &params) != nil {
+		return nil // non-JSON body — tool params cannot be inspected
+	}
+	return params
 }
 
 // toolNameToPath converts "tool:weather-api" to "weather-api".

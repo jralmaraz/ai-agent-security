@@ -30,6 +30,13 @@ type Decision struct {
 	Allowed bool
 	// Reason is a human-readable explanation (useful for audit logs).
 	Reason string
+
+	// Pending is true when access is denied but can be requested for approval.
+	// COAZ-MCP Binding 1.0 / AuthZEN AARP 1.0 §4 — third outcome.
+	Pending bool
+	// ApprovalEndpoint is the URL where the subject can submit an approval request.
+	// Only set when Pending is true.
+	ApprovalEndpoint string
 }
 
 // Request is the input to an authorization check.
@@ -40,6 +47,12 @@ type Request struct {
 	Object string
 	// Action is the permission being requested.
 	Action Action
+
+	// ToolParams carries the MCP tool call parameters for parameter-level authorization.
+	// COAZ-MCP Binding 1.0: the AuthZEN context element is populated from these.
+	// Authorizers may use these to enforce parameter-level policy (e.g. restrict SQL
+	// QUERY bodies, limit file paths, cap pagination limits).
+	ToolParams map[string]any
 }
 
 // Authorizer checks whether an agent is allowed to perform an action.
