@@ -581,6 +581,27 @@
       "_discovery_gap": "Not discovered by automated tracker. Individual submissions (no ietf- prefix) are invisible to WG Atom feeds. Fix: ietf-keyword-search feed type added to wg_feeds; check_standards.py updated to query /api/v1/doc/document/?name__icontains=agent&type=draft daily."
     },
     {
+      "id": "openid-coaz-mcp-binding",
+      "label": "COAZ-MCP Binding 1.0",
+      "short": "COAZ-MCP",
+      "wg": "OpenID Foundation AuthZEN WG",
+      "last_known_rev": "1.0",
+      "implemented_rev": null,
+      "status": "wg-draft",
+      "datatracker_url": "https://openid.github.io/authzen/authzen-coaz-mcp-binding-1_0.html",
+      "api_url": null,
+      "check_method": "page-hash",
+      "spec_url": "https://openid.github.io/authzen/authzen-coaz-mcp-binding-1_0.html",
+      "source_repo": "https://github.com/openid/authzen",
+      "source_repo_api": "https://api.github.com/repos/openid/authzen/commits/HEAD",
+      "impact": "HIGH — binds AuthZEN Authorization API 1.0 PDP decisions to MCP (Model Context Protocol) tool calls. Defines per-parameter authorization enforcement at tool invocation time. internal/gateway/server.go is the primary enforcement point: it proxies MCP tool calls but currently validates identity only — no PDP call for tool-level parameter authorization. Implementing COAZ-MCP adds an AuthZEN /access/v1/evaluation call per MCP tool/call dispatch before forwarding to the upstream MCP server.",
+      "used_in": [
+        "internal/gateway/server.go"
+      ],
+      "_triage": "2026-08-29: assessed. HIGH relevance — gateway validates AgentToken identity but does not enforce tool-level PDP decisions per COAZ-MCP. Gap: internal/gateway/server.go forwards all authorized MCP tool calls without consulting an AuthZEN PDP. Implementation would add a five-tuple evaluation (subject=AgentToken.sub, resource=tool_name, action=invoke, context=tool_params, environment=trust_domain) before each tool dispatch.",
+      "_gap": "Gateway validates identity (AgentToken + AgentProofToken) but does not enforce per-tool AuthZEN PDP decisions. COAZ-MCP fills this gap by specifying the exact /access/v1/evaluation five-tuple mapping for MCP tool/call requests."
+    },
+    {
       "id": "draft-jia-oauth-scope-aggregation",
       "label": "OAuth 2.0 Scope Aggregation for Multi-Step AI Agent Workflows",
       "status": "discovered",
