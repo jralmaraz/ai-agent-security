@@ -1,7 +1,7 @@
 {
   "_comment": "Tracks IETF/OpenID drafts implemented in this PoC. Updated daily by the standards-tracker GitHub Actions workflow. Set implemented_rev when the PoC code is updated to match a new revision.",
   "_tracking_policy": "docs/standards-tracking.md",
-  "last_checked": "2026-08-29",
+  "last_checked": "2026-08-30",
   "wg_feeds": [
     {
       "name": "IETF WIMSE WG",
@@ -594,12 +594,14 @@
       "spec_url": "https://openid.github.io/authzen/authzen-coaz-mcp-binding-1_0.html",
       "source_repo": "https://github.com/openid/authzen",
       "source_repo_api": "https://api.github.com/repos/openid/authzen/commits/HEAD",
-      "impact": "HIGH — binds AuthZEN Authorization API 1.0 PDP decisions to MCP (Model Context Protocol) tool calls. Defines per-parameter authorization enforcement at tool invocation time. internal/gateway/server.go is the primary enforcement point: it proxies MCP tool calls but currently validates identity only — no PDP call for tool-level parameter authorization. Implementing COAZ-MCP adds an AuthZEN /access/v1/evaluation call per MCP tool/call dispatch before forwarding to the upstream MCP server.",
+      "impact": "HIGH \u2014 binds AuthZEN Authorization API 1.0 PDP decisions to MCP (Model Context Protocol) tool calls. Defines per-parameter authorization enforcement at tool invocation time. internal/gateway/server.go is the primary enforcement point: it proxies MCP tool calls but currently validates identity only \u2014 no PDP call for tool-level parameter authorization. Implementing COAZ-MCP adds an AuthZEN /access/v1/evaluation call per MCP tool/call dispatch before forwarding to the upstream MCP server.",
       "used_in": [
         "internal/gateway/server.go"
       ],
-      "_triage": "2026-08-29: assessed. HIGH relevance — gateway validates AgentToken identity but does not enforce tool-level PDP decisions per COAZ-MCP. Gap: internal/gateway/server.go forwards all authorized MCP tool calls without consulting an AuthZEN PDP. Implementation would add a five-tuple evaluation (subject=AgentToken.sub, resource=tool_name, action=invoke, context=tool_params, environment=trust_domain) before each tool dispatch.",
-      "_gap": "Gateway validates identity (AgentToken + AgentProofToken) but does not enforce per-tool AuthZEN PDP decisions. COAZ-MCP fills this gap by specifying the exact /access/v1/evaluation five-tuple mapping for MCP tool/call requests."
+      "_triage": "2026-08-29: assessed. HIGH relevance \u2014 gateway validates AgentToken identity but does not enforce tool-level PDP decisions per COAZ-MCP. Gap: internal/gateway/server.go forwards all authorized MCP tool calls without consulting an AuthZEN PDP. Implementation would add a five-tuple evaluation (subject=AgentToken.sub, resource=tool_name, action=invoke, context=tool_params, environment=trust_domain) before each tool dispatch.",
+      "_gap": "Gateway validates identity (AgentToken + AgentProofToken) but does not enforce per-tool AuthZEN PDP decisions. COAZ-MCP fills this gap by specifying the exact /access/v1/evaluation five-tuple mapping for MCP tool/call requests.",
+      "spec_content_hash": "91ea23839832ce53f40904ba6b46e3ba150a048f64b5f9782509b92f881cef6b",
+      "github_commit_sha": "e94e0a26e52346d33fef56d28bce96bd34835705"
     },
     {
       "id": "draft-jia-oauth-scope-aggregation",
@@ -1661,7 +1663,7 @@
       "label": "tool_use Is Not invoke(): Binding Execution-Finality to Claude, ChatGPT, and MCP",
       "short": "ToolBinding",
       "wg": "Individual Draft",
-      "last_known_rev": "00",
+      "last_known_rev": "01",
       "implemented_rev": null,
       "status": "individual-draft",
       "first_seen": "2026-08-27",
@@ -1679,6 +1681,14 @@
       "first_seen": "2026-08-28",
       "wg": "IETF Datatracker \u2014 AI Agent keyword search",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-agentic-ai-tool-execution-finality/"
+    },
+    {
+      "id": "draft-mishra-oauth-agent-grants",
+      "label": "OAuth Profile for Delegated AI Agent Authorization",
+      "status": "discovered",
+      "first_seen": "2026-08-30",
+      "wg": "IETF OAuth WG",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-mishra-oauth-agent-grants/"
     }
   ]
 }
