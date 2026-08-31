@@ -1,7 +1,7 @@
 {
   "_comment": "Tracks IETF/OpenID drafts implemented in this PoC. Updated daily by the standards-tracker GitHub Actions workflow. Set implemented_rev when the PoC code is updated to match a new revision.",
   "_tracking_policy": "docs/standards-tracking.md",
-  "last_checked": "2026-08-30",
+  "last_checked": "2026-08-31",
   "wg_feeds": [
     {
       "name": "IETF WIMSE WG",
@@ -336,7 +336,7 @@
       "label": "Cross-Organizational Delegation for Workload and Agent Identity",
       "short": "CrossOrgDelegation",
       "wg": "IETF WIMSE WG",
-      "last_known_rev": "01",
+      "last_known_rev": "02",
       "implemented_rev": null,
       "status": "individual-draft",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-reece-wimse-cross-org-delegation/",
@@ -1663,7 +1663,7 @@
       "label": "tool_use Is Not invoke(): Binding Execution-Finality to Claude, ChatGPT, and MCP",
       "short": "ToolBinding",
       "wg": "Individual Draft",
-      "last_known_rev": "01",
+      "last_known_rev": "02",
       "implemented_rev": null,
       "status": "individual-draft",
       "first_seen": "2026-08-27",
@@ -1689,6 +1689,14 @@
       "first_seen": "2026-08-30",
       "wg": "IETF OAuth WG",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-mishra-oauth-agent-grants/"
+    },
+    {
+      "id": "draft-hamr-oauth-agent-delegation",
+      "label": "An Attenuated Delegation Profile for Automated Agents",
+      "status": "discovered",
+      "first_seen": "2026-08-31",
+      "wg": "IETF OAuth WG",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-hamr-oauth-agent-delegation/"
     }
   ]
 }
