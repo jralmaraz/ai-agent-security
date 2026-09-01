@@ -1,7 +1,7 @@
 {
   "_comment": "Tracks IETF/OpenID drafts implemented in this PoC. Updated daily by the standards-tracker GitHub Actions workflow. Set implemented_rev when the PoC code is updated to match a new revision.",
   "_tracking_policy": "docs/standards-tracking.md",
-  "last_checked": "2026-08-31",
+  "last_checked": "2026-09-01",
   "wg_feeds": [
     {
       "name": "IETF WIMSE WG",
@@ -385,7 +385,7 @@
       "label": "SD-JWT-based Verifiable Digital Credentials (SD-JWT VC)",
       "short": "SD-JWT-VC",
       "wg": "IETF OAuth WG",
-      "last_known_rev": "18",
+      "last_known_rev": "19",
       "implemented_rev": null,
       "status": "active-draft",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-ietf-oauth-sd-jwt-vc/",
@@ -1697,6 +1697,14 @@
       "first_seen": "2026-08-31",
       "wg": "IETF OAuth WG",
       "datatracker_url": "https://datatracker.ietf.org/doc/draft-hamr-oauth-agent-delegation/"
+    },
+    {
+      "id": "draft-chu-oauth-subject-key-binding",
+      "label": "OAuth Subject Signing Key Binding for Resource Servers",
+      "status": "discovered",
+      "first_seen": "2026-09-01",
+      "wg": "IETF OAuth WG",
+      "datatracker_url": "https://datatracker.ietf.org/doc/draft-chu-oauth-subject-key-binding/"
     }
   ]
 }
