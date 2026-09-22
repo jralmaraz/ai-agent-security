@@ -3,13 +3,11 @@ module github.com/jralmaraz/ai-agent-security
 go 1.26.6
 
 require (
-	github.com/example/wimse-identity-fabric v0.0.0-00010101000000-000000000000
 	github.com/gin-gonic/gin v1.12.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
+	github.com/jralmaraz/wimse-identity-fabric v1.1.0
 	github.com/openfga/go-sdk v0.8.2
 )
-
-replace github.com/example/wimse-identity-fabric => ../wimse-identity-fabric
 
 require (
 	github.com/bytedance/gopkg v0.1.3 // indirect
