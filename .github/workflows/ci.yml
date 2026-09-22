@@ -24,14 +24,11 @@ jobs:
       - uses: actions/checkout@v7
 
       # wimse-agent-fabric depends on wimse-identity-fabric via a replace directive
-      # pointing to ../wimse-identity-fabric. Check it out at the expected sibling path.
-      # This will be removed once wimse-identity-fabric publishes a tagged release at
-      # github.com/jralmaraz/wimse-identity-fabric.
-      - name: Check out wimse-identity-fabric (dependency)
-        uses: actions/checkout@v7
-        with:
-          repository: jralmaraz/wimse-identity-fabric
-          path: ../wimse-identity-fabric
+      # pointing to ../wimse-identity-fabric. actions/checkout blocks paths outside
+      # the workspace root, so we use git clone to place the sibling repo there directly.
+      # This step is removed once wimse-identity-fabric publishes a tagged release.
+      - name: Clone wimse-identity-fabric (replace directive dependency)
+        run: git clone --depth=1 https://github.com/jralmaraz/wimse-identity-fabric.git ../wimse-identity-fabric
 
       - uses: actions/setup-go@v7
         with:
@@ -107,11 +104,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Check out wimse-identity-fabric (dependency)
-        uses: actions/checkout@v7
-        with:
-          repository: jralmaraz/wimse-identity-fabric
-          path: ../wimse-identity-fabric
+      - name: Clone wimse-identity-fabric (replace directive dependency)
+        run: git clone --depth=1 https://github.com/jralmaraz/wimse-identity-fabric.git ../wimse-identity-fabric
 
       - uses: actions/setup-go@v7
         with:
