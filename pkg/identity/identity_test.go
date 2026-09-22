@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"strings"
 	"testing"
 	"time"
 
@@ -190,6 +191,59 @@ func TestAgentToken_MissingFields(t *testing.T) {
 	}
 	if _, err := issuer.Issue(identity.IssueOptions{Subject: "spiffe://x/y", Role: identity.RoleExecutor}); err == nil {
 		t.Error("expected error for missing workload key")
+	}
+}
+
+// TestAgentToken_WITSuperset verifies AIMS §7: the AgentToken carries the full
+// WIMSE-CRED claim set (sub as SPIFFE URI, cnf.jwk key binding) as required
+// for any workload identity credential.
+func TestAgentToken_WITSuperset(t *testing.T) {
+	issuer, validator, _ := newIssuerValidator(t)
+	_, wlPub := mustKeyPair(t)
+
+	spiffeSubject := "spiffe://cloud-a.example/ns/agents/orchestrator"
+	tok, err := issuer.Issue(identity.IssueOptions{
+		Subject:     spiffeSubject,
+		Role:        identity.RoleOrchestrator,
+		TrustDomain: "cloud-a.example",
+		WorkloadKey: wlPub,
+	})
+	if err != nil {
+		t.Fatalf("Issue: %v", err)
+	}
+
+	va, err := validator.Validate(tok)
+	if err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+
+	// WIMSE-CRED: sub MUST be a SPIFFE URI
+	if !strings.HasPrefix(va.Claims.Subject, "spiffe://") {
+		t.Errorf("sub must be a SPIFFE URI, got %q", va.Claims.Subject)
+	}
+	if va.Claims.Subject != spiffeSubject {
+		t.Errorf("sub: want %q got %q", spiffeSubject, va.Claims.Subject)
+	}
+
+	// WIMSE-CRED: cnf.jwk MUST bind the token to a public key
+	if len(va.Claims.Cnf.JWK) == 0 {
+		t.Error("cnf.jwk must be present (WIMSE-CRED key binding)")
+	}
+	if va.WorkloadKey == nil {
+		t.Error("extracted workload key must not be nil")
+	}
+	if va.WorkloadKey.X.Cmp(wlPub.X) != 0 || va.WorkloadKey.Y.Cmp(wlPub.Y) != 0 {
+		t.Error("extracted workload key does not match the issued key")
+	}
+
+	// TrustDomain is carried from wit.Claims
+	if va.Claims.TrustDomain != "cloud-a.example" {
+		t.Errorf("trust_domain: want %q got %q", "cloud-a.example", va.Claims.TrustDomain)
+	}
+
+	// Agent-specific extensions are still present
+	if va.Claims.Role != identity.RoleOrchestrator {
+		t.Errorf("role: want orchestrator got %q", va.Claims.Role)
 	}
 }
 
