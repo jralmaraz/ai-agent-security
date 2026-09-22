@@ -269,12 +269,14 @@ func (i *AgentIssuer) Issue(opts IssueOptions) (string, error)
 
 // IssueOptions controls token content.
 type IssueOptions struct {
-    Subject     string          // SPIFFE URI (e.g. spiffe://trust-domain/workload)
+    Subject     string           // SPIFFE URI — AIMS §7 MUST be set
     Audiences   []string
-    Role        string          // RoleOrchestrator | RoleExecutor | RoleToolServer
-    ChainDepth  int             // 0 = originating orchestrator
-    KeyID       string          // optional kid header
+    TrustDomain string           // SPIFFE trust domain (optional)
+    Role        string           // RoleOrchestrator | RoleExecutor | RoleToolServer
+    ChainDepth  int              // 0 = originating orchestrator
+    KeyID       string           // optional kid header
     WorkloadKey *ecdsa.PublicKey // agent's key → cnf.jwk
+    Mission     string           // optional: approved scope of action (agent_mission)
 }
 
 // NewAgentValidator creates a validator for tokens from a specific IdP.
@@ -404,6 +406,40 @@ http.ListenAndServe(":8080", gw)
 
 ---
 
+## AIMS alignment
+
+`draft-ietf-wimse-aims` (AI Identity Management System) is the IETF WIMSE WG document that profiles how WIMSE standards should be applied to AI agents. This project is structured to follow that profile directly. The table below maps each AIMS section to the implementation here (and, where applicable, to the `wimse-identity-fabric` dependency that provides the WIMSE-CRED layer).
+
+| AIMS | Topic | Implementation | Notes |
+|---|---|---|---|
+| §4 | Agent identity lifecycle | `pkg/identity` — `AgentIssuer` / `AgentValidator`; `pkg/keys` — EC P-256 key generation | Agents are issued an `AgentToken` whose lifetime is bounded by `exp`; key rotation follows the same `cnf.jwk` field |
+| §5 | Agent registration & bootstrapping | `pkg/keys/mtls.go` — `IssueAgentCert` with SPIFFE URI SAN; `cmd/gateway --write-agent-creds` | X.509/SVID bootstrap path; the private key never leaves the agent process |
+| §6 | Agent credentials | `pkg/identity/token.go` — `AgentClaims` embeds `wit.Claims` (from `wimse-identity-fabric`); `pkg/cb4a` — CB4A Credential Delivery Point | `AgentToken` carries `cnf.jwk` (RFC 7800) binding the credential to the agent's key pair |
+| §7 | Agents MUST use WIT | `AgentClaims` embeds `wit.Claims` — `sub` is a SPIFFE URI, `cnf.jwk` is required; `go.mod` `replace` makes the dependency explicit | The WIT-superset relationship is encoded in the Go type system, not just documented |
+| §7 (alt) | X.509/JWT-SVID alternative | `pkg/keys/mtls.go` — TLS client cert with SPIFFE URI SAN; `internal/gateway` — mTLS cert binding | AIMS §7 allows X.509/JWT-SVID in place of WIT; gateway validates either path |
+| §8 | Agent authentication (PoP) | `pkg/identity/proof.go` — `AgentProofToken` signed by `cnf.jwk` private key; `internal/gateway` — proof validation before forwarding | Proof binds to `aud` (exact target URI), `chain_hash`, and `jti` (replay detection) |
+| §8 (OAuth) | OAuth client authentication | `pkg/spiffeclientauth` — WIT/AgentToken as JWT bearer assertion per `draft-ietf-oauth-spiffe-client-auth` | Enables an agent to authenticate to a token endpoint without a separate client secret |
+| §9 | Authorization model | `internal/authz` — `Authorizer` interface; `InMemoryAuthorizer`; `OpenFGAAuthorizer` (Zanzibar) | `subject × tool × action` model; wildcard subjects; `can_call` → `can_read` inheritance |
+| §10 | Access control / delegation | `pkg/identity/chain.go` — `AgentChain` wire format (`AT-1~AT-2~...~AT-N`), sequential `chain_depth` validation | Delegation path is cryptographically committed at every hop; no depth gaps or resets allowed |
+| §10 (cross-domain) | Identity chaining | `pkg/identitychaining` — `GrantIssuer` issues `jwt-authz-grant` cross-domain; `pkg/federation` — OpenID Federation 1.0 trust chains | Cross-domain agents present a grant targeting domain B's token endpoint (RFC 7523 profile) |
+| §10.4.1 | User delegates to agent | `pkg/obo` — OBO issuer: `sub=user, act=agent SPIFFE ID`; SD-JWT selective disclosure | The OBO token carries both human and agent identity so downstream can distinguish |
+| §10 (context) | Transaction Token binding | `pkg/txntoken` — `txntoken+jwt` per `draft-ietf-oauth-transaction-tokens`; `tth` claim in `AgentProofToken` | Proof can bind to a Transaction Token via `tth = SHA-256(Txn-Token)`, anchoring the request to a business transaction |
+| §10 (payment) | Agent payment authorization | `pkg/x402` — x402 HTTP payment protocol using CB4A-DPoP credentials + AgentToken identity | Paying agent presents a DPoP-bound CB4A access token alongside an AgentToken proving who is paying |
+| §11 | Activity monitoring / SSF | Issue [#53](https://github.com/jralmaraz/ai-agent-security/issues/53) — SSF/CAEP receiver + agent remediation | AIMS §11 requires CAEP for authorization signals and RISC for security incidents; planned |
+
+### Layer boundary
+
+The module graph encodes the AIMS architectural separation:
+
+```
+wimse-agent-fabric   ← this repo
+  └─ depends on ──►  wimse-identity-fabric  (AIMS §6–§7: WIT, mTLS, SPIFFE, token exchange)
+```
+
+`wimse-identity-fabric` provides the WIMSE-CRED layer (WIT issuance and validation, `pkg/wit`, `pkg/keys`). This repo adds the AI-agent-specific profile on top: delegation chains, proof tokens, OBO, CB4A, x402, and the agent gateway.
+
+---
+
 ## Running tests
 
 ```bash
@@ -504,6 +540,7 @@ The interactive demo (`demo/index.html` → **OpenID Federation** tab) runs the 
 
 | Specification | Relevance |
 |---|---|
+| [draft-ietf-wimse-aims](https://datatracker.ietf.org/doc/draft-ietf-wimse-aims/) | AI Identity Management System — authoritative profile this project implements |
 | [draft-ietf-wimse-workload-creds](https://datatracker.ietf.org/doc/draft-ietf-wimse-workload-creds/) | `cnf.jwk` structure, `alg: ES256` requirement |
 | [draft-ietf-wimse-arch](https://datatracker.ietf.org/doc/draft-ietf-wimse-arch/) | Trust domain model, token exchange pattern |
 | [RFC 7517](https://www.rfc-editor.org/rfc/rfc7517) | JSON Web Key format |
