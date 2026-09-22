@@ -23,6 +23,16 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # wimse-agent-fabric depends on wimse-identity-fabric via a replace directive
+      # pointing to ../wimse-identity-fabric. Check it out at the expected sibling path.
+      # This will be removed once wimse-identity-fabric publishes a tagged release at
+      # github.com/jralmaraz/wimse-identity-fabric.
+      - name: Check out wimse-identity-fabric (dependency)
+        uses: actions/checkout@v7
+        with:
+          repository: jralmaraz/wimse-identity-fabric
+          path: ../wimse-identity-fabric
+
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
@@ -96,6 +106,12 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
+
+      - name: Check out wimse-identity-fabric (dependency)
+        uses: actions/checkout@v7
+        with:
+          repository: jralmaraz/wimse-identity-fabric
+          path: ../wimse-identity-fabric
 
       - uses: actions/setup-go@v7
         with:
