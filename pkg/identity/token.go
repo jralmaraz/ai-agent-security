@@ -1,9 +1,15 @@
 // Package identity provides agent token issuance and validation for the
 // WIMSE agent-fabric identity layer.
 //
-// AgentToken (typ: agent+jwt) is a signed JWT that identifies an AI agent
-// workload: its SPIFFE URI subject, operational role, hop position in a
-// delegation chain, and a public-key confirmation binding (cnf.jwk).
+// AgentToken (typ: agent+jwt) is a WIT-superset per AIMS §7:
+// "Each AI agent component MUST possess a Workload Identity Token (WIT) ...
+// that provides cryptographic binding to their agent identifier."
+//
+// The AgentToken carries all WIMSE-CRED claims (sub as SPIFFE URI, cnf.jwk
+// key binding, iss/exp/nbf/iat/jti) via the embedded wit.Claims, with
+// agent-specific extensions (role, chain_depth, agent_mission) layered on top.
+// The typ header is "agent+jwt" rather than "wit+jwt" to distinguish the
+// extended profile at the application layer.
 package identity
 
 import (
@@ -13,6 +19,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/example/wimse-identity-fabric/pkg/wit"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jralmaraz/ai-agent-security/pkg/keys"
 )
@@ -26,14 +33,18 @@ const (
 	RoleToolServer   = "tool-server"
 )
 
-// ConfirmationKey holds the workload's public key as a JWK (RFC 7800 §3.2).
-type ConfirmationKey struct {
-	JWK json.RawMessage `json:"jwk"`
-}
-
 // AgentClaims is the JWT payload for an AgentToken.
+//
+// Embedding wit.Claims gives every AgentToken the full WIMSE-CRED claim set:
+//   - RegisteredClaims (iss, sub, aud, exp, nbf, iat, jti)
+//   - sub MUST be a SPIFFE URI identifying the agent workload
+//   - Cnf.JWK binds the token to the agent's public key (RFC 7800 §3.2)
+//   - TrustDomain (optional) carries the SPIFFE trust domain
+//
+// The agent-specific extensions (Role, ChainDepth, Mission) are layered
+// on top of this WIT base.
 type AgentClaims struct {
-	jwt.RegisteredClaims
+	wit.Claims
 
 	// Role is the operational role of this agent workload.
 	Role string `json:"role"`
@@ -42,14 +53,9 @@ type AgentClaims struct {
 	// The originating orchestrator has depth 0.
 	ChainDepth int `json:"chain_depth"`
 
-	// Cnf binds the token to the agent's public key (for proof-of-possession).
-	Cnf ConfirmationKey `json:"cnf"`
-
 	// Mission is an optional human-readable description of the approved
 	// scope of action for this agent — e.g. "Summarise Q2 financial reports".
 	// Defined in draft-klrc-aiagent-auth §4 (Agent Mission claim).
-	// Gateways MAY use this to verify that downstream tool calls are plausibly
-	// within the stated mission.
 	Mission string `json:"agent_mission,omitempty"`
 }
 
@@ -61,13 +67,14 @@ type ValidatedAgent struct {
 
 // IssueOptions controls what goes into an AgentToken.
 type IssueOptions struct {
-	Subject    string            // SPIFFE or WIMSE URI
-	Audiences  []string          // intended recipients
-	Role       string            // RoleOrchestrator | RoleExecutor | RoleToolServer
-	ChainDepth int               // 0 for originating orchestrator
-	KeyID      string            // kid header (optional)
-	WorkloadKey *ecdsa.PublicKey // agent's own public key → cnf.jwk
-	Mission    string            // optional: approved scope of action (agent_mission claim)
+	Subject     string            // SPIFFE URI (AIMS §7 MUST be set)
+	Audiences   []string          // intended recipients
+	TrustDomain string            // SPIFFE trust domain (optional)
+	Role        string            // RoleOrchestrator | RoleExecutor | RoleToolServer
+	ChainDepth  int               // 0 for originating orchestrator
+	KeyID       string            // kid header (optional)
+	WorkloadKey *ecdsa.PublicKey  // agent's own public key → cnf.jwk
+	Mission     string            // optional: approved scope of action (agent_mission claim)
 }
 
 // AgentIssuer issues AgentTokens signed with an IdP EC P-256 key.
@@ -106,18 +113,21 @@ func (i *AgentIssuer) Issue(opts IssueOptions) (string, error) {
 
 	now := time.Now()
 	claims := AgentClaims{
-		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    i.issuerID,
-			Subject:   opts.Subject,
-			Audience:  jwt.ClaimStrings(opts.Audiences),
-			IssuedAt:  jwt.NewNumericDate(now),
-			NotBefore: jwt.NewNumericDate(now),
-			ExpiresAt: jwt.NewNumericDate(now.Add(i.ttl)),
-			ID:        generateJTI(),
+		Claims: wit.Claims{
+			RegisteredClaims: jwt.RegisteredClaims{
+				Issuer:    i.issuerID,
+				Subject:   opts.Subject,
+				Audience:  jwt.ClaimStrings(opts.Audiences),
+				IssuedAt:  jwt.NewNumericDate(now),
+				NotBefore: jwt.NewNumericDate(now),
+				ExpiresAt: jwt.NewNumericDate(now.Add(i.ttl)),
+				ID:        generateJTI(),
+			},
+			TrustDomain: opts.TrustDomain,
+			Cnf:         wit.ConfirmationKey{JWK: json.RawMessage(jwkRaw)},
 		},
 		Role:       opts.Role,
 		ChainDepth: opts.ChainDepth,
-		Cnf:        ConfirmationKey{JWK: json.RawMessage(jwkRaw)},
 		Mission:    opts.Mission,
 	}
 
@@ -172,6 +182,9 @@ func (v *AgentValidator) Validate(token string) (*ValidatedAgent, error) {
 		return nil, fmt.Errorf("issuer mismatch: want %q got %q", v.issuerID, claims.Issuer)
 	}
 
+	if len(claims.Cnf.JWK) == 0 {
+		return nil, errors.New("agent token missing cnf.jwk claim")
+	}
 	var jwk keys.JWK
 	if err := json.Unmarshal(claims.Cnf.JWK, &jwk); err != nil {
 		return nil, fmt.Errorf("unmarshal cnf.jwk: %w", err)
