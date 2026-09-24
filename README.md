@@ -408,31 +408,41 @@ http.ListenAndServe(":8080", gw)
 
 ## AIMS alignment
 
-`draft-ietf-wimse-aims` (AI Identity Management System) is the IETF WIMSE WG document that profiles how WIMSE standards should be applied to AI agents. This project is structured to follow that profile directly. The table below maps each AIMS section to the implementation here (and, where applicable, to the `wimse-identity-fabric` dependency that provides the WIMSE-CRED layer).
+`draft-ietf-wimse-aims-00` (AI Identity Management System) is the IETF WIMSE WG document that
+profiles how WIMSE standards apply to AI agents. Section numbers below are from the -00 publication
+(September 2026). The table maps each AIMS section to the implementation here and, where applicable,
+to the `wimse-identity-fabric` dependency that provides the WIMSE-CRED layer.
 
-| AIMS | Topic | Implementation | Notes |
+| AIMS -00 | Topic | Implementation | Status |
 |---|---|---|---|
-| §4 | Agent identity lifecycle | `pkg/identity` — `AgentIssuer` / `AgentValidator`; `pkg/keys` — EC P-256 key generation | Agents are issued an `AgentToken` whose lifetime is bounded by `exp`; key rotation follows the same `cnf.jwk` field |
-| §5 | Agent registration & bootstrapping | `pkg/keys/mtls.go` — `IssueAgentCert` with SPIFFE URI SAN; `cmd/gateway --write-agent-creds` | X.509/SVID bootstrap path; the private key never leaves the agent process |
-| §6 | Agent credentials | `pkg/identity/token.go` — `AgentClaims` embeds `wit.Claims` (from `wimse-identity-fabric`); `pkg/cb4a` — CB4A Credential Delivery Point | `AgentToken` carries `cnf.jwk` (RFC 7800) binding the credential to the agent's key pair |
-| §7 | Agents MUST use WIT | `AgentClaims` embeds `wit.Claims` — `sub` is a SPIFFE URI, `cnf.jwk` is required; `go.mod` `replace` makes the dependency explicit | The WIT-superset relationship is encoded in the Go type system, not just documented |
-| §7 (alt) | X.509/JWT-SVID alternative | `pkg/keys/mtls.go` — TLS client cert with SPIFFE URI SAN; `internal/gateway` — mTLS cert binding | AIMS §7 allows X.509/JWT-SVID in place of WIT; gateway validates either path |
-| §8 | Agent authentication (PoP) | `pkg/identity/proof.go` — `AgentProofToken` signed by `cnf.jwk` private key; `internal/gateway` — proof validation before forwarding | Proof binds to `aud` (exact target URI), `chain_hash`, and `jti` (replay detection) |
-| §8 (OAuth) | OAuth client authentication | `pkg/spiffeclientauth` — WIT/AgentToken as JWT bearer assertion per `draft-ietf-oauth-spiffe-client-auth` | Enables an agent to authenticate to a token endpoint without a separate client secret |
-| §9 | Authorization model | `internal/authz` — `Authorizer` interface; `InMemoryAuthorizer`; `OpenFGAAuthorizer` (Zanzibar) | `subject × tool × action` model; wildcard subjects; `can_call` → `can_read` inheritance |
-| §10 | Access control / delegation | `pkg/identity/chain.go` — `AgentChain` wire format (`AT-1~AT-2~...~AT-N`), sequential `chain_depth` validation | Delegation path is cryptographically committed at every hop; no depth gaps or resets allowed |
-| §10 (cross-domain) | Identity chaining | `pkg/identitychaining` — `GrantIssuer` issues `jwt-authz-grant` cross-domain; `pkg/federation` — OpenID Federation 1.0 trust chains | Cross-domain agents present a grant targeting domain B's token endpoint (RFC 7523 profile) |
-| §10.4.1 | User delegates to agent | `pkg/obo` — OBO issuer: `sub=user, act=agent SPIFFE ID`; SD-JWT selective disclosure | The OBO token carries both human and agent identity so downstream can distinguish |
-| §10 (context) | Transaction Token binding | `pkg/txntoken` — `txntoken+jwt` per `draft-ietf-oauth-transaction-tokens`; `tth` claim in `AgentProofToken` | Proof can bind to a Transaction Token via `tth = SHA-256(Txn-Token)`, anchoring the request to a business transaction |
-| §10 (payment) | Agent payment authorization | `pkg/x402` — x402 HTTP payment protocol using CB4A-DPoP credentials + AgentToken identity | Paying agent presents a DPoP-bound CB4A access token alongside an AgentToken proving who is paying |
-| §11 | Activity monitoring / SSF | Issue [#53](https://github.com/jralmaraz/ai-agent-security/issues/53) — SSF/CAEP receiver + agent remediation | AIMS §11 requires CAEP for authorization signals and RISC for security incidents; planned |
+| §6 | Agent Identifier (SPIFFE URI) | `AgentClaims.Subject` is a SPIFFE URI (`spiffe://<trust-domain>/<path>`); `IssueAgentCert` embeds it as a URI SAN | ✅ |
+| §7 | Agent Credentials — agents MUST use WIT | `AgentClaims` embeds `wit.Claims` from `wimse-identity-fabric`; `sub` is a SPIFFE URI, `cnf.jwk` is mandatory; WIT-superset enforced in the Go type system | ✅ |
+| §7 (alt) | X.509-SVID / JWT-SVID alternative | `pkg/keys/mtls.go` — TLS cert with SPIFFE URI SAN; `internal/gateway` — mTLS cert binding validates either credential path | ✅ |
+| §8 | Credential Provisioning — LLM MUST NOT access credentials | `AgentIssuer` is gateway-side only; the LLM inference path (`cmd/demo-wasm`) has no access to signing keys or issued tokens | ✅ |
+| §8 | Short-lived credentials + rotation | `AgentIssuer.ttl` controls lifetime; `cnf.jwk` enables key rotation without re-registration | ✅ |
+| §9.1 | Transport Layer Auth (mTLS) | `pkg/keys/mtls.go` — mutual TLS with SPIFFE URI SAN cert; `internal/gateway` — enforces token-cert binding (`cnf.jwk == peer cert key`) | ✅ |
+| §9.2.1 | Application Layer Auth (WPT / PoP) | `pkg/identity/proof.go` — `AgentProofToken` signed by `cnf.jwk` private key; binds to `aud` (target URI), `chain_hash`, `jti` (replay) | ✅ |
+| §9.2.2 | Application Layer Auth (HTTP Message Signatures) | Issue [wimse-identity-fabric #42](https://github.com/jralmaraz/wimse-identity-fabric/issues/42) — RFC 9421 profile not yet built | 📋 planned |
+| §10.1 | Agent Mission | `AgentClaims.Mission` (`agent_mission` claim) carries the approved scope of action | ✅ |
+| §10.2–10.3 | OAuth 2.0 as delegation framework; JWT access tokens | `pkg/spiffeclientauth` — AgentToken as JWT bearer assertion (RFC 7523); `pkg/obo` — `sub=user, act=agent` on-behalf-of pattern | ✅ |
+| §10.4.1 | User delegates authorization to agent | `pkg/obo` — OBO issuer/validator, SD-JWT selective disclosure path; `act` claim carries agent SPIFFE ID | ✅ |
+| §10.4.2 | Agent obtains own authorization | `pkg/spiffeclientauth` — client_credentials / JWT grant using AgentToken as `client_assertion` | ✅ |
+| §10.4.3 | Agents accessed by other agents | `pkg/identity/chain.go` — `AgentChain` (`AT-1~AT-2~...~AT-N`), sequential `chain_depth` validation; `internal/gateway` validates full chain | ✅ |
+| §10.5 | Risk reduction via Transaction Tokens | `pkg/txntoken` — `txntoken+jwt`; `tth` claim in `AgentProofToken` binds proof to the transaction | ✅ |
+| §10.6 | Cross-domain access | `pkg/identitychaining` — `jwt-authz-grant` cross-domain; `pkg/federation` — OpenID Federation 1.0 trust chains | ✅ |
+| §10.7 | Human in the Loop (CIBA) | `pkg/cb4a` — CB4A Tier 2 HITL policy (PDP pause for human approval); CIBA protocol not yet wired | ⚠️ partial |
+| §10.8 | Tool-to-service access (no token forwarding) | `internal/gateway` enforces fresh proof per hop; forwarding a received token without re-signing is rejected by the proof validator's `tth` check | ✅ |
+| §10.9 | Privacy / claim minimization | `pkg/obo` SD-JWT path enables selective disclosure; opaque token pattern for downstream privacy | ⚠️ partial |
+| §10.10 | OAuth discovery (AS/PR metadata) | `pkg/federation` covers OID-FED entity statements; RFC 8414 AS metadata discovery not yet built | 📋 planned |
+| §11 | Monitoring, observability, SSF/CAEP | Issue [#53](https://github.com/jralmaraz/ai-agent-security/issues/53) — SSF/CAEP receiver + agent remediation | 📋 planned |
+| §12 | Authentication & authorization policy | `pkg/cb4a/pdp.go` — versioned rule set (`DefaultPolicyRules`); format is deployment-specific per AIMS §12 | ✅ |
 
 ### Layer boundary
 
 The module graph encodes the AIMS architectural separation:
 
 ```
-wimse-agent-fabric   ← this repo
+wimse-agent-fabric   ← this repo  (AIMS §8–§13: provisioning, auth, authz, monitoring)
   └─ depends on ──►  wimse-identity-fabric  (AIMS §6–§7: WIT, mTLS, SPIFFE, token exchange)
 ```
 
