@@ -1,12 +1,16 @@
 package cb4a_test
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/jralmaraz/ai-agent-security/pkg/cb4a"
 	"github.com/jralmaraz/ai-agent-security/pkg/keys"
+	"github.com/jralmaraz/ai-agent-security/pkg/webauthn"
 )
 
 // helpers
@@ -838,5 +842,103 @@ func TestEndToEnd_TierAuto(t *testing.T) {
 	proof, _ := cb4a.GenerateDPoPProof(mc, "GET", "https://api.analytics.example/events")
 	if err := cdp.SimulateAPICall(mc.Token, proof, "GET", "https://api.analytics.example/events"); err != nil {
 		t.Fatalf("SimulateAPICall: %v", err)
+	}
+}
+
+// TestPDP_ApproveWithPasskey_Valid verifies that a valid WebAuthn assertion
+// resolves a pending HITL request and returns a signed decision JWT.
+func TestPDP_ApproveWithPasskey_Valid(t *testing.T) {
+	pdpKP := mustPDPKey(t)
+	audit := newAudit()
+	pdp := newPDP(t, pdpKP, audit)
+
+	agentKP := mustKey(t)
+	env := &cb4a.EnvelopeClaims{
+		AgentSVID: "spiffe://mesh/worker",
+		Target:    "https://api.billing.example/invoices",
+		Action:    "write",
+		Scope:     "billing:invoices:write",
+	}
+	_, reqID, err := pdp.Evaluate(env)
+	if err != nil {
+		t.Fatalf("Evaluate: %v", err)
+	}
+	if reqID == "" {
+		t.Fatal("expected HITL requestID for billing write scope")
+	}
+	_ = agentKP
+
+	cred, err := webauthn.Register("approver@example.com")
+	if err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+	challenge := []byte("hitl-challenge-" + reqID)
+	assertion, err := cred.MakeAssertion(challenge)
+	if err != nil {
+		t.Fatalf("MakeAssertion: %v", err)
+	}
+
+	decisionJWT, err := pdp.ApproveWithPasskey(reqID, cred, challenge, assertion)
+	if err != nil {
+		t.Fatalf("ApproveWithPasskey: %v", err)
+	}
+	if decisionJWT == "" {
+		t.Fatal("expected non-empty decision JWT")
+	}
+
+	claims, err := cb4a.ParseDecision(decisionJWT, pdpKP.Public)
+	if err != nil {
+		t.Fatalf("ParseDecision: %v", err)
+	}
+	if !claims.Approved {
+		t.Error("expected Approved=true")
+	}
+	if claims.ApproverID != cred.ID {
+		t.Errorf("ApproverID: got %q, want credential ID %q", claims.ApproverID, cred.ID)
+	}
+}
+
+// TestPDP_ApproveWithPasskey_WrongAssertion verifies that a forged or wrong-key
+// assertion leaves the request pending and returns an error.
+func TestPDP_ApproveWithPasskey_WrongAssertion(t *testing.T) {
+	pdpKP := mustPDPKey(t)
+	audit := newAudit()
+	pdp := newPDP(t, pdpKP, audit)
+
+	env := &cb4a.EnvelopeClaims{
+		AgentSVID: "spiffe://mesh/worker",
+		Target:    "https://api.billing.example/invoices",
+		Action:    "write",
+		Scope:     "billing:invoices:write",
+	}
+	_, reqID, err := pdp.Evaluate(env)
+	if err != nil {
+		t.Fatalf("Evaluate: %v", err)
+	}
+
+	cred, _ := webauthn.Register("approver@example.com")
+	challenge := []byte("hitl-challenge-" + reqID)
+
+	// Sign with a different key (forge assertion).
+	forgerKey, _ := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	forgedCred := &webauthn.Credential{
+		ID:        "forged-id",
+		PublicKey: &forgerKey.PublicKey,
+	}
+	_ = forgedCred
+
+	// Sign the real challenge with a freshly registered (wrong) credential.
+	wrongCred, _ := webauthn.Register("attacker@example.com")
+	wrongAssertion, _ := wrongCred.MakeAssertion(challenge)
+
+	// Verify against the real cred's public key — should fail.
+	_, err = pdp.ApproveWithPasskey(reqID, cred, challenge, wrongAssertion)
+	if err == nil {
+		t.Error("expected error for wrong assertion, got nil")
+	}
+	// Request must still be pending.
+	req := pdp.Get(reqID)
+	if req == nil || req.State != cb4a.StatePending {
+		t.Errorf("request should still be pending after failed passkey assertion, got %v", req)
 	}
 }

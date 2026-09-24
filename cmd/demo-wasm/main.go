@@ -25,6 +25,7 @@ import (
 	"github.com/jralmaraz/ai-agent-security/pkg/memory"
 	"github.com/jralmaraz/ai-agent-security/pkg/obo"
 	"github.com/jralmaraz/ai-agent-security/pkg/ssfreceiver"
+	"github.com/jralmaraz/ai-agent-security/pkg/webauthn"
 	x402pkg "github.com/jralmaraz/ai-agent-security/pkg/x402"
 )
 
@@ -45,6 +46,8 @@ var (
 	orchestratorToken string
 	executorToken     string
 	chain             identity.AgentChain
+
+	wasmPasskey *webauthn.Credential
 )
 
 // ── exported functions ────────────────────────────────────────────────────────
@@ -1608,6 +1611,9 @@ func main() {
 		"memoryIntegrityDemo": js.FuncOf(memoryIntegrityDemo),
 		// SSF/CAEP live revocation demo
 		"ssfSimulateRevocation": js.FuncOf(ssfSimulateRevocation),
+
+		"webauthnRegister": js.FuncOf(webauthnRegister),
+		"webauthnApprove":  js.FuncOf(webauthnApprove),
 	}))
 	<-make(chan struct{}) // block forever
 }
@@ -1784,6 +1790,87 @@ func memoryIntegrityDemo(_ js.Value, _ []js.Value) any {
 		"verdict":          verdict,
 		"steps":            steps,
 	}
+}
+
+// ── WebAuthn passkey demos ────────────────────────────────────────────────────
+
+// webauthnRegister simulates a WebAuthn Level 4 credential registration.
+// args[0]: userID string (e.g. "alice@example.com")
+// Returns: {ok, credID, userID, prfSample (hex first 8 bytes)}
+func webauthnRegister(_ js.Value, args []js.Value) any {
+	userID := "alice@example.com"
+	if len(args) > 0 && args[0].String() != "" {
+		userID = args[0].String()
+	}
+	cred, err := webauthn.Register(userID)
+	if err != nil {
+		return errObj("webauthn.Register: " + err.Error())
+	}
+	wasmPasskey = cred
+	// Show first 8 bytes of a sample PRF output as proof-of-life.
+	prfOut := cred.PRF([]byte("demo-session-context"))
+	prfHex := fmt.Sprintf("%x", prfOut[:8])
+	return okObj(map[string]any{
+		"credID":    cred.ID,
+		"userID":    cred.UserID,
+		"prfSample": prfHex + "…",
+		"steps": []any{
+			map[string]any{"step": "1", "actor": "Authenticator", "action": "Generated EC P-256 keypair (simulated FIDO2 hardware)"},
+			map[string]any{"step": "2", "actor": "Authenticator", "action": "Derived PRF secret: HMAC-SHA256(deviceKey, credID)"},
+			map[string]any{"step": "3", "actor": "Browser", "action": "Returned credentialId + publicKey to relying party"},
+			map[string]any{"step": "4", "actor": "Server", "action": "Stored publicKey ← credential registered"},
+		},
+	})
+}
+
+// webauthnApprove simulates a WebAuthn Level 4 assertion (get) + PDP approve.
+// Requires: webauthnRegister called first AND cb4aInit + cb4aSubmit to create a pending request.
+// args[0]: requestID from cb4aSubmit
+// Returns: {ok, decisionJWT, assertionB64, steps:[]}
+func webauthnApprove(_ js.Value, args []js.Value) any {
+	if wasmPasskey == nil {
+		return errObj("call webauthnRegister first")
+	}
+	if globalPDP == nil {
+		return errObj("call cb4aInit first")
+	}
+	if len(args) == 0 || args[0].String() == "" {
+		return errObj("requestID required")
+	}
+	requestID := args[0].String()
+
+	challenge := []byte("hitl-approval-challenge-" + requestID)
+	assertion, err := wasmPasskey.MakeAssertion(challenge)
+	if err != nil {
+		return errObj("MakeAssertion: " + err.Error())
+	}
+
+	decisionJWT, err := globalPDP.ApproveWithPasskey(requestID, wasmPasskey, challenge, assertion)
+	if err != nil {
+		return errObj("ApproveWithPasskey: " + err.Error())
+	}
+
+	parts := func() []any {
+		p := splitJWT(decisionJWT)
+		r := make([]any, len(p))
+		for i, s := range p {
+			r[i] = s
+		}
+		return r
+	}()
+
+	return okObj(map[string]any{
+		"decisionJWT":  decisionJWT,
+		"jwtParts":     parts,
+		"assertionB64": assertion[:20] + "…",
+		"approverID":   wasmPasskey.ID,
+		"steps": []any{
+			map[string]any{"step": "1", "actor": "PDP", "action": "Issued HITL challenge: " + string(challenge[:32]) + "…"},
+			map[string]any{"step": "2", "actor": "Authenticator", "action": "Signed challenge with EC P-256 private key (ES256/SHA-256)"},
+			map[string]any{"step": "3", "actor": "PDP", "action": "Verified ES256 assertion against registered public key"},
+			map[string]any{"step": "4", "actor": "PDP", "action": "Passkey verified → issued signed PDP Decision JWT (approved=true)"},
+		},
+	})
 }
 
 // ── helpers ───────────────────────────────────────────────────────────────────

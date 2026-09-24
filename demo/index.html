@@ -3461,6 +3461,59 @@ KER ═════════════════════════�
     <strong>agent_mission in the approval UI.</strong> When the AgentToken carries an <code>agent_mission</code> claim (e.g. <em>"Summarise Q2 financial reports"</em>), the CIBA push notification can surface it to the human: <em>"Agent 'Summarise Q2 reports' wants to transfer $2,400 — does this match the approved mission?"</em> This gives the approver context to detect scope creep before approving.
   </div>
   <div class="spec-ref">Spec: <a href="https://datatracker.ietf.org/doc/html/draft-klrc-aiagent-auth" target="_blank">draft-klrc-aiagent-auth §6</a> · OpenID CIBA Core 1.0 · RFC 6749 backchannel extension</div>
+
+  <!-- WebAuthn L4 Passkey HITL demo -->
+  <div class="card" style="margin-top:1.5rem">
+    <div class="card-title">Live: WebAuthn Level 4 Passkey — HITL Approval with Cryptographic Presence</div>
+    <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">
+      CB4A Tier 2 (HITL) requires <em>human approval</em>. <strong>WebAuthn Level 4</strong> gives that approval a cryptographic binding: the approver proves physical presence via a FIDO2/passkey assertion (EC P-256, ES256). The PDP verifies the signature before issuing the Decision JWT — no password, no session cookie, no replay possible.
+    </p>
+
+    <!-- Step 1: Register passkey -->
+    <div style="margin-bottom:1rem">
+      <div style="font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.5rem">Step 1 — Register Passkey</div>
+      <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+        <input id="wa-userid" type="text" value="alice@example.com"
+          style="padding:.4rem .7rem;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--fg);font-size:.8rem;width:220px"/>
+        <button onclick="waRegister()" style="padding:.4rem .9rem;border-radius:6px;background:var(--blue);color:#fff;border:none;cursor:pointer;font-size:.8rem">Register</button>
+      </div>
+      <div id="wa-reg-out" style="margin-top:.6rem"></div>
+    </div>
+
+    <!-- Step 2: Submit a HITL request (reuses CB4A init) -->
+    <div style="margin-bottom:1rem">
+      <div style="font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.5rem">Step 2 — Submit CB4A Request (billing:invoices:write → Tier 2 HITL)</div>
+      <button onclick="waSubmitRequest()" style="padding:.4rem .9rem;border-radius:6px;background:var(--blue);color:#fff;border:none;cursor:pointer;font-size:.8rem">Submit Request</button>
+      <div id="wa-req-out" style="margin-top:.6rem"></div>
+    </div>
+
+    <!-- Step 3: Approve with passkey -->
+    <div style="margin-bottom:1rem">
+      <div style="font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.5rem">Step 3 — Approve with Passkey Assertion</div>
+      <button onclick="waApprove()" style="padding:.4rem .9rem;border-radius:6px;background:var(--green,#3fb950);color:#fff;border:none;cursor:pointer;font-size:.8rem">Approve with Passkey</button>
+      <div id="wa-approve-out" style="margin-top:.6rem"></div>
+    </div>
+
+    <!-- Animated step sequence -->
+    <div id="wa-steps" style="display:none;margin-top:1rem">
+      <div style="font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem">Passkey Ceremony</div>
+      <div class="vstep" id="wa-s1"><span class="vstep-icon">⏳</span> Authenticator generates EC P-256 keypair</div>
+      <div class="vstep" id="wa-s2"><span class="vstep-icon">⏳</span> PRF secret derived — deterministic 32-byte key</div>
+      <div class="vstep" id="wa-s3"><span class="vstep-icon">⏳</span> PDP issues HITL challenge</div>
+      <div class="vstep" id="wa-s4"><span class="vstep-icon">⏳</span> Authenticator signs challenge (ES256/SHA-256)</div>
+      <div class="vstep" id="wa-s5"><span class="vstep-icon">⏳</span> PDP verifies assertion → no replay, no phishing</div>
+      <div class="vstep" id="wa-s6"><span class="vstep-icon">⏳</span> PDP issues signed Decision JWT (approved=true)</div>
+    </div>
+
+    <!-- Decision JWT output -->
+    <div id="wa-jwt-wrap" style="display:none;margin-top:1rem">
+      <div style="font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.4rem">PDP Decision JWT</div>
+      <div id="wa-jwt-raw" class="jwt-raw" style="font-size:.7rem;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:.6rem .8rem;word-break:break-all"></div>
+    </div>
+
+    <div class="spec-ref" style="margin-top:1rem">Spec: <a href="https://www.w3.org/TR/webauthn-4/" target="_blank">WebAuthn Level 4</a> · FIDO2 CTAP2 · ES256 (RFC 8812) · CB4A Tier 2 HITL</div>
+  </div>
+
 </div>
 
 <!-- ══ SSF / CAEP MONITORING ══════════════════════════════════════════════════ -->
@@ -5483,6 +5536,89 @@ function bkAudit(_btn) {
   });
   html += '</tbody></table>';
   document.getElementById('bk-audit-out').innerHTML = entries.length ? html : '<div style="color:var(--muted);font-size:12px;padding:8px">No audit entries yet.</div>';
+}
+
+// ── WebAuthn passkey HITL demo ────────────────────────────────────────────────
+
+let waRequestID = '';
+
+function waOut(id, html) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = html;
+}
+
+async function waRegister() {
+  const uid = document.getElementById('wa-userid').value.trim() || 'alice@example.com';
+  waOut('wa-reg-out', '<span style="color:var(--muted);font-size:.75rem">Registering…</span>');
+  await delay(120);
+  const r = call('webauthnRegister', uid);
+  if (!r.ok) { waOut('wa-reg-out', `<span style="color:#f85149;font-size:.75rem">Error: ${r.error}</span>`); return; }
+  waOut('wa-reg-out', `
+    <div class="vstep pass" style="margin-top:.3rem"><span class="vstep-icon">✓</span>
+      Credential registered — ID: <code style="font-size:.7rem">${r.credID.slice(0,20)}…</code><br>
+      PRF sample: <code style="font-size:.7rem">${r.prfSample}</code>
+    </div>`);
+}
+
+async function waSubmitRequest() {
+  // Ensure CB4A is initialised
+  const init = call('cb4aInit');
+  if (!init.ok) { waOut('wa-req-out', `<span style="color:#f85149;font-size:.75rem">CB4A init failed: ${init.error}</span>`); return; }
+
+  // Force a HITL scope — args: (svid, scope, target, action)
+  const r = call('cb4aSubmit',
+    'spiffe://cloud.example/agent-payments',
+    'billing:invoices:write',
+    'https://api.bank.example/v1/invoices',
+    'send'
+  );
+  if (!r.ok) { waOut('wa-req-out', `<span style="color:#f85149;font-size:.75rem">Submit failed: ${r.error}</span>`); return; }
+  waRequestID = r.requestID || '';
+  waOut('wa-req-out', `
+    <div class="vstep pass"><span class="vstep-icon">✓</span>
+      Request submitted — Tier 2 HITL · ID: <code style="font-size:.7rem">${waRequestID}</code>
+    </div>`);
+}
+
+async function waApprove() {
+  if (!waRequestID) { alert('Submit a request first (Step 2).'); return; }
+  waOut('wa-approve-out', '<span style="color:var(--muted);font-size:.75rem">Signing challenge…</span>');
+  await delay(100);
+
+  const r = call('webauthnApprove', waRequestID);
+  if (!r.ok) { waOut('wa-approve-out', `<span style="color:#f85149;font-size:.75rem">Error: ${r.error}</span>`); return; }
+
+  // Show step animation
+  document.getElementById('wa-steps').style.display = 'block';
+  const stepIds = ['wa-s1','wa-s2','wa-s3','wa-s4','wa-s5','wa-s6'];
+  stepIds.forEach(id => vstepReset(id));
+
+  const labels = r.steps || [];
+  for (let i = 0; i < stepIds.length; i++) {
+    if (labels[i]) {
+      const el = document.getElementById(stepIds[i]);
+      if (el) el.querySelector('.vstep-icon').textContent = '⏳';
+    }
+    await delay(340);
+    await vstepPass(stepIds[i], 0);
+  }
+
+  // Show Decision JWT
+  const jwtWrap = document.getElementById('wa-jwt-wrap');
+  const jwtRaw  = document.getElementById('wa-jwt-raw');
+  if (jwtWrap && jwtRaw && r.decisionJWT) {
+    const parts = r.jwtParts || r.decisionJWT.split('.');
+    const colours = ['#f85149','#a5d6ff','#3fb950'];
+    jwtRaw.innerHTML = parts.map((p,i) =>
+      `<span style="color:${colours[i]||'var(--fg)'}">${p}</span>`
+    ).join('<span style="color:var(--muted)">.</span>');
+    jwtWrap.style.display = 'block';
+  }
+
+  waOut('wa-approve-out', `
+    <div class="vstep pass"><span class="vstep-icon">✓</span>
+      Passkey assertion verified · Decision JWT issued (approved=true)
+    </div>`);
 }
 
 async function doFedValidate() {
