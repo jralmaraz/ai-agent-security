@@ -40,6 +40,12 @@
   ],
   "standards": [
     {
+      "id": "draft-ietf-wimse-aims",
+      "last": "00",
+      "impl": "-",
+      "status": "active-draft"
+    },
+    {
       "id": "draft-ietf-wimse-workload-creds",
       "label": "WIMSE Workload Identity Credentials (WIT / AgentToken base)",
       "short": "WIT",
