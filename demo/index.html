@@ -3565,6 +3565,59 @@ KER ═════════════════════════�
   <div class="callout ok">
     <strong>Integration with AgentChain.</strong> The CAEP SET's <code>sub</code> is the agent's SPIFFE URI — the same value in every AgentToken's <code>sub</code> claim and every AgentChain hop. The revocation check is a single set lookup in <code>internal/gateway/server.go</code>: if <code>revokedSubs.Contains(claims.Subject)</code> → 401. No per-token tracking needed.
   </div>
+
+  <!-- ── Live WASM demo ── -->
+  <div class="card" style="margin-top:18px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="card-title" style="margin-bottom:0">Live: Real SET Generation &amp; Revocation Check</div>
+      <div class="btn-group" style="margin:0">
+        <button class="btn btn-primary" id="ssf-run-btn" onclick="ssfRunLive()">▶ Run Live Demo</button>
+        <button class="btn" onclick="ssfClearLive()">↺ Clear</button>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin:0 0 12px">Runs entirely in-browser via WebAssembly. Generates real EC keys, issues an AgentToken, builds and signs a CAEP SET, delivers it to an in-memory SSF Receiver, then queries the revocation store — no server required.</p>
+
+    <div id="ssf-live-out" style="display:none">
+      <!-- Before/After state -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div id="ssf-before-box" style="padding:10px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface)">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin-bottom:4px">BEFORE SET DELIVERY</div>
+          <div id="ssf-before-val" style="font-size:15px;font-weight:700;font-family:monospace"></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">IsRevoked(sub)</div>
+        </div>
+        <div id="ssf-after-box" style="padding:10px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface)">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin-bottom:4px">AFTER SET DELIVERY</div>
+          <div id="ssf-after-val" style="font-size:15px;font-weight:700;font-family:monospace"></div>
+          <div id="ssf-revoked-at" style="font-size:11px;color:var(--muted);margin-top:2px"></div>
+        </div>
+      </div>
+
+      <!-- Agent subject + HTTP status -->
+      <div style="margin-bottom:10px">
+        <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin-bottom:4px">REVOKED SUBJECT</div>
+        <code id="ssf-agent-sub" style="font-size:12px;color:var(--blue)"></code>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin-bottom:4px">SSF RECEIVER HTTP RESPONSE</div>
+        <span id="ssf-http-status" style="font-family:monospace;font-size:13px;font-weight:700"></span>
+      </div>
+
+      <!-- AgentToken (still valid) -->
+      <div style="margin-bottom:12px">
+        <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin-bottom:4px">AGENT TOKEN (still valid — not expired, not tampered)</div>
+        <div class="jwt-parts" id="ssf-agent-tok"></div>
+      </div>
+
+      <!-- SET JWT -->
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin-bottom:4px">SECURITY EVENT TOKEN (SET) — signed CAEP session-revoked</div>
+        <div class="jwt-parts" id="ssf-set-jwt"></div>
+      </div>
+    </div>
+
+    <div id="ssf-live-err" style="display:none;padding:10px;background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.25);border-radius:6px;font-size:12px;color:#f85149;font-family:monospace"></div>
+  </div>
+
   <div class="spec-ref">Spec: <a href="https://datatracker.ietf.org/doc/html/draft-klrc-aiagent-auth" target="_blank">draft-klrc-aiagent-auth §7</a> · <a href="https://datatracker.ietf.org/doc/html/draft-ietf-sharedsignals-framework" target="_blank">draft-ietf-sharedsignals-framework</a> · CAEP 1.0</div>
 </div>
 
@@ -6489,6 +6542,57 @@ function resetSSFFlow() {
     el.classList.remove('pass','fail');
     el.querySelector('.vstep-icon').textContent = '○';
   });
+}
+
+// ── SSF live WASM demo ──────────────────────────────────────────────────────────
+function ssfRunLive() {
+  const btn = document.getElementById('ssf-run-btn');
+  const out  = document.getElementById('ssf-live-out');
+  const err  = document.getElementById('ssf-live-err');
+  out.style.display = 'none';
+  err.style.display = 'none';
+  if (!window.agentFabric) { err.textContent = 'WASM not loaded yet — wait a moment and try again.'; err.style.display = 'block'; return; }
+  btn.disabled = true; btn.textContent = '…';
+  try {
+    const r = agentFabric.ssfSimulateRevocation();
+    btn.disabled = false; btn.textContent = '▶ Run Live Demo';
+    if (!r.ok) { err.textContent = r.error || 'unknown error'; err.style.display = 'block'; return; }
+
+    document.getElementById('ssf-before-val').textContent = r.beforeRevoked ? 'REVOKED' : 'NOT revoked';
+    document.getElementById('ssf-before-val').style.color  = r.beforeRevoked ? '#f85149' : '#3fb950';
+    document.getElementById('ssf-after-val').textContent   = r.afterRevoked  ? 'REVOKED' : 'NOT revoked';
+    document.getElementById('ssf-after-val').style.color   = r.afterRevoked  ? '#f85149' : '#3fb950';
+    document.getElementById('ssf-revoked-at').textContent  = r.revokedAt ? 'since ' + r.revokedAt : '';
+
+    document.getElementById('ssf-agent-sub').textContent = r.agentSub;
+    const statusEl = document.getElementById('ssf-http-status');
+    statusEl.textContent = r.httpStatus + ' Accepted';
+    statusEl.style.color = '#3fb950';
+
+    const tokEl = document.getElementById('ssf-agent-tok');
+    if (r.agentToken) {
+      const parts = r.agentToken.split('.');
+      tokEl.innerHTML = parts.map((p,i)=>`<span class="jwt-${['header','payload','sig'][i]||'sig'}">${p}</span>`).join('<span class="jwt-dot">.</span>');
+    }
+    const setEl = document.getElementById('ssf-set-jwt');
+    if (r.setJWTParts && r.setJWTParts.length === 3) {
+      setEl.innerHTML = r.setJWTParts.map((p,i)=>`<span class="jwt-${['header','payload','sig'][i]}">${p}</span>`).join('<span class="jwt-dot">.</span>');
+    } else if (r.setJWT) {
+      const parts = r.setJWT.split('.');
+      setEl.innerHTML = parts.map((p,i)=>`<span class="jwt-${['header','payload','sig'][i]||'sig'}">${p}</span>`).join('<span class="jwt-dot">.</span>');
+    }
+    out.style.display = 'block';
+  } catch(e) {
+    btn.disabled = false; btn.textContent = '▶ Run Live Demo';
+    err.textContent = e.message || String(e); err.style.display = 'block';
+  }
+}
+
+function ssfClearLive() {
+  document.getElementById('ssf-live-out').style.display = 'none';
+  document.getElementById('ssf-live-err').style.display = 'none';
+  const btn = document.getElementById('ssf-run-btn');
+  btn.disabled = false; btn.textContent = '▶ Run Live Demo';
 }
 
 function runMemWrite(scenario) {
