@@ -3565,6 +3565,59 @@ KER ═════════════════════════�
   <div class="callout ok">
     <strong>Integration with AgentChain.</strong> The CAEP SET's <code>sub</code> is the agent's SPIFFE URI — the same value in every AgentToken's <code>sub</code> claim and every AgentChain hop. The revocation check is a single set lookup in <code>internal/gateway/server.go</code>: if <code>revokedSubs.Contains(claims.Subject)</code> → 401. No per-token tracking needed.
   </div>
+
+  <!-- ── Live WASM demo ── -->
+  <div class="card" style="margin-top:18px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="card-title" style="margin-bottom:0">Live: Real SET Generation &amp; Revocation Check</div>
+      <div class="btn-group" style="margin:0">
+        <button class="btn btn-danger" id="ssf-run-btn" onclick="ssfRunLive()">▶ Run Live Demo</button>
+        <button class="btn" onclick="ssfClearLive()">↺ Clear</button>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin:0 0 14px">In-browser WebAssembly only — no server. Steps execute sequentially with real cryptography.</p>
+
+    <!-- Step-by-step animation -->
+    <div class="vsteps" id="ssf-live-steps">
+      <div class="vstep" id="ssfl-s1"><div class="vstep-icon">○</div>Generate EC P-256 key pairs — IdP (issues AgentTokens) + SIEM transmitter (signs SETs)</div>
+      <div class="vstep" id="ssfl-s2"><div class="vstep-icon">○</div>Issue AgentToken <code>typ: agent+jwt</code> for <code>spiffe://agent-fabric.example/compromised-worker</code></div>
+      <div class="vstep" id="ssfl-s3"><div class="vstep-icon">○</div>Check <code>IsRevoked(sub)</code> — agent is active, gateway would accept token</div>
+      <div class="vstep" id="ssfl-s4"><div class="vstep-icon">○</div>SIEM detects anomaly → builds CAEP <code>session-revoked</code> SET, signs with ES256</div>
+      <div class="vstep" id="ssfl-s5"><div class="vstep-icon">○</div>POST SET to <code>POST /ssf/events</code> (Content-Type: application/secevent+jwt) → <span id="ssfl-status-badge"></span></div>
+      <div class="vstep" id="ssfl-s6"><div class="vstep-icon">○</div>Check <code>IsRevoked(sub)</code> again — agent is now blocked, 401 on next request</div>
+    </div>
+
+    <div id="ssf-live-out" style="display:none;margin-top:16px">
+      <!-- Before/After -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div style="padding:10px 14px;border-radius:6px;border:1px solid var(--green);background:rgba(63,185,80,.05)">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin-bottom:5px">BEFORE SET DELIVERY</div>
+          <div id="ssf-before-val" style="font-size:16px;font-weight:700;font-family:monospace;color:var(--green)">NOT revoked</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">IsRevoked(sub) → false</div>
+        </div>
+        <div style="padding:10px 14px;border-radius:6px;border:1px solid var(--red);background:rgba(248,81,73,.05)">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin-bottom:5px">AFTER SET DELIVERY</div>
+          <div id="ssf-after-val" style="font-size:16px;font-weight:700;font-family:monospace;color:#f85149">REVOKED</div>
+          <div id="ssf-revoked-at" style="font-size:11px;color:var(--muted);margin-top:3px"></div>
+        </div>
+      </div>
+
+      <!-- AgentToken -->
+      <div style="margin-bottom:12px">
+        <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin-bottom:5px">AGENT TOKEN — <span style="color:var(--green)">still valid, unexpired</span> — gateway would normally accept it</div>
+        <div class="jwt-raw" id="ssf-agent-tok" style="color:var(--text)"></div>
+      </div>
+
+      <!-- SET JWT -->
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin-bottom:5px">SECURITY EVENT TOKEN (SET) — CAEP <code>session-revoked</code>, ES256 signed</div>
+        <div class="jwt-raw" id="ssf-set-jwt" style="color:var(--text)"></div>
+      </div>
+    </div>
+
+    <div id="ssf-live-err" style="display:none;padding:10px;background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.25);border-radius:6px;font-size:12px;color:#f85149;font-family:monospace;margin-top:10px"></div>
+  </div>
+
   <div class="spec-ref">Spec: <a href="https://datatracker.ietf.org/doc/html/draft-klrc-aiagent-auth" target="_blank">draft-klrc-aiagent-auth §7</a> · <a href="https://datatracker.ietf.org/doc/html/draft-ietf-sharedsignals-framework" target="_blank">draft-ietf-sharedsignals-framework</a> · CAEP 1.0</div>
 </div>
 
@@ -6489,6 +6542,104 @@ function resetSSFFlow() {
     el.classList.remove('pass','fail');
     el.querySelector('.vstep-icon').textContent = '○';
   });
+}
+
+// ── SSF live WASM demo ──────────────────────────────────────────────────────────
+const ssfSleep = ms => new Promise(r => setTimeout(r, ms));
+
+function ssfStep(id, cls, labelText) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('pass', 'fail');
+  el.classList.add(cls);
+  el.querySelector('.vstep-icon').textContent = cls === 'pass' ? '✓' : '✗';
+  if (labelText !== undefined) el.querySelector('.vstep-icon').title = labelText;
+}
+
+async function ssfRunLive() {
+  const btn = document.getElementById('ssf-run-btn');
+  const out  = document.getElementById('ssf-live-out');
+  const err  = document.getElementById('ssf-live-err');
+
+  // Reset steps
+  ['ssfl-s1','ssfl-s2','ssfl-s3','ssfl-s4','ssfl-s5','ssfl-s6'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('pass', 'fail');
+    el.querySelector('.vstep-icon').textContent = '○';
+  });
+  out.style.display = 'none';
+  err.style.display = 'none';
+
+  if (!window.agentFabric) {
+    err.textContent = 'WASM not loaded yet — wait a moment and try again.';
+    err.style.display = 'block'; return;
+  }
+
+  btn.disabled = true; btn.innerHTML = '<span style="display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;margin-right:6px"></span>Running…';
+
+  try {
+    // WASM call is synchronous — run it first, then animate with real data
+    const r = agentFabric.ssfSimulateRevocation();
+
+    if (!r.ok) {
+      btn.disabled = false; btn.innerHTML = '▶ Run Live Demo';
+      err.textContent = r.error || 'unknown error'; err.style.display = 'block'; return;
+    }
+
+    // Animate steps with real results
+    await ssfSleep(120);
+    ssfStep('ssfl-s1', 'pass');
+    await ssfSleep(280);
+    ssfStep('ssfl-s2', 'pass');
+    await ssfSleep(280);
+    // Step 3: IsRevoked before
+    ssfStep('ssfl-s3', r.beforeRevoked ? 'fail' : 'pass');
+    document.getElementById('ssfl-s3').querySelector('div:last-child') &&
+      (document.getElementById('ssfl-s3').childNodes[1].textContent =
+        `Check IsRevoked(sub) — result: ${r.beforeRevoked ? 'true (already revoked)' : 'false ✓ agent active'}`);
+    await ssfSleep(320);
+    ssfStep('ssfl-s4', 'fail'); // SIEM detects = "bad" event, hence red
+    await ssfSleep(320);
+    // Step 5: POST SET
+    ssfStep('ssfl-s5', r.httpStatus === 202 ? 'pass' : 'fail');
+    const badge = document.getElementById('ssfl-status-badge');
+    if (badge) { badge.textContent = r.httpStatus + ' Accepted'; badge.style.cssText = 'color:#3fb950;font-weight:700;font-family:monospace'; }
+    await ssfSleep(320);
+    ssfStep('ssfl-s6', r.afterRevoked ? 'fail' : 'pass'); // REVOKED = the attack was stopped (red = agent blocked)
+
+    // Fill output tokens
+    const tokEl = document.getElementById('ssf-agent-tok');
+    if (r.agentToken) {
+      const parts = r.agentToken.split('.');
+      tokEl.innerHTML = parts.map((p,i)=>`<span style="color:${['#f85149','#a5d6ff','#3fb950'][i]||'var(--muted)'}">${p}</span>`).join('<span style="color:var(--muted)">.</span>');
+    }
+    const setEl = document.getElementById('ssf-set-jwt');
+    const setparts = (r.setJWTParts && r.setJWTParts.length === 3) ? r.setJWTParts : (r.setJWT || '').split('.');
+    if (setparts.length === 3) {
+      setEl.innerHTML = setparts.map((p,i)=>`<span style="color:${['#f85149','#a5d6ff','#3fb950'][i]||'var(--muted)'}">${p}</span>`).join('<span style="color:var(--muted)">.</span>');
+    }
+    if (r.revokedAt) document.getElementById('ssf-revoked-at').textContent = 'since ' + r.revokedAt;
+
+    out.style.display = 'block';
+    btn.disabled = false; btn.innerHTML = '▶ Run Again';
+  } catch(e) {
+    btn.disabled = false; btn.innerHTML = '▶ Run Live Demo';
+    err.textContent = e.message || String(e); err.style.display = 'block';
+  }
+}
+
+function ssfClearLive() {
+  ['ssfl-s1','ssfl-s2','ssfl-s3','ssfl-s4','ssfl-s5','ssfl-s6'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('pass', 'fail');
+    el.querySelector('.vstep-icon').textContent = '○';
+  });
+  document.getElementById('ssf-live-out').style.display = 'none';
+  document.getElementById('ssf-live-err').style.display = 'none';
+  const btn = document.getElementById('ssf-run-btn');
+  btn.disabled = false; btn.innerHTML = '▶ Run Live Demo';
 }
 
 function runMemWrite(scenario) {

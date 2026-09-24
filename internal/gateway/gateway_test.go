@@ -7,12 +7,15 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/jralmaraz/ai-agent-security/internal/authz"
 	"github.com/jralmaraz/ai-agent-security/internal/gateway"
 	"github.com/jralmaraz/ai-agent-security/pkg/identity"
+	"github.com/jralmaraz/ai-agent-security/pkg/ssfreceiver"
 )
 
 // ── test fixtures ─────────────────────────────────────────────────────────────
@@ -270,5 +273,105 @@ func TestGateway_ReplayAttack(t *testing.T) {
 	resp2.Body.Close()
 	if resp2.StatusCode != http.StatusUnauthorized {
 		t.Errorf("replay: want 401 got %d", resp2.StatusCode)
+	}
+}
+
+func TestGateway_RevokedAgent(t *testing.T) {
+	idpPriv, idpPub := mustKey(t)
+	wlPriv, wlPub := mustKey(t)
+
+	issuer := identity.NewAgentIssuer(issuerID, idpPriv, time.Hour)
+	validator := identity.NewAgentValidator(issuerID, idpPub)
+
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(upstream.Close)
+
+	a := authz.NewInMemoryAuthorizer()
+	a.Allow(agentSub, toolName, authz.ActionCall)
+
+	recv := ssfreceiver.NewReceiver()
+	rem := ssfreceiver.NewAgentRemediation(recv)
+
+	gw := gateway.New(gateway.Config{
+		Validators:     map[string]*identity.AgentValidator{issuerID: validator},
+		ProofValidator: identity.NewProofValidator(),
+		Authz:          a,
+		Routes:         map[string]string{toolName: upstream.URL},
+		Remediation:    rem,
+	})
+
+	gwServer := httptest.NewServer(gw)
+	t.Cleanup(gwServer.Close)
+
+	buildReq := func(targetURL string) *http.Request {
+		tok, _ := issuer.Issue(identity.IssueOptions{
+			Subject:     agentSub,
+			Role:        identity.RoleOrchestrator,
+			ChainDepth:  0,
+			WorkloadKey: wlPub,
+		})
+		chain := identity.AgentChain{tok}
+		proof, _ := identity.GenerateProof(identity.ProofGenerateOptions{
+			TargetURI:   targetURL,
+			Chain:       chain,
+			WorkloadKey: wlPriv,
+		})
+		req, _ := http.NewRequest(http.MethodGet, targetURL, nil)
+		req.Header.Set(authz.HeaderAgentIdentityToken, tok)
+		req.Header.Set(authz.HeaderAgentChainToken, chain.String())
+		req.Header.Set(authz.HeaderAgentProofToken, proof)
+		return req
+	}
+
+	// Before revocation: request should succeed.
+	resp1, err := http.DefaultClient.Do(buildReq(gwServer.URL + "/tools/echo/check1"))
+	if err != nil {
+		t.Fatalf("before revocation Do: %v", err)
+	}
+	resp1.Body.Close()
+	if resp1.StatusCode != http.StatusOK {
+		t.Fatalf("before revocation: want 200 got %d", resp1.StatusCode)
+	}
+
+	// Push a session-revoked SET for agentSub via the gateway's /ssf/events endpoint.
+	type setClaims struct {
+		jwt.RegisteredClaims
+		Events map[string]json.RawMessage `json:"events"`
+	}
+	evPayload, _ := json.Marshal(map[string]any{
+		"subject": map[string]any{"format": "spiffe", "sub": agentSub},
+	})
+	sc := setClaims{
+		RegisteredClaims: jwt.RegisteredClaims{ID: "revoke-jti-gw-test", Issuer: "https://idp.example"},
+		Events: map[string]json.RawMessage{
+			ssfreceiver.EventTypeSessionRevoked: json.RawMessage(evPayload),
+		},
+	}
+	setTok, _ := jwt.NewWithClaims(jwt.SigningMethodNone, sc).SignedString(jwt.UnsafeAllowNoneSignatureType)
+
+	ssfReq, _ := http.NewRequest(http.MethodPost, gwServer.URL+"/ssf/events", strings.NewReader(setTok))
+	ssfReq.Header.Set("Content-Type", "application/secevent+jwt")
+	ssfResp, err := http.DefaultClient.Do(ssfReq)
+	if err != nil {
+		t.Fatalf("SSF push: %v", err)
+	}
+	ssfResp.Body.Close()
+	if ssfResp.StatusCode != http.StatusAccepted {
+		t.Fatalf("SSF push: want 202 got %d", ssfResp.StatusCode)
+	}
+
+	// After revocation: same agent should be rejected.
+	resp2, err := http.DefaultClient.Do(buildReq(gwServer.URL + "/tools/echo/check2"))
+	if err != nil {
+		t.Fatalf("after revocation Do: %v", err)
+	}
+	resp2.Body.Close()
+	if resp2.StatusCode != http.StatusUnauthorized {
+		t.Errorf("after revocation: want 401 got %d", resp2.StatusCode)
+	}
+	if www := resp2.Header.Get("WWW-Authenticate"); !strings.Contains(www, "agent revoked") {
+		t.Errorf("expected WWW-Authenticate to mention 'agent revoked', got %q", www)
 	}
 }

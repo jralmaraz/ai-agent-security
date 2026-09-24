@@ -5,21 +5,26 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"syscall/js"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/jralmaraz/ai-agent-security/pkg/cb4a"
 	"github.com/jralmaraz/ai-agent-security/pkg/federation"
 	"github.com/jralmaraz/ai-agent-security/pkg/identity"
 	"github.com/jralmaraz/ai-agent-security/pkg/keys"
 	"github.com/jralmaraz/ai-agent-security/pkg/memory"
 	"github.com/jralmaraz/ai-agent-security/pkg/obo"
+	"github.com/jralmaraz/ai-agent-security/pkg/ssfreceiver"
 	x402pkg "github.com/jralmaraz/ai-agent-security/pkg/x402"
 )
 
@@ -1456,6 +1461,111 @@ func oboSimulateSD(_ js.Value, args []js.Value) any {
 
 // ── WASM registration ─────────────────────────────────────────────────────────
 
+// ssfSimulateRevocation demonstrates the SSF/CAEP real-time agent revocation flow:
+// 1. Issue an AgentToken for a SPIFFE subject.
+// 2. Build a signed CAEP session-revoked SET (transmitter side).
+// 3. POST the SET to an in-memory Receiver (receiver side).
+// 4. Show that IsRevoked flips from false → true.
+func ssfSimulateRevocation(_ js.Value, _ []js.Value) any {
+	const agentSub = "spiffe://agent-fabric.example/compromised-worker"
+	const siemIssuer = "https://siem.agent-fabric.example"
+
+	// Generate keys for IdP and SIEM transmitter.
+	idpKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return errObj("generate IdP key: " + err.Error())
+	}
+	siemKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return errObj("generate SIEM key: " + err.Error())
+	}
+
+	// Issue a valid AgentToken for the agent being monitored.
+	agentIssuer := identity.NewAgentIssuer("https://idp.agent-fabric.example", idpKey, time.Hour)
+	agentTok, err := agentIssuer.Issue(identity.IssueOptions{
+		Subject:     agentSub,
+		Role:        identity.RoleExecutor,
+		ChainDepth:  0,
+		WorkloadKey: &idpKey.PublicKey,
+	})
+	if err != nil {
+		return errObj("issue agent token: " + err.Error())
+	}
+
+	// Build the CAEP session-revoked event payload.
+	eventPayload := map[string]any{
+		"subject": map[string]any{
+			"format": "spiffe",
+			"sub":    agentSub,
+		},
+		"reason": "anomalous API call rate detected by SIEM",
+	}
+	evtJSON, err := json.Marshal(eventPayload)
+	if err != nil {
+		return errObj("marshal event: " + err.Error())
+	}
+
+	// Build and sign the SET JWT (transmitter side).
+	type setClaims struct {
+		jwt.RegisteredClaims
+		Events map[string]json.RawMessage `json:"events"`
+	}
+	now := time.Now()
+	claims := setClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:   siemIssuer,
+			Subject:  agentSub,
+			ID:       fmt.Sprintf("set-%d", now.UnixNano()),
+			IssuedAt: jwt.NewNumericDate(now),
+		},
+		Events: map[string]json.RawMessage{
+			ssfreceiver.EventTypeSessionRevoked: json.RawMessage(evtJSON),
+		},
+	}
+	setToken := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	setJWT, err := setToken.SignedString(siemKey)
+	if err != nil {
+		return errObj("sign SET: " + err.Error())
+	}
+
+	// Wire up the receiver + remediation (gateway side).
+	rcvr := ssfreceiver.NewReceiver()
+	remediation := ssfreceiver.NewAgentRemediation(rcvr)
+
+	beforeRevoked := remediation.IsRevoked(agentSub) // expect false
+
+	// Deliver the SET via the HTTP handler (in-memory).
+	req, err := http.NewRequest(http.MethodPost, "/ssf/events", bytes.NewReader([]byte(setJWT)))
+	if err != nil {
+		return errObj("create request: " + err.Error())
+	}
+	req.Header.Set("Content-Type", "application/secevent+jwt")
+
+	rr := httptest.NewRecorder()
+	rcvr.ServeHTTP(rr, req)
+	if rr.Code != http.StatusAccepted {
+		return errObj(fmt.Sprintf("receiver rejected SET (%d): %s", rr.Code, rr.Body.String()))
+	}
+
+	afterRevoked := remediation.IsRevoked(agentSub) // expect true
+	var revokedAt string
+	if t, ok := remediation.RevokedSince(agentSub); ok {
+		revokedAt = t.UTC().Format(time.RFC3339)
+	}
+
+	return okObj(map[string]any{
+		"agentSub":     agentSub,
+		"agentToken":   truncate(agentTok),
+		"setJWT":       truncate(setJWT),
+		"setJWTParts":  func() []any { parts := splitJWT(setJWT); r := make([]any, len(parts)); for i, p := range parts { r[i] = p }; return r }(),
+		"beforeRevoked": beforeRevoked,
+		"afterRevoked":  afterRevoked,
+		"revokedAt":    revokedAt,
+		"httpStatus":   rr.Code,
+		"message":      fmt.Sprintf("SET delivered via POST /ssf/events → %s revoked at %s", agentSub, revokedAt),
+	})
+}
+
 func main() {
 	js.Global().Set("agentFabric", js.ValueOf(map[string]any{
 		"setup":                      js.FuncOf(setup),
@@ -1496,6 +1606,8 @@ func main() {
 		"memoryWriteDemo":     js.FuncOf(memoryWriteDemo),
 		"memoryIsolationDemo": js.FuncOf(memoryIsolationDemo),
 		"memoryIntegrityDemo": js.FuncOf(memoryIntegrityDemo),
+		// SSF/CAEP live revocation demo
+		"ssfSimulateRevocation": js.FuncOf(ssfSimulateRevocation),
 	}))
 	<-make(chan struct{}) // block forever
 }
