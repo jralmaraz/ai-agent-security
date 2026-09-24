@@ -18,6 +18,7 @@ import (
 	"github.com/jralmaraz/ai-agent-security/internal/authz"
 	"github.com/jralmaraz/ai-agent-security/pkg/federation"
 	"github.com/jralmaraz/ai-agent-security/pkg/identity"
+	"github.com/jralmaraz/ai-agent-security/pkg/ssfreceiver"
 )
 
 // Config holds gateway configuration.
@@ -44,6 +45,11 @@ type Config struct {
 	// identity to application identity. The listener must be separately
 	// configured with RequireAndVerifyClientCert and this same CA pool.
 	MTLSClientCA *x509.CertPool
+
+	// Remediation, when non-nil, is checked on every request. If the
+	// presenting agent's subject has received a CAEP session-revoked event,
+	// the request is rejected with 401 before any further validation.
+	Remediation *ssfreceiver.AgentRemediation
 }
 
 // Server is the agent gateway HTTP server.
@@ -60,6 +66,11 @@ func New(cfg Config) *Server {
 
 	s := &Server{cfg: cfg, router: r}
 	r.GET("/health", s.healthHandler)
+
+	// SSF SET push endpoint — receives CAEP session-revoked and related events.
+	if cfg.Remediation != nil {
+		r.POST("/ssf/events", gin.WrapF(cfg.Remediation.Receiver().ServeHTTP))
+	}
 
 	// Each configured route gets its own protected sub-path.
 	for toolName, upstream := range cfg.Routes {
@@ -105,7 +116,15 @@ func (s *Server) agentAuthMiddleware(toolName string) gin.HandlerFunc {
 			return
 		}
 
-		// 2. mTLS token-cert binding: peer certificate URI SAN must equal token sub.
+		// 2. CAEP remediation check: reject before any further processing if
+		// this agent subject has received a session-revoked signal.
+		if s.cfg.Remediation != nil && s.cfg.Remediation.IsRevoked(va.Claims.Subject) {
+			c.Header("WWW-Authenticate", `Bearer error="insufficient_scope", error_description="agent revoked"`)
+			abort(c, http.StatusUnauthorized, "agent revoked by SSF signal")
+			return
+		}
+
+		// 3. mTLS token-cert binding: peer certificate URI SAN must equal token sub.
 		if s.cfg.MTLSClientCA != nil {
 			if err := verifyMTLSBinding(c.Request, va.Claims.Subject); err != nil {
 				abort(c, http.StatusUnauthorized, "mTLS binding: "+err.Error())
@@ -113,7 +132,7 @@ func (s *Server) agentAuthMiddleware(toolName string) gin.HandlerFunc {
 			}
 		}
 
-		// 3. Delegation chain.
+		// 4. Delegation chain.
 		chainStr := c.GetHeader(authz.HeaderAgentChainToken)
 		if chainStr == "" {
 			abort(c, http.StatusUnauthorized, "missing "+authz.HeaderAgentChainToken)
@@ -129,7 +148,7 @@ func (s *Server) agentAuthMiddleware(toolName string) gin.HandlerFunc {
 			return
 		}
 
-		// 4. Proof token.
+		// 5. Proof token.
 		proofTok := c.GetHeader(authz.HeaderAgentProofToken)
 		if proofTok == "" {
 			abort(c, http.StatusUnauthorized, "missing "+authz.HeaderAgentProofToken)
@@ -151,7 +170,7 @@ func (s *Server) agentAuthMiddleware(toolName string) gin.HandlerFunc {
 			return
 		}
 
-		// 5. Authorization — COAZ-MCP Binding 1.0.
+		// 6. Authorization — COAZ-MCP Binding 1.0.
 		// Read and restore the request body so both the authz check and the upstream
 		// proxy can consume it. The tool parameters form the COAZ-MCP context element.
 		toolParams := extractToolParams(c.Request)
