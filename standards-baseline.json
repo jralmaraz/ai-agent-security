@@ -1,7 +1,7 @@
 {
   "_comment": "Tracks IETF/OpenID drafts implemented in this PoC. Updated daily by the standards-tracker GitHub Actions workflow. Set implemented_rev when the PoC code is updated to match a new revision.",
   "_tracking_policy": "docs/standards-tracking.md",
-  "last_checked": "2026-09-02",
+  "last_checked": "2026-08-21",
   "wg_feeds": [
     {
       "name": "IETF WIMSE WG",
@@ -72,7 +72,8 @@
         "pkg/identity/proof.go",
         "internal/gateway"
       ],
-      "_triage": "2026-08-28: assessed WPT-02 breaking changes against agent-fabric. Three -02 changes: (1) transport header changed from Workload-Proof-Token to Authorization: WPT \u2014 NOT applicable, AgentProofToken uses its own Agent-Proof-Token header; (2) ath claim removed \u2014 NOT applicable, ath was never in AgentProofToken; (3) WWW-Authenticate: WPT on 401 \u2014 NOT applicable, agent-fabric uses its own auth scheme. No code changes required. implemented_rev intentionally left at 01 because the AgentProofToken is a distinct token type that tracks WPT structurally but not mechanically."
+      "_triage": "2026-08-28: assessed WPT-02 breaking changes against agent-fabric. Three -02 changes: (1) transport header changed from Workload-Proof-Token to Authorization: WPT \u2014 NOT applicable, AgentProofToken uses its own Agent-Proof-Token header; (2) ath claim removed \u2014 NOT applicable, ath was never in AgentProofToken; (3) WWW-Authenticate: WPT on 401 \u2014 NOT applicable, agent-fabric uses its own auth scheme. No code changes required. implemented_rev intentionally left at 01 because the AgentProofToken is a distinct token type that tracks WPT structurally but not mechanically.",
+      "last": "02"
     },
     {
       "id": "draft-ietf-wimse-identifier",
@@ -312,7 +313,8 @@
         "pkg/identitychaining",
         "internal/authz"
       ],
-      "_triage": "2026-08-07: monitored. Rev 00, very early. High relevance to AI agent identity chaining and Txn-Token issuance flows. Callout added in CB4A demo tab."
+      "_triage": "2026-08-07: monitored. Rev 00, very early. High relevance to AI agent identity chaining and Txn-Token issuance flows. Callout added in CB4A demo tab.",
+      "last": "01"
     },
     {
       "id": "draft-gazitt-oauth-authzen-issuance",
@@ -329,7 +331,8 @@
       "used_in": [
         "internal/authz"
       ],
-      "_triage": "2026-08-07: monitored. Companion to authzen-token-exchange. Defines the canonical PDP evaluation API that our InMemoryPDP loosely follows."
+      "_triage": "2026-08-07: monitored. Companion to authzen-token-exchange. Defines the canonical PDP evaluation API that our InMemoryPDP loosely follows.",
+      "last": "01"
     },
     {
       "id": "draft-reece-wimse-cross-org-delegation",
@@ -346,7 +349,8 @@
       "used_in": [
         "pkg/identitychaining",
         "pkg/identity/chain.go"
-      ]
+      ],
+      "last": "02"
     },
     {
       "id": "draft-sharma-oauth-identity-propagation-context",
@@ -393,7 +397,8 @@
       "source_repo": "https://github.com/oauth-wg/oauth-sd-jwt-vc",
       "impact": "SD-JWT VC is for human-facing credential presentation. CB4A credentials use custom JWT types (cb4a-token+jwt, pdp-decision+jwt) \u2014 intentionally NOT SD-JWT VC format. Distinction: SD-JWT VC targets verifiable credentials for humans; CB4A targets per-request M2M governance tokens.",
       "used_in": [],
-      "_triage": "2026-08-04: assessed in issue #10. Tracked but not implemented; CB4A uses distinct token types."
+      "_triage": "2026-08-04: assessed in issue #10. Tracked but not implemented; CB4A uses distinct token types.",
+      "last": "19"
     },
     {
       "id": "draft-richer-oauth-httpsig",
@@ -528,7 +533,8 @@
       "source_repo": null,
       "impact": "Defines an Identity Continuation Assertion (typ: oauth-identity-continuation+jwt, claims: identity_continuation_handle, act, cnf.jkt, jti, exp \u2264300s) for preserving user identity context across service boundaries using RFC 8693 Token Exchange. Focuses on pairwise user subject identifiers propagated across IdP trust boundaries \u2014 different problem space from agent/workload identity (SPIFFE). Adjacent to pkg/identitychaining (jwt-authz-grant) and AgentChain delegation patterns; monitor for convergence.",
       "used_in": [],
-      "_triage": "2026-08-05: assessed in issue #13. Agent-fabric uses SPIFFE workload identity (not pairwise user subjects), so the continuation handle mechanism does not apply directly. Monitor for convergence with identity chaining patterns."
+      "_triage": "2026-08-05: assessed in issue #13. Agent-fabric uses SPIFFE workload identity (not pairwise user subjects), so the continuation handle mechanism does not apply directly. Monitor for convergence with identity chaining patterns.",
+      "last": "01"
     },
     {
       "id": "draft-hardt-oauth-aauth-protocol",
@@ -1672,7 +1678,8 @@
       "source_repo": null,
       "impact": "HIGH (companion to draft-das-agentic-execution-finality) \u2014 Maps Claude tool_use (id, name, input), OpenAI tool_calls (id, function.name, function.arguments), and MCP tools/call (name, arguments) to a unified AgentCandidateAct. Each mapping produces an arguments_digest over canonical JSON (JCS). enforce(act, live_args) contract: host must call before any invocation, verifying digest matches live args, authority exists and is unconsumed, then consumes single-use authority before returning allow=true. Parallel tool_calls are independent acts \u2014 one ALLOW does not authorize siblings. No model changes required \u2014 binding is host-side only. Directly applicable to the MCP proxy path in internal/gateway/server.go, which currently forwards tool calls without argument-level authority binding.",
       "used_in": [],
-      "_triage": "2026-08-28: assessed from issue #43. Individual draft, rev-00. HIGH relevance as companion to agentic-execution-finality. The MCP proxy in internal/gateway/server.go is exactly the enforcement point this draft targets. Implementing would add enforce() call before each tool proxy request, binding it to the argument digest from the AgentCandidateAct. Monitor alongside execution-finality \u2014 likely implemented together."
+      "_triage": "2026-08-28: assessed from issue #43. Individual draft, rev-00. HIGH relevance as companion to agentic-execution-finality. The MCP proxy in internal/gateway/server.go is exactly the enforcement point this draft targets. Implementing would add enforce() call before each tool proxy request, binding it to the argument digest from the AgentCandidateAct. Monitor alongside execution-finality \u2014 likely implemented together.",
+      "last": "01"
     },
     {
       "id": "draft-agentic-ai-tool-execution-finality",
