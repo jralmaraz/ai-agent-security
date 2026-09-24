@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jralmaraz/ai-agent-security/pkg/webauthn"
 )
 
 const pdpDecisionType = "pdp-decision+jwt"
@@ -232,6 +233,22 @@ func (p *InMemoryPDP) Approve(requestID, approverID string) (string, error) {
 	})
 
 	return j, nil
+}
+
+// ApproveWithPasskey resolves a pending HITL request using a WebAuthn passkey
+// assertion as proof of approver presence.
+//
+// It verifies the ES256 assertion against the credential's public key before
+// calling Approve. If the assertion is invalid, the request is left in its
+// current state and an error is returned.
+func (p *InMemoryPDP) ApproveWithPasskey(requestID string, cred *webauthn.Credential, challenge []byte, assertionB64 string) (string, error) {
+	if cred == nil {
+		return "", errors.New("credential is required")
+	}
+	if err := webauthn.VerifyAssertion(cred.PublicKey, challenge, assertionB64); err != nil {
+		return "", fmt.Errorf("passkey assertion invalid: %w", err)
+	}
+	return p.Approve(requestID, cred.ID)
 }
 
 // Deny resolves a pending request as denied.
